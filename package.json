@@ -28,7 +28,15 @@
     "database"
   ],
   "author": "J Chris Anderson",
-  "license": "MIT",
+  "license": "Apache-2.0 OR MIT",
+  "homepage": "https://fireproof.storage",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fireproof-storage/fireproof.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fireproof-storage/fireproof/issues"
+  },
   "devDependencies": {
     "@types/mocha": "^10.0.1",
     "@typescript-eslint/eslint-plugin": "^6.1.0",
