@@ -1,0 +1,24 @@
+{
+  "name": "@fireproof/database",
+  "version": "0.9.0",
+  "description": "Immutable embedded distributed database for the web",
+  "main": "src/main.ts",
+  "type": "module",
+  "scripts": {
+    "build": "node ./build/build.js",
+    "start": "node ./build/serve.js",
+    "analyze": "node ./build/analyze.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "database"
+  ],
+  "author": "J Chris Anderson",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.18.14",
+    "esbuild-plugin-tsc": "^0.4.0",
+    "tslib": "^2.6.0",
+    "typescript": "^5.1.6"
+  }
+}
