@@ -17,6 +17,7 @@
     "build": "node ./scripts/build.js",
     "start": "node ./scripts/serve.js",
     "analyze": "node ./scripts/analyze.js",
+    "test:watch": "npm run test:node -- -w --parallel",
     "test:node": "mocha test/*.js",
     "test:browser": "polendina test/*.js --webpack-config webpack.config.cjs",
     "test": "npm run build && npm run test:node && npm run test:browser",
@@ -29,6 +30,7 @@
   "author": "J Chris Anderson",
   "license": "MIT",
   "devDependencies": {
+    "@types/mocha": "^10.0.1",
     "@typescript-eslint/eslint-plugin": "^6.1.0",
     "@typescript-eslint/parser": "^6.1.0",
     "browser-assert": "^1.2.1",
@@ -37,6 +39,7 @@
     "eslint": "^8.45.0",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-mocha": "^10.1.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.1.1",
     "mocha": "^10.2.0",

@@ -1,15 +1,22 @@
 // eslint-disable-next-line no-undef
 module.exports = {
+  env: {
+    mocha: true
+  },
+  plugins: [
+    'mocha'
+  ],
   parser: '@typescript-eslint/parser',
   extends: [
     'standard',
     'plugin:@typescript-eslint/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
+    'plugin:mocha/recommended'
   ],
   parserOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
-    project: './tsconfig.json',
+    project: './tsconfig.json'
   },
   rules: {
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
@@ -24,6 +31,6 @@ module.exports = {
       named: 'never',
       asyncArrow: 'always'
     }],
-    semi: ['error', 'never'],
+    semi: ['error', 'never']
   }
 }
