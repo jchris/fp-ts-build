@@ -5,6 +5,6 @@ import { Fireproof } from '../dist/fireproof.esm.js'
 describe('Hello World Test', function () {
   it('should pass the hello world test', function () {
     const result = Fireproof.storage() // call to your library function
-    assert.strictEqual(result, 'Hello, World!')
+    assert(result === 'Hello, World!')
   })
 })
