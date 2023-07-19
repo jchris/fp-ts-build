@@ -1,3 +1,5 @@
-let message: string = 'Hello, World!'
-console.log(message)
-export { message }
+export class Fireproof {
+  static storage(): string {
+    return 'Hello, World!';
+  }
+}

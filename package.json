@@ -2,13 +2,24 @@
   "name": "@fireproof/database",
   "version": "0.9.0",
   "description": "Immutable embedded distributed database for the web",
-  "main": "src/main.ts",
+  "main": "dist/fireproof.cjs.js",
+  "module": "dist/fireproof.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/fireproof.esm.js",
+      "require": "./dist/fireproof.cjs.js"
+    },
+    "./browser": "./dist/fireproof.browser.js"
+  },
+  "browser": "dist/fireproof.browser.js",
   "type": "module",
   "scripts": {
-    "build": "node ./build/build.js",
-    "start": "node ./build/serve.js",
-    "analyze": "node ./build/analyze.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "node ./scripts/build.js",
+    "start": "node ./scripts/serve.js",
+    "analyze": "node ./scripts/analyze.js",
+    "test:node": "mocha test/*.js",
+    "test:browser": "polendina --cleanup test/*.js",
+    "test": "npm run build && npm run test:node && npm run test:browser"
   },
   "keywords": [
     "database"
@@ -18,6 +29,8 @@
   "devDependencies": {
     "esbuild": "^0.18.14",
     "esbuild-plugin-tsc": "^0.4.0",
+    "mocha": "^10.2.0",
+    "polendina": "^3.2.1",
     "tslib": "^2.6.0",
     "typescript": "^5.1.6"
   }
