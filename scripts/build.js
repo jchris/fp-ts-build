@@ -1,15 +1,15 @@
-import { build } from 'esbuild';
-import { createBuildSettings } from './settings.js';
+import { build } from 'esbuild'
+import { createBuildSettings } from './settings.js'
 
-async function buildProject() {
-  const buildConfigs = createBuildSettings();
+async function buildProject () {
+  const buildConfigs = createBuildSettings()
 
   for (const config of buildConfigs) {
-    await build(config);
+    await build(config)
   }
 }
 
 buildProject().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+  console.error(err)
+  process.exit(1)
+})

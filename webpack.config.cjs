@@ -14,4 +14,4 @@ module.exports = {
       assert: require.resolve('browser-assert')
     }
   }
-};
+}
