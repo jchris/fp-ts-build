@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { Link } from 'multiformats'
 import { EventFetcher, EventLink } from '@alanshaw/pail/clock'
 import { MemoryBlockstore as Blockstore } from '@alanshaw/pail/block'
 // @ts-ignore
 import { create, load } from 'prolly-trees/map'
+// @ts-ignore
+import { Node } from 'prolly-trees/base'
 // @ts-ignore
 import { nocache as cache } from 'prolly-trees/cache'
 // @ts-ignore
@@ -46,15 +49,30 @@ export class Prolly<T> {
   // async get(key: string, rootCache: any = null): Promise<{result: any, cids: CIDCounter, clockCIDs: CIDCounter, root: any}> {
 }
 
-async function getProllyRootFromClock(head: EventLink<any>[], blocks: Blockstore) {
+interface LoadOptions {
+  cid: any
+  get: (cid: any) => Promise<any>
+  cache: any
+  chunker: (entry: any, distance: number) => boolean
+  codec: any
+  hasher: any
+  compare: (a: any, b: any) => number
+}
+
+async function getProllyRootFromClock(head: EventLink<any>[], blocks: Blockstore): Promise<Node | null> {
   const events = new EventFetcher(blocks)
   if (head.length === 0) {
     return null
   } else if (head.length === 1) {
     const event = await events.get(head[0])
-    const { root } = event.value.data
+    const root: Link = event.value.data.root
     if (root) {
-      return load({ cid: root, get: blocks.get.bind(head), ...blockOpts })
+      const loadOptions: LoadOptions = {
+        cid: root,
+        get: blocks.get.bind(blocks),
+        ...blockOpts
+      }
+      return load(loadOptions)
     }
   } else {
     throw new Error('Multiple heads not implemented yet')
