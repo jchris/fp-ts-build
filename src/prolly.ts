@@ -5,7 +5,7 @@ import { MemoryBlockstore as Blockstore } from '@alanshaw/pail/block'
 // @ts-ignore
 import { create, load } from 'prolly-trees/map'
 // @ts-ignore
-import { Node } from 'prolly-trees/base'
+import { Node as BaseNode } from 'prolly-trees/base'
 // @ts-ignore
 import { nocache as cache } from 'prolly-trees/cache'
 // @ts-ignore
@@ -14,6 +14,26 @@ import * as codec from '@ipld/dag-cbor'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 
 const blockOpts = { cache, chunker: bf(30), codec, hasher, compare }
+
+// Node type based on the Node from 'prolly-trees/base'
+export interface Node extends BaseNode {
+  entryList: EntryList;
+  chunker: (entry: Entry, distance: number) => boolean;
+  distance: number;
+  getNode: (address: any) => Promise<Node>;
+  compare: (a: any, b: any) => number;
+  cache: any;
+}
+
+export type Entry = {
+  key: any;
+  address: any;
+};
+
+export type EntryList = {
+  entries: Entry[];
+  closed: boolean;
+};
 
 export class Prolly<T> {
   private _blocks: Blockstore
@@ -59,22 +79,35 @@ interface LoadOptions {
   compare: (a: any, b: any) => number
 }
 
+interface EventData {
+  root: Link;
+  key: string;
+  value: any;
+  type: 'del' | 'put';
+}
+
 async function getProllyRootFromClock(head: EventLink<any>[], blocks: Blockstore): Promise<Node | null> {
   const events = new EventFetcher(blocks)
   if (head.length === 0) {
     return null
   } else if (head.length === 1) {
     const event = await events.get(head[0])
-    const root: Link = event.value.data.root
+    const eventData = event.value.data as EventData
+    if (!('cid' in eventData.root)) {
+      throw new Error('event.value.data.root does not look like a Link')
+    }
+    const root = eventData.root
     if (root) {
       const loadOptions: LoadOptions = {
         cid: root,
         get: blocks.get.bind(blocks),
         ...blockOpts
       }
-      return load(loadOptions)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      return (await load(loadOptions) as Node)
     }
   } else {
     throw new Error('Multiple heads not implemented yet')
   }
+  return null
 }

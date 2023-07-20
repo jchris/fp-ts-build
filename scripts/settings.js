@@ -1,8 +1,15 @@
 import esbuildPluginTsc from 'esbuild-plugin-tsc'
+import fs from 'fs'
+import path from 'path'
+
+// Obtain all .ts files in the src directory
+const entryPoints = fs.readdirSync('src')
+  .filter(file => path.extname(file) === '.ts')
+  .map(file => path.join('src', file))
 
 export function createBuildSettings (options) {
   const commonSettings = {
-    entryPoints: ['src/main.ts'],
+    entryPoints,
     bundle: true,
     plugins: [
       esbuildPluginTsc({
@@ -12,25 +19,35 @@ export function createBuildSettings (options) {
     ...options
   }
 
-  const cjsConfig = {
-    ...commonSettings,
-    outfile: 'dist/fireproof.cjs.js',
-    format: 'cjs'
-  }
+  // Generate build configs for each entry point
+  const configs = entryPoints.map(entryPoint => {
+    const filename = path.basename(entryPoint, '.ts')
+    
+    const cjsConfig = {
+      ...commonSettings,
+      outfile: `dist/${filename}.cjs.js`,
+      format: 'cjs',
+      entryPoints: [entryPoint]
+    }
 
-  const esmConfig = {
-    ...commonSettings,
-    outfile: 'dist/fireproof.esm.js',
-    format: 'esm'
-  }
+    const esmConfig = {
+      ...commonSettings,
+      outfile: `dist/${filename}.esm.js`,
+      format: 'esm',
+      entryPoints: [entryPoint]
+    }
 
-  const browserConfig = {
-    ...commonSettings,
-    outfile: 'dist/fireproof.browser.js',
-    format: 'iife', // 'iife' format is suitable for browsers
-    platform: 'browser', // build for browser platform
-    target: 'es2015' // transpile to ES2015 syntax for compatibility with older browsers
-  }
+    const browserConfig = {
+      ...commonSettings,
+      outfile: `dist/${filename}.browser.js`,
+      format: 'iife',
+      platform: 'browser',
+      target: 'es2015',
+      entryPoints: [entryPoint]
+    }
 
-  return [cjsConfig, esmConfig, browserConfig]
+    return [cjsConfig, esmConfig, browserConfig]
+  })
+
+  return configs.flat()
 }
