@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { Link } from 'multiformats'
+import { Link, Block } from 'multiformats'
 import { EventFetcher, EventLink } from '@alanshaw/pail/clock'
 import { MemoryBlockstore as Blockstore } from '@alanshaw/pail/block'
 // @ts-ignore
@@ -13,6 +12,7 @@ import { CIDCounter, bf, simpleCompare as compare } from 'prolly-trees/utils'
 import * as codec from '@ipld/dag-cbor'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 const blockOpts = { cache, chunker: bf(30), codec, hasher, compare }
 
 // Node type based on the Node from 'prolly-trees/base'
@@ -23,6 +23,7 @@ export interface Node extends BaseNode {
   getNode: (address: any) => Promise<Node>;
   compare: (a: any, b: any) => number;
   cache: any;
+  block: Block
 }
 
 export type Entry = {
@@ -35,6 +36,11 @@ export type EntryList = {
   closed: boolean;
 };
 
+export type ProllyEvent = {
+  key: string;
+  value: EventLink<any>;
+}
+
 export class Prolly<T> {
   private _blocks: Blockstore
   private _head: EventLink<T>[]
@@ -44,14 +50,15 @@ export class Prolly<T> {
     this._head = head
   }
 
-  async put(event: {key: string, value: EventLink<T>}, options?: object): Promise<any> {
+  async put(event: ProllyEvent, options?: object): Promise<any> {
     // If the head is not empty, get the prolly root from the clock
 
-    const prollyRoot = await getProllyRootFromClock(this._head, this._blocks)
+    const prollyRoot = await getProllyRootFromClock(this._blocks, this._head)
 
     if (prollyRoot) {
       // we hve an existing database we can add to
     } else {
+      const newProllyRoot = await createProllyRoot(this._blocks, event)
       return 'ok'
       // we have a new database
     }
@@ -76,8 +83,9 @@ export class Prolly<T> {
   // async get(key: string, rootCache: any = null): Promise<{result: any, cids: CIDCounter, clockCIDs: CIDCounter, root: any}> {
 }
 
-interface LoadOptions {
-  cid: any
+interface ProllyOptions {
+  cid?: Link
+  list?: ProllyEvent[]
   get: (cid: any) => Promise<any>
   cache: any
   chunker: (entry: any, distance: number) => boolean
@@ -93,7 +101,7 @@ interface EventData {
   type: 'del' | 'put';
 }
 
-async function getProllyRootFromClock(head: EventLink<any>[], blocks: Blockstore): Promise<Node | null> {
+async function getProllyRootFromClock(blocks: Blockstore, head: EventLink<any>[]): Promise<Node | null> {
   const events = new EventFetcher(blocks)
   if (head.length === 0) {
     return null
@@ -105,7 +113,7 @@ async function getProllyRootFromClock(head: EventLink<any>[], blocks: Blockstore
     }
     const root = eventData.root
     if (root) {
-      const loadOptions: LoadOptions = {
+      const loadOptions: ProllyOptions = {
         cid: root,
         get: blocks.get.bind(blocks),
         ...blockOpts
@@ -117,4 +125,23 @@ async function getProllyRootFromClock(head: EventLink<any>[], blocks: Blockstore
     throw new Error('Multiple heads not implemented yet')
   }
   return null
+}
+
+async function createProllyRoot(blocks: Blockstore, event: ProllyEvent): Promise<Node> {
+  console.log('new event', event)
+
+  const loadOptions: ProllyOptions = {
+    list: [event],
+    get: blocks.get.bind(blocks),
+    ...blockOpts
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+  const newBlocks = []
+  let root: Node
+  for await (const node of (create(loadOptions))) {
+    root = node as Node
+    newBlocks.push(await root.block)
+  }
+
+  return { root, blocks: newBlocks }
 }

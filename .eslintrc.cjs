@@ -22,6 +22,7 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     '@typescript-eslint/no-use-before-define': ['error', { functions: false, classes: false, variables: true, typedefs: false }],
     '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/ban-ts-comment': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/type-annotation-spacing': 'error',
     'no-use-before-define': 'off',
