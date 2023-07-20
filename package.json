@@ -17,7 +17,7 @@
     "build": "node ./scripts/build.js",
     "start": "node ./scripts/serve.js",
     "analyze": "node ./scripts/analyze.js",
-    "test:watch": "npm run test:node -- -w --parallel",
+    "test:watch": "nodemon -w src -w test -e ts,js --exec \"npm run build && npm run test:node\"",
     "test:node": "mocha test/*.js",
     "test:browser": "polendina test/*.js --webpack-config webpack.config.cjs",
     "test": "npm run build && npm run test:node && npm run test:browser",
@@ -51,6 +51,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.1.1",
     "mocha": "^10.2.0",
+    "nodemon": "^3.0.1",
     "polendina": "^3.2.1",
     "tslib": "^2.6.0",
     "typescript": "^5.1.6"

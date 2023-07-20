@@ -49,6 +49,13 @@ export class Prolly<T> {
 
     const prollyRoot = await getProllyRootFromClock(this._head, this._blocks)
 
+    if (prollyRoot) {
+      // we hve an existing database we can add to
+    } else {
+      return 'ok'
+      // we have a new database
+    }
+
     // If the head is empty, the database is new.
     if (this._head.length === 0) {
       // Create a new prolly tree
