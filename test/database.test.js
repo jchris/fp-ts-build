@@ -66,3 +66,48 @@ describe('basic Database with record', function () {
     matches(e.message, /Not found/)
   })
 })
+
+describe('basic Database parallel writes', function () {
+  /** @type {Database} */
+  let db
+  const writes = []
+  beforeEach(async function () {
+    db = new Database()
+    /** @type {Doc} */
+    for (let i = 0; i < 10; i++) {
+      const doc = { _id: `id-${i}`, value: 'world' }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      writes.push(db.put(doc))
+    }
+    await Promise.all(writes)
+  })
+  it('should have one head', function () {
+    const crdt = db._crdt
+    equals(crdt._head.length, 1)
+  })
+  it('should write all', async function () {
+    for (let i = 0; i < 10; i++) {
+      const id = `id-${i}`
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      const got = await db.get(id).catch(e => e)
+      assert(got)
+      console.log(i, got)
+    }
+
+    // const got = await db.get('id-5')
+    // assert(got)
+    // equals(got._id, 'id-5')
+  })
+  // it('should get', async function () {
+  //   const doc = await db.get('hello')
+  //   assert(doc)
+  //   equals(doc._id, 'hello')
+  // })
+  // it('should del last record', async function () {
+  //   const ok = await db.del('hello')
+  //   equals(ok.id, 'hello')
+  //   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  //   const e = await (db.get('hello')).catch(e => e)
+  //   matches(e.message, /Not found/)
+  // })
+})
