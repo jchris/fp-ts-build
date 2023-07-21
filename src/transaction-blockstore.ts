@@ -14,6 +14,7 @@ export type BlockFetcher = { get: (link: AnyLink) => Promise<AnyBlock | undefine
 
 export class MemoryBlockstore implements BlockFetcher {
   private blocks: Map<string, Uint8Array> = new Map()
+  private instanceId: string = Math.random().toString(36).slice(2, 8)
 
   constructor(blocks?: AnyBlock[]) {
     if (blocks) {
@@ -22,12 +23,14 @@ export class MemoryBlockstore implements BlockFetcher {
   }
 
   async get(cid: AnyLink): Promise<AnyBlock | undefined> {
+    console.log('s get', this.instanceId, cid.toString())
     const bytes = this.blocks.get(cid.toString())
     if (!bytes) return
     return { cid, bytes }
   }
 
   async put(cid: AnyLink, bytes: Uint8Array): Promise<void> {
+    console.log('s put', this.instanceId, cid.toString())
     this.blocks.set(cid.toString(), bytes)
   }
 
@@ -66,17 +69,33 @@ export class MultiBlockFetcher {
 }
 
 export class Transaction extends MemoryBlockstore {
+  constructor(private parent: BlockFetcher) {
+    super()
+  }
 
+  async get(cid: AnyLink): Promise<AnyBlock | undefined> {
+    return super.get(cid) ?? this.parent.get(cid)
+  }
 }
 
 export class TransactionBlockstore implements BlockFetcher {
-  private committed: Map<string, Uint8Array> = new Map()
-  // private transactions: Set
+  // private committed: Map<string, Uint8Array> = new Map()
+  private transactions: Set<Transaction> = new Set()
   put() {
     throw new Error('use a transaction to put')
   }
 
-  async transaction() {
-    return new Transaction()
+  async get(cid: AnyLink): Promise<AnyBlock | undefined> {
+    console.log('get', cid.toString())
+    for (const f of this.transactions) {
+      const v = await f.get(cid)
+      if (v) return v
+    }
+  }
+
+  async transaction(fn: (t: Transaction) => Promise<any>) {
+    const t = new Transaction(this)
+    this.transactions.add(t)
+    return fn(t)
   }
 }

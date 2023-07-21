@@ -33,8 +33,6 @@ describe('CRDT with one record', function () {
   beforeEach(async function () {
     crdt = new CRDT(blocks, [])
     firstPut = await crdt.bulk([{ key: 'hello', value: { hello: 'world' } }])
-
-    await persistResult(blocks, firstPut)
   })
   it('should have a one-element head', async function () {
     const head = crdt._head
@@ -51,18 +49,9 @@ describe('CRDT with one record', function () {
   it('should accept another put and return results', async function () {
     const didPut = await crdt.bulk([{ key: 'nice', value: { nice: 'data' } }])
 
-    await persistResult(blocks, didPut)
-
     const head = didPut.head
     equals(head.length, 1)
     matches(await didPut.root.address, /272pceze/)
     notEquals((await didPut.root.address).toString(), (await firstPut.root.address).toString())
   })
 })
-
-async function persistResult(blocks, result) {
-  for (const block of result.additions) {
-    console.log('persisting block', block.cid, block.bytes.length)
-    await blocks.put(block.cid, block.bytes)
-  }
-}
