@@ -21,18 +21,6 @@ export class MemoryBlockstore implements BlockFetcher {
     this.blocks.set(cid.toString(), bytes)
   }
 
-  // putSync(cid: AnyLink, bytes: Uint8Array): void {
-  //   this.blocks.set(cid.toString(), bytes)
-  // }
-
-  // async delete(cid: AnyLink): Promise<void> {
-  //   this.blocks.delete(cid.toString())
-  // }
-
-  // deleteSync(cid: AnyLink): void {
-  //   this.blocks.delete(cid.toString())
-  // }
-
   * entries() {
     for (const [str, bytes] of this.blocks) {
       yield { cid: parse(str), bytes }
