@@ -29,7 +29,6 @@ export class Database {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       this._writeQueue.push({ key: _id, value }, function (err: Error | null, result?: BulkResult) {
         if (err) reject(err)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         resolve({ id: doc._id, clock: result?.head } as DbResponse)
       })
     })
@@ -48,7 +47,6 @@ export class Database {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       this._writeQueue.push({ key: id, del: true }, function (err: Error | null, result?: BulkResult) {
         if (err) reject(err)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         resolve({ id, clock: result?.head } as DbResponse)
       })
     })
