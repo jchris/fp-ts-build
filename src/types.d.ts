@@ -12,13 +12,21 @@ export type BulkResult = ProllyResult & {
   head: ClockHead
 }
 
+type DocBody = {
+  [key: string]: any
+}
+
+export type Doc = DocBody & {
+  _id: string
+}
+
 export type DocUpdate = {
   key: string
-  value: AnyLink<any> // should be AnyLink?
-  del: boolean
+  value?: DocBody
+  del?: boolean
 }
 export interface EventData {
-  root: Link
+  root: Link | null
   bulk: DocUpdate[]
 }
 

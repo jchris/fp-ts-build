@@ -35,10 +35,10 @@ export async function advanceClock(
   root: ProllyNode,
   bulk: DocUpdate[]
 ): Promise<{ head: ClockHead; event: BlockView }> {
-  if (!root) throw new Error('missing root')
+  // if (!root) throw new Error('missing root')
 
   const data: EventData = {
-    root: await root.address,
+    root: root ? await root.address : null,
     bulk
   }
 
@@ -91,6 +91,11 @@ export async function updateProllyRoot(
 }
 
 export async function createProllyRoot(blocks: Transaction, updates: DocUpdate[]): Promise<ProllyResult> {
+  // if any update has a del, throw not found
+  for (const update of updates) {
+    if (update.del) throw new Error('Not found')
+  }
+
   const loadOptions: ProllyOptions = {
     list: updates,
     get: makeGetBlock(blocks),

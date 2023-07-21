@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 import { EventLink } from '@alanshaw/pail/clock'
 import { TransactionBlockstore as Blockstore } from './transaction-blockstore'
-import { DocUpdate, BulkResult, CIDCounter } from './types'
+import { DocUpdate, EventData, BulkResult, CIDCounter } from './types'
 import { getProllyRootFromClock, updateProllyRoot, createProllyRoot, advanceClock } from './crdt-helpers'
 
-export class CRDT<T> {
+export class CRDT {
   private _blocks: Blockstore
-  private _head: EventLink<T>[]
+  private _head: EventLink<EventData>[]
 
-  constructor(blocks: Blockstore, head: EventLink<T>[]) {
-    this._blocks = blocks
-    this._head = head
+  constructor(blocks?: Blockstore, head?: EventLink<EventData>[]) {
+    this._blocks = blocks || new Blockstore()
+    this._head = head || []
   }
 
   async bulk(updates: DocUpdate[], _options?: object): Promise<BulkResult> {
