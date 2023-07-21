@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/require-await */
 import { parse } from 'multiformats/link'
-import { BlockFetcher, AnyBlock, AnyLink } from './types'
+import { BlockFetcher, AnyBlock, AnyLink, BulkResult } from './types'
 
 export class MemoryBlockstore implements BlockFetcher {
   private blocks: Map<string, Uint8Array> = new Map()
@@ -71,9 +71,10 @@ export class TransactionBlockstore implements BlockFetcher {
     }
   }
 
-  async transaction(fn: (t: Transaction) => Promise<any>) {
+  async transaction(fn: (t: Transaction) => Promise<BulkResult>) {
     const t = new Transaction(this)
     this.transactions.add(t)
-    return fn(t)
+    const done: BulkResult = await fn(t)
+    return done
   }
 }
