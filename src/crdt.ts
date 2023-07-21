@@ -1,15 +1,14 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import { Link, Block, BlockView } from 'multiformats'
+import { Link } from 'multiformats'
 import { create as createBlock } from 'multiformats/block'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import * as codec from '@ipld/dag-cbor'
 
-import { EventBlock, EventFetcher, EventLink, advance } from '@alanshaw/pail/clock'
-import { TransactionBlockstore as Blockstore, Transaction, BlockFetcher } from './transaction-blockstore'
+import { EventLink } from '@alanshaw/pail/clock'
+import { TransactionBlockstore as Blockstore } from './transaction-blockstore'
+import { BlockFetcher, DocUpdate, BulkResult, CIDCounter } from './types'
 // @ts-ignore
-import * as Map from 'prolly-trees/map'
 // @ts-ignore
-import { ProllyNode as BaseNode } from 'prolly-trees/base'
 // @ts-ignore
 import { nocache as cache } from 'prolly-trees/cache'
 import {
@@ -18,9 +17,10 @@ import {
   simpleCompare as compare
   // @ts-ignore
 } from 'prolly-trees/utils'
+import { getProllyRootFromClock, updateProllyRoot, createProllyRoot, advanceClock } from './getProllyRootFromClock'
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-const blockOpts = { cache, chunker: bf(30), codec, hasher, compare }
+export const blockOpts = { cache, chunker: bf(30), codec, hasher, compare }
 
 export class CRDT<T> {
   private _blocks: Blockstore
@@ -56,124 +56,11 @@ export class CRDT<T> {
   }
 }
 
-function makeGetBlock(blocks: BlockFetcher) {
+export function makeGetBlock(blocks: BlockFetcher) {
   return async (address: Link) => {
     const block = await blocks.get(address)
     if (!block) throw new Error(`Missing block ${address}`)
     const { cid, bytes } = block
     return createBlock({ cid, bytes, hasher, codec })
   }
-}
-
-async function advanceClock(
-  blocks: Transaction,
-  head: ClockHead,
-  root: ProllyNode,
-  bulk: DocUpdate[]
-): Promise<{ head: ClockHead; event: BlockView }> {
-  if (!root) throw new Error('missing root')
-  const data: EventData = {
-    root: await root.address,
-    bulk
-  }
-  const clockEvent = await EventBlock.create(data, head)
-  await blocks.put(clockEvent.cid, clockEvent.bytes)
-  const didAdvance: ClockHead = await advance(blocks, head, clockEvent.cid)
-  return { head: didAdvance, event: clockEvent }
-}
-
-async function getProllyRootFromClock(blocks: Blockstore, head: ClockHead): Promise<ProllyNode | null> {
-  const events = new EventFetcher(blocks)
-  if (head.length === 0) {
-    return null
-  } else if (head.length === 1) {
-    const event = await events.get(head[0])
-    const eventData = event.value.data as EventData
-    const root = eventData.root
-    if (root) {
-      const loadOptions: ProllyOptions = {
-        cid: root,
-        get: makeGetBlock(blocks),
-        ...blockOpts
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      return (await Map.load(loadOptions)) as ProllyNode
-    }
-  } else {
-    throw new Error(`Multiple heads not implemented yet. head.length = ${head.length}`)
-  }
-  return null
-}
-
-async function updateProllyRoot(tblocks: Transaction, prollyRoot: ProllyNode, updates: DocUpdate[]): Promise<ProllyResult> {
-  const { root, blocks } = (await prollyRoot.bulk(updates)) as { root: ProllyNode, blocks: Block[] }
-  for (const block of blocks) {
-    await tblocks.put(block.cid, block.bytes)
-  }
-  return { root }
-}
-
-async function createProllyRoot(blocks: Transaction, updates: DocUpdate[]): Promise<ProllyResult> {
-  const loadOptions: ProllyOptions = {
-    list: updates,
-    get: makeGetBlock(blocks),
-    ...blockOpts
-  }
-  let root: ProllyNode | null = null
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  for await (const node of Map.create(loadOptions)) {
-    root = node as ProllyNode
-    const { cid, bytes } = await root.block
-    await blocks.put(cid, bytes)
-  }
-  if (!root) throw new Error('failed to create root')
-  return { root }
-}
-
-type ClockHead = EventLink<any>[]
-
-type ProllyResult = {
-  root: ProllyNode,
-}
-
-export type BulkResult = ProllyResult & {
-  head: ClockHead
-}
-
-// ProllyNode type based on the ProllyNode from 'prolly-trees/base'
-export interface ProllyNode extends BaseNode {
-  get(key: string): unknown
-  bulk(bulk: DocUpdate[]): { root: any; blocks: any } | PromiseLike<{ root: any; blocks: any }>
-  address: Promise<Link>
-  distance: number
-  compare: (a: any, b: any) => number
-  cache: any
-  block: Promise<Block>
-}
-
-interface CIDCounter {
-  add(node: ProllyNode): void;
-  all(): Promise<Set<string | Promise<string>>>;
-}
-
-export type DocUpdate = {
-  key: string
-  value: EventLink<any>
-  del: boolean
-}
-
-interface ProllyOptions {
-  cid?: Link
-  list?: DocUpdate[]
-  get: (cid: any) => Promise<any>
-  cache: any
-  chunker: (entry: any, distance: number) => boolean
-  codec: any
-  hasher: any
-  compare: (a: any, b: any) => number
-}
-
-interface EventData {
-  root: Link
-  bulk: DocUpdate[]
 }

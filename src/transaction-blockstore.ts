@@ -1,15 +1,6 @@
 /* eslint-disable @typescript-eslint/require-await */
-import { Link } from 'multiformats'
 import { parse } from 'multiformats/link'
-
-/** forked from
- * https://github.com/alanshaw/pail/blob/main/src/block.js
- * thanks Alan
-**/
-
-export type AnyLink = Link<unknown, number, number, 1|0>;
-type AnyBlock = { cid: AnyLink, bytes: Uint8Array };
-export type BlockFetcher = { get: (link: AnyLink) => Promise<AnyBlock | undefined> };
+import { BlockFetcher, AnyBlock, AnyLink } from './types'
 
 export class MemoryBlockstore implements BlockFetcher {
   private blocks: Map<string, Uint8Array> = new Map()
@@ -49,20 +40,20 @@ export class MemoryBlockstore implements BlockFetcher {
   }
 }
 
-export class MultiBlockFetcher {
-  private fetchers: BlockFetcher[]
+// export class MultiBlockFetcher {
+//   private fetchers: BlockFetcher[]
 
-  constructor(...fetchers: BlockFetcher[]) {
-    this.fetchers = fetchers
-  }
+//   constructor(...fetchers: BlockFetcher[]) {
+//     this.fetchers = fetchers
+//   }
 
-  async get(link: AnyLink): Promise<AnyBlock | undefined> {
-    for (const f of this.fetchers) {
-      const v = await f.get(link)
-      if (v) return v
-    }
-  }
-}
+//   async get(link: AnyLink): Promise<AnyBlock | undefined> {
+//     for (const f of this.fetchers) {
+//       const v = await f.get(link)
+//       if (v) return v
+//     }
+//   }
+// }
 
 export class Transaction extends MemoryBlockstore {
   constructor(private parent: BlockFetcher) {
