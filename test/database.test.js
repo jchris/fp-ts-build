@@ -88,7 +88,7 @@ describe('basic Database parallel writes', function () {
   it('should write all', async function () {
     for (let i = 0; i < 10; i++) {
       const id = `id-${i}`
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
       const got = await db.get(id).catch(e => e)
       assert(got)
       equals(got._id, id)
