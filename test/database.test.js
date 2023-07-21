@@ -91,23 +91,33 @@ describe('basic Database parallel writes', function () {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       const got = await db.get(id).catch(e => e)
       assert(got)
-      console.log(i, got)
+      equals(got._id, id)
+      equals(got.value, 'world')
     }
-
-    // const got = await db.get('id-5')
-    // assert(got)
-    // equals(got._id, 'id-5')
   })
-  // it('should get', async function () {
-  //   const doc = await db.get('hello')
-  //   assert(doc)
-  //   equals(doc._id, 'hello')
-  // })
-  // it('should del last record', async function () {
-  //   const ok = await db.del('hello')
-  //   equals(ok.id, 'hello')
-  //   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  //   const e = await (db.get('hello')).catch(e => e)
-  //   matches(e.message, /Not found/)
-  // })
+  it('should del all', async function () {
+    for (let i = 0; i < 10; i++) {
+      const id = `id-${i}`
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      const ok = await db.del(id)
+      equals(ok.id, id)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      const e = await (db.get(id)).catch(e => e)
+      matches(e.message, /Not found/)
+    }
+  })
+  it('should delete all in parallel', async function () {
+    const deletes = []
+    for (let i = 0; i < 10; i++) {
+      const id = `id-${i}`
+      deletes.push(db.del(id))
+    }
+    await Promise.all(deletes)
+    for (let i = 0; i < 10; i++) {
+      const id = `id-${i}`
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      const e = await (db.get(id)).catch(e => e)
+      matches(e.message, /Not found/)
+    }
+  })
 })
