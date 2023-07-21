@@ -1,26 +1,8 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import { Link } from 'multiformats'
-import { create as createBlock } from 'multiformats/block'
-import { sha256 as hasher } from 'multiformats/hashes/sha2'
-import * as codec from '@ipld/dag-cbor'
-
 import { EventLink } from '@alanshaw/pail/clock'
 import { TransactionBlockstore as Blockstore } from './transaction-blockstore'
-import { BlockFetcher, DocUpdate, BulkResult, CIDCounter } from './types'
-// @ts-ignore
-// @ts-ignore
-// @ts-ignore
-import { nocache as cache } from 'prolly-trees/cache'
-import {
-  CIDCounter,
-  bf,
-  simpleCompare as compare
-  // @ts-ignore
-} from 'prolly-trees/utils'
-import { getProllyRootFromClock, updateProllyRoot, createProllyRoot, advanceClock } from './getProllyRootFromClock'
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-export const blockOpts = { cache, chunker: bf(30), codec, hasher, compare }
+import { DocUpdate, BulkResult, CIDCounter } from './types'
+import { getProllyRootFromClock, updateProllyRoot, createProllyRoot, advanceClock } from './crdt-helpers'
 
 export class CRDT<T> {
   private _blocks: Blockstore
@@ -53,14 +35,5 @@ export class CRDT<T> {
     if (!prollyRoot) throw new Error('no root')
     const { result, cids } = await prollyRoot.get(key) as { result: DocUpdate, cids: CIDCounter }
     return { result, cids }
-  }
-}
-
-export function makeGetBlock(blocks: BlockFetcher) {
-  return async (address: Link) => {
-    const block = await blocks.get(address)
-    if (!block) throw new Error(`Missing block ${address}`)
-    const { cid, bytes } = block
-    return createBlock({ cid, bytes, hasher, codec })
   }
 }
