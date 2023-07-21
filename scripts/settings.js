@@ -1,13 +1,16 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import esbuildPluginTsc from 'esbuild-plugin-tsc'
 import fs from 'fs'
 import path from 'path'
 
 // Obtain all .ts files in the src directory
-const entryPoints = fs.readdirSync('src')
+const entryPoints = fs
+  .readdirSync('src')
   .filter(file => path.extname(file) === '.ts')
   .map(file => path.join('src', file))
 
-export function createBuildSettings (options) {
+export function createBuildSettings(options) {
   const commonSettings = {
     entryPoints,
     bundle: true,
@@ -23,7 +26,7 @@ export function createBuildSettings (options) {
   // Generate build configs for each entry point
   const configs = entryPoints.map(entryPoint => {
     const filename = path.basename(entryPoint, '.ts')
-    
+
     const cjsConfig = {
       ...commonSettings,
       outfile: `dist/${filename}.cjs.js`,
