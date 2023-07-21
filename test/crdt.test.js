@@ -5,14 +5,12 @@
 /* eslint-disable mocha/max-top-level-suites */
 import { assert, equals, notEquals, matches } from './helpers.js'
 import { CRDT } from '../dist/crdt.esm.js'
-import { TransactionBlockstore as Blockstore } from '../dist/transaction-blockstore.esm.js'
 
 describe('Fresh crdt', function () {
   /** @type {CRDT} */
   let crdt
   beforeEach(function () {
-    const blocks = new Blockstore()
-    crdt = new CRDT(blocks, [])
+    crdt = new CRDT()
   })
   it('should have an empty head', async function () {
     const head = crdt._head
@@ -35,9 +33,8 @@ describe('Fresh crdt', function () {
 describe('CRDT with one record', function () {
   /** @type {CRDT} */
   let crdt, firstPut
-  const blocks = new Blockstore()
   beforeEach(async function () {
-    crdt = new CRDT(blocks, [])
+    crdt = new CRDT()
     firstPut = await crdt.bulk([{ key: 'hello', value: { hello: 'world' } }])
   })
   it('should have a one-element head', async function () {
@@ -69,9 +66,8 @@ describe('CRDT with one record', function () {
 describe('CRDT with a multi-write', function () {
   /** @type {CRDT} */
   let crdt, firstPut
-  const blocks = new Blockstore()
   beforeEach(async function () {
-    crdt = new CRDT(blocks, [])
+    crdt = new CRDT()
     firstPut = await crdt.bulk([{ key: 'ace', value: { points: 11 } }, { key: 'king', value: { points: 10 } }])
   })
   it('should have a one-element head', async function () {

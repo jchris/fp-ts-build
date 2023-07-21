@@ -16,7 +16,7 @@ export class Database {
   constructor(name: string, config = {}) {
     this.name = name
     this.config = config
-    this._crdt = new CRDT()
+    this._crdt = new CRDT(name)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     this._writeQueue = cargoQueue(async (updates: DocUpdate[]) => {
       return await this._crdt.bulk(updates)

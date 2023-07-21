@@ -5,12 +5,15 @@ import { DocUpdate, EventData, BulkResult, CIDCounter } from './types'
 import { getProllyRootFromClock, updateProllyRoot, createProllyRoot, advanceClock } from './crdt-helpers'
 
 export class CRDT {
+  name: string | null
+
   private _blocks: Blockstore
   private _head: EventLink<EventData>[]
 
-  constructor(blocks?: Blockstore, head?: EventLink<EventData>[]) {
-    this._blocks = blocks || new Blockstore()
-    this._head = head || []
+  constructor(name?: string) {
+    this.name = name || null
+    this._blocks = new Blockstore()
+    this._head = []
   }
 
   async bulk(updates: DocUpdate[], _options?: object): Promise<BulkResult> {
