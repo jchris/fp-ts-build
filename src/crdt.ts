@@ -9,7 +9,7 @@ import { TransactionBlockstore as Blockstore } from './transaction-blockstore'
 // @ts-ignore
 import * as Map from 'prolly-trees/map'
 // @ts-ignore
-import { Node as BaseNode } from 'prolly-trees/base'
+import { ProllyNode as BaseNode } from 'prolly-trees/base'
 // @ts-ignore
 import { nocache as cache } from 'prolly-trees/cache'
 import {
@@ -30,22 +30,17 @@ export class CRDT<T> {
     this._head = head
   }
 
-  async bulk(prollyEvent: ProllyEvent, _options?: object): Promise<ProllyCrdtResult> {
-    // If the head is not empty, get the prolly root from the clock
-
+  async bulk(updates: DocUpdate[], _options?: object): Promise<ProllyCrdtResult> {
     const prollyRoot = await getProllyRootFromClock(this._blocks, this._head)
-
-    if (prollyRoot) {
-      // we hve an existing database we can update
+    if (prollyRoot) { // update existing database
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const { root, blocks } = await prollyRoot.bulk([prollyEvent])
-      const { head, event } = await advanceClock(this._blocks, this._head, root as Node, prollyEvent)
+      const { root, blocks } = await prollyRoot.bulk(updates)
+      const { head, event } = await advanceClock(this._blocks, this._head, root as ProllyNode, updates)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       return { root, additions: [...blocks, event], head }
-    } else {
-      // we have a new database
-      const { root, additions } = await createProllyRoot(this._blocks, prollyEvent)
-      const { head, event } = await advanceClock(this._blocks, this._head, root, prollyEvent)
+    } else { // create and update new database
+      const { root, additions } = await createProllyRoot(this._blocks, updates)
+      const { head, event } = await advanceClock(this._blocks, this._head, root, updates)
       this._head = head
       additions.push(event)
       return { root, additions, head }
@@ -87,15 +82,12 @@ function makeGetBlock(blocks: Blockstore) {
   }
 }
 
-async function advanceClock(blocks: Blockstore, head: ClockHead, root: Node, event: ProllyEvent): Promise<{head: ClockHead, event: BlockView}> {
+async function advanceClock(blocks: Blockstore, head: ClockHead, root: ProllyNode, bulk: DocUpdate[]): Promise<{head: ClockHead, event: BlockView}> {
   if (!root) throw new Error('missing root')
   const data: EventData = {
     root: (await root.address),
-    key: event.key,
-    type: event.del ? 'del' : 'put',
-    value: event.del ? null : event.value
+    bulk
   }
-
   const clockEvent = await EventBlock.create(data, head)
 
   // console.log('persisting clock', clockEvent.cid, clockEvent.bytes.length)
@@ -105,7 +97,7 @@ async function advanceClock(blocks: Blockstore, head: ClockHead, root: Node, eve
   return { head: didAdvance, event: clockEvent }
 }
 
-async function getProllyRootFromClock(blocks: Blockstore, head: ClockHead): Promise<Node | null> {
+async function getProllyRootFromClock(blocks: Blockstore, head: ClockHead): Promise<ProllyNode | null> {
   const events = new EventFetcher(blocks)
   if (head.length === 0) {
     return null
@@ -124,7 +116,7 @@ async function getProllyRootFromClock(blocks: Blockstore, head: ClockHead): Prom
         ...blockOpts
       }
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      return (await Map.load(loadOptions) as Node)
+      return (await Map.load(loadOptions) as ProllyNode)
     }
   } else {
     throw new Error(`Multiple heads not implemented yet. head.length = ${head.length}`)
@@ -132,18 +124,18 @@ async function getProllyRootFromClock(blocks: Blockstore, head: ClockHead): Prom
   return null
 }
 
-async function createProllyRoot(blocks: Blockstore, event: ProllyEvent): Promise<ProllyResult> {
+async function createProllyRoot(blocks: Blockstore, events: DocUpdate[]): Promise<ProllyResult> {
   const loadOptions: ProllyOptions = {
-    list: [event],
+    list: events,
     get: makeGetBlock(blocks),
     ...blockOpts
   }
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const newBlocks = []
-  let root: Node | null = null
+  let root: ProllyNode | null = null
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   for await (const node of (Map.create(loadOptions))) {
-    root = node as Node
+    root = node as ProllyNode
     newBlocks.push(await root.block)
   }
   if (!root) throw new Error('failed to create root')
@@ -153,7 +145,7 @@ async function createProllyRoot(blocks: Blockstore, event: ProllyEvent): Promise
 type ClockHead = EventLink<any>[];
 
 type ProllyResult = {
-  root: Node
+  root: ProllyNode
   additions: Block[]
 }
 
@@ -161,31 +153,18 @@ export type ProllyCrdtResult = ProllyResult & {
   head: ClockHead
 }
 
-// Node type based on the Node from 'prolly-trees/base'
-export interface Node extends BaseNode {
+// ProllyNode type based on the ProllyNode from 'prolly-trees/base'
+export interface ProllyNode extends BaseNode {
   get(key: string): unknown
-  bulk(bulk: ProllyEvent[]): { root: any; blocks: any } | PromiseLike<{ root: any; blocks: any }>
+  bulk(bulk: DocUpdate[]): { root: any; blocks: any } | PromiseLike<{ root: any; blocks: any }>
   address: Promise<Link>
-  entryList: EntryList;
-  chunker: (entry: Entry, distance: number) => boolean;
   distance: number;
-  getNode: (address: any) => Promise<Node>;
   compare: (a: any, b: any) => number;
   cache: any;
   block: Promise<Block>
 }
 
-export type Entry = {
-  key: any;
-  address: any;
-};
-
-export type EntryList = {
-  entries: Entry[];
-  closed: boolean;
-};
-
-export type ProllyEvent = {
+export type DocUpdate = {
   key: string;
   value: EventLink<any>;
   del: boolean;
@@ -193,7 +172,7 @@ export type ProllyEvent = {
 
 interface ProllyOptions {
   cid?: Link
-  list?: ProllyEvent[]
+  list?: DocUpdate[]
   get: (cid: any) => Promise<any>
   cache: any
   chunker: (entry: any, distance: number) => boolean
@@ -204,7 +183,5 @@ interface ProllyOptions {
 
 interface EventData {
   root: Link;
-  key: string;
-  value: any;
-  type: 'del' | 'put';
+  bulk: DocUpdate[];
 }
