@@ -7,14 +7,12 @@ import { parse } from 'multiformats/link'
  * thanks Alan
 **/
 
-// Define and export the AnyLink type
 export type AnyLink = Link<unknown, number, number, 1|0>;
 type AnyBlock = { cid: AnyLink, bytes: Uint8Array };
 export type BlockFetcher = { get: (link: AnyLink) => Promise<AnyBlock | undefined> };
 
 export class MemoryBlockstore implements BlockFetcher {
   private blocks: Map<string, Uint8Array> = new Map()
-  private instanceId: string = Math.random().toString(36).slice(2, 8)
 
   constructor(blocks?: AnyBlock[]) {
     if (blocks) {
@@ -23,28 +21,26 @@ export class MemoryBlockstore implements BlockFetcher {
   }
 
   async get(cid: AnyLink): Promise<AnyBlock | undefined> {
-    console.log('s get', this.instanceId, cid.toString())
     const bytes = this.blocks.get(cid.toString())
     if (!bytes) return
     return { cid, bytes }
   }
 
   async put(cid: AnyLink, bytes: Uint8Array): Promise<void> {
-    console.log('s put', this.instanceId, cid.toString())
     this.blocks.set(cid.toString(), bytes)
   }
 
-  putSync(cid: AnyLink, bytes: Uint8Array): void {
-    this.blocks.set(cid.toString(), bytes)
-  }
+  // putSync(cid: AnyLink, bytes: Uint8Array): void {
+  //   this.blocks.set(cid.toString(), bytes)
+  // }
 
-  async delete(cid: AnyLink): Promise<void> {
-    this.blocks.delete(cid.toString())
-  }
+  // async delete(cid: AnyLink): Promise<void> {
+  //   this.blocks.delete(cid.toString())
+  // }
 
-  deleteSync(cid: AnyLink): void {
-    this.blocks.delete(cid.toString())
-  }
+  // deleteSync(cid: AnyLink): void {
+  //   this.blocks.delete(cid.toString())
+  // }
 
   * entries() {
     for (const [str, bytes] of this.blocks) {
@@ -71,24 +67,27 @@ export class MultiBlockFetcher {
 export class Transaction extends MemoryBlockstore {
   constructor(private parent: BlockFetcher) {
     super()
+    this.parent = parent
   }
 
   async get(cid: AnyLink): Promise<AnyBlock | undefined> {
-    return super.get(cid) ?? this.parent.get(cid)
+    return this.parent.get(cid)
+  }
+
+  async superGet(cid: AnyLink): Promise<AnyBlock | undefined> {
+    return super.get(cid)
   }
 }
 
 export class TransactionBlockstore implements BlockFetcher {
-  // private committed: Map<string, Uint8Array> = new Map()
   private transactions: Set<Transaction> = new Set()
   async put() {
     throw new Error('use a transaction to put')
   }
 
   async get(cid: AnyLink): Promise<AnyBlock | undefined> {
-    console.log('get', cid.toString())
     for (const f of this.transactions) {
-      const v = await f.get(cid)
+      const v = await f.superGet(cid)
       if (v) return v
     }
   }

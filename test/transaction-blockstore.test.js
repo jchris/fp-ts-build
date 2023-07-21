@@ -5,8 +5,7 @@
 /* eslint-disable mocha/max-top-level-suites */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, equals, notEquals, matches } from './helpers.js'
-import { CRDT } from '../dist/crdt.esm.js'
-import { TransactionBlockstore as Blockstore } from '../dist/transaction-blockstore.esm.js'
+import { TransactionBlockstore as Blockstore, Transaction } from '../dist/transaction-blockstore.esm.js'
 
 describe('Fresh TransactionBlockstore', function () {
   /** @type {Blockstore} */
@@ -19,7 +18,45 @@ describe('Fresh TransactionBlockstore', function () {
     matches(e.message, /transaction/)
   })
   it('should yield a transaction', async function () {
-    const tx = await blocks.transaction()
-    assert(tx)
+    const txR = await blocks.transaction((tblocks) => {
+      assert(tblocks)
+      assert(tblocks instanceof Transaction)
+      return 'xyz'
+    })
+    assert(txR)
+    equals(txR, 'xyz')
+  })
+})
+
+describe('A transaction', function () {
+  /** @type {Transaction} */
+  let tblocks, blocks
+  beforeEach(async function () {
+    blocks = new Blockstore()
+    tblocks = new Transaction(blocks)
+    blocks.transactions.add(tblocks)
+  })
+  it('should put and get', async function () {
+    await tblocks.put('key', 'bytes')
+    assert(blocks.transactions.has(tblocks))
+    const got = await tblocks.get('key')
+    assert(got)
+    equals(got.cid, 'key')
+    equals(got.bytes, 'bytes')
+  })
+})
+
+describe('TransactionBlockstore with a completed transaction', function () {
+  let blocks
+  beforeEach(async function () {
+    blocks = new Blockstore()
+    await blocks.transaction(async (tblocks) => {
+      await tblocks.put('key', 'value')
+    })
+  })
+  it('should get', async function () {
+    const value = await blocks.get('key')
+    equals(value.cid, 'key')
+    equals(value.bytes, 'value')
   })
 })

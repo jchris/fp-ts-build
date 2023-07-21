@@ -40,8 +40,8 @@ describe('CRDT with one record', function () {
   })
   it('return the record on get', async function () {
     const got = await crdt.get('hello')
+    assert(got)
     assert(got.cids, 'should have cids')
-    console.log('got', got)
     equals(got.cids._cids.size, 1)
     const value = got.result
     equals(value.hello, 'world')
@@ -51,7 +51,11 @@ describe('CRDT with one record', function () {
 
     const head = didPut.head
     equals(head.length, 1)
-    matches(await didPut.root.address, /272pceze/)
+    matches(await didPut.root.address, /bf3tdqy4h4ae/)
     notEquals((await didPut.root.address).toString(), (await firstPut.root.address).toString())
+
+    const got = await crdt.get('nice')
+    assert(got)
+    equals(got.result.nice, 'data')
   })
 })

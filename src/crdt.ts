@@ -13,7 +13,7 @@ import { ProllyNode as BaseNode } from 'prolly-trees/base'
 // @ts-ignore
 import { nocache as cache } from 'prolly-trees/cache'
 import {
-  // CIDCounter,
+  CIDCounter,
   bf,
   simpleCompare as compare
   // @ts-ignore
@@ -35,18 +35,10 @@ export class CRDT<T> {
     const prollyRoot = await getProllyRootFromClock(this._blocks, this._head)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const tResult: BulkResult = await this._blocks.transaction(async tblocks => {
-      if (prollyRoot) {
-        // update existing database
-        const { root } = await updatProllyRoot(tblocks, prollyRoot, updates)
-        const { head } = await advanceClock(tblocks, this._head, root, updates)
-        return { root, head }
-      } else {
-        // create and update new database
-        const { root } = await createProllyRoot(tblocks, updates)
-        const { head } = await advanceClock(tblocks, this._head, root, updates)
-        this._head = head
-        return { root, head }
-      }
+      const { root } = prollyRoot ? await updateProllyRoot(tblocks, prollyRoot, updates) : await createProllyRoot(tblocks, updates)
+      const { head } = await advanceClock(tblocks, this._head, root, updates)
+      this._head = head
+      return { root, head }
     })
     return tResult
   }
@@ -59,10 +51,8 @@ export class CRDT<T> {
   async get(key: string) {
     const prollyRoot = await getProllyRootFromClock(this._blocks, this._head)
     if (!prollyRoot) throw new Error('no root')
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-    const { result } = await prollyRoot.get(key) as { result: EventLink<any> }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return result
+    const { result, cids } = await prollyRoot.get(key) as { result: DocUpdate, cids: CIDCounter }
+    return { result, cids }
   }
 }
 
@@ -115,7 +105,7 @@ async function getProllyRootFromClock(blocks: Blockstore, head: ClockHead): Prom
   return null
 }
 
-async function updatProllyRoot(tblocks: Transaction, prollyRoot: ProllyNode, updates: DocUpdate[]): Promise<ProllyResult> {
+async function updateProllyRoot(tblocks: Transaction, prollyRoot: ProllyNode, updates: DocUpdate[]): Promise<ProllyResult> {
   const { root, blocks } = (await prollyRoot.bulk(updates)) as { root: ProllyNode, blocks: Block[] }
   for (const block of blocks) {
     await tblocks.put(block.cid, block.bytes)
@@ -159,6 +149,11 @@ export interface ProllyNode extends BaseNode {
   compare: (a: any, b: any) => number
   cache: any
   block: Promise<Block>
+}
+
+interface CIDCounter {
+  add(node: ProllyNode): void;
+  all(): Promise<Set<string | Promise<string>>>;
 }
 
 export type DocUpdate = {
