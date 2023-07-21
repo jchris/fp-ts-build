@@ -81,7 +81,7 @@ export class Transaction extends MemoryBlockstore {
 export class TransactionBlockstore implements BlockFetcher {
   // private committed: Map<string, Uint8Array> = new Map()
   private transactions: Set<Transaction> = new Set()
-  put() {
+  async put() {
     throw new Error('use a transaction to put')
   }
 

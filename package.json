@@ -18,7 +18,7 @@
     "start": "node ./scripts/serve.js",
     "analyze": "node ./scripts/analyze.js",
     "test:watch": "nodemon -w src -w test -e ts,js --exec \"npm run build && npm run test:node\"",
-    "test:node": "mocha test/*.js",
+    "test:node": "node ./scripts/test.js",
     "test:browser": "polendina test/*.js --webpack-config webpack.config.cjs",
     "test": "npm run build && npm run test:node && npm run test:browser",
     "lint": "eslint 'src/**/*.{js,ts}'",
