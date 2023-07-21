@@ -1,8 +1,13 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
 import { Link, Block, BlockView } from 'multiformats'
+import { create as createBlock } from 'multiformats/block'
+import { sha256 as hasher } from 'multiformats/hashes/sha2'
+import * as codec from '@ipld/dag-cbor'
+
 import { EventBlock, EventFetcher, EventLink, advance } from '@alanshaw/pail/clock'
-import { MemoryBlockstore as Blockstore } from '@alanshaw/pail/block'
+import { TransactionBlockstore as Blockstore } from './transaction-blockstore'
 // @ts-ignore
-import { create, load } from 'prolly-trees/map'
+import * as Map from 'prolly-trees/map'
 // @ts-ignore
 import { Node as BaseNode } from 'prolly-trees/base'
 // @ts-ignore
@@ -12,13 +17,11 @@ import {
   bf, simpleCompare as compare
 // @ts-ignore
 } from 'prolly-trees/utils'
-import * as codec from '@ipld/dag-cbor'
-import { sha256 as hasher } from 'multiformats/hashes/sha2'
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 const blockOpts = { cache, chunker: bf(30), codec, hasher, compare }
 
-export class Prolly<T> {
+export class CRDT<T> {
   private _blocks: Blockstore
   private _head: EventLink<T>[]
 
@@ -27,22 +30,25 @@ export class Prolly<T> {
     this._head = head
   }
 
-  async put(event: ProllyEvent, _options?: object): Promise<ProllyCrdtResult> {
+  async bulk(prollyEvent: ProllyEvent, _options?: object): Promise<ProllyCrdtResult> {
     // If the head is not empty, get the prolly root from the clock
 
     const prollyRoot = await getProllyRootFromClock(this._blocks, this._head)
 
     if (prollyRoot) {
-      // we hve an existing database we can add to
-      // do the update
-
+      // we hve an existing database we can update
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const { root, blocks } = await prollyRoot.bulk([prollyEvent])
+      const { head, event } = await advanceClock(this._blocks, this._head, root as Node, prollyEvent)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      return { root, additions: [...blocks, event], head }
     } else {
       // we have a new database
-      const { root, additions } = await createProllyRoot(this._blocks, event)
-      // add the new root to the clock
-      const newHead = await advanceClock(this._blocks, this._head, root, event)
-      this._head = newHead.head
-      return { root, additions, head: newHead }
+      const { root, additions } = await createProllyRoot(this._blocks, prollyEvent)
+      const { head, event } = await advanceClock(this._blocks, this._head, root, prollyEvent)
+      this._head = head
+      additions.push(event)
+      return { root, additions, head }
     }
 
     // If the head is empty, the database is new.
@@ -67,12 +73,22 @@ export class Prolly<T> {
   async get(key: string) {
     const prollyRoot = await getProllyRootFromClock(this._blocks, this._head)
     if (!prollyRoot) throw new Error('no root')
-    const result = await prollyRoot.get(key)
-    return result
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    return await prollyRoot.get(key)
+  }
+}
+
+function makeGetBlock(blocks: Blockstore) {
+  return async (address: Link) => {
+    const block = await blocks.get(address)
+    if (!block) throw new Error(`Missing block ${address}`)
+    const { cid, bytes } = block
+    return createBlock({ cid, bytes, hasher, codec })
   }
 }
 
 async function advanceClock(blocks: Blockstore, head: ClockHead, root: Node, event: ProllyEvent): Promise<{head: ClockHead, event: BlockView}> {
+  if (!root) throw new Error('missing root')
   const data: EventData = {
     root: (await root.address),
     key: event.key,
@@ -82,7 +98,8 @@ async function advanceClock(blocks: Blockstore, head: ClockHead, root: Node, eve
 
   const clockEvent = await EventBlock.create(data, head)
 
-  await blocks.put(clockEvent.cid, clockEvent.bytes) // hmm
+  // console.log('persisting clock', clockEvent.cid, clockEvent.bytes.length)
+  await blocks.put(clockEvent.cid, clockEvent.bytes) // must be in blockstore before we can advance the clock
 
   const didAdvance: ClockHead = await advance(blocks, head, clockEvent.cid)
   return { head: didAdvance, event: clockEvent }
@@ -95,23 +112,22 @@ async function getProllyRootFromClock(blocks: Blockstore, head: ClockHead): Prom
   } else if (head.length === 1) {
     const event = await events.get(head[0])
     const eventData = event.value.data as EventData
-    if (!('cid' in eventData.root)) {
-      console.log('event.value.data.root does not look like a Link:', eventData.root)
-      throw new Error('event.value.data.root does not look like a Link')
-    }
+    // if (!('cid' in eventData.root)) {
+    //   console.log('event.value.data.root does not look like a Link:', eventData.root)
+    //   throw new Error('event.value.data.root does not look like a Link')
+    // }
     const root = eventData.root
     if (root) {
       const loadOptions: ProllyOptions = {
         cid: root,
-        get: blocks.get.bind(blocks),
+        get: makeGetBlock(blocks),
         ...blockOpts
       }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      return (await load(loadOptions) as Node)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      return (await Map.load(loadOptions) as Node)
     }
   } else {
-    console.log(`Multiple heads: ${head}`, head)
-    throw new Error('Multiple heads not implemented yet')
+    throw new Error(`Multiple heads not implemented yet. head.length = ${head.length}`)
   }
   return null
 }
@@ -119,14 +135,14 @@ async function getProllyRootFromClock(blocks: Blockstore, head: ClockHead): Prom
 async function createProllyRoot(blocks: Blockstore, event: ProllyEvent): Promise<ProllyResult> {
   const loadOptions: ProllyOptions = {
     list: [event],
-    get: blocks.get.bind(blocks), // add a cid set for reads?
+    get: makeGetBlock(blocks),
     ...blockOpts
   }
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const newBlocks = []
   let root: Node | null = null
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  for await (const node of (create(loadOptions))) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  for await (const node of (Map.create(loadOptions))) {
     root = node as Node
     newBlocks.push(await root.block)
   }
@@ -147,6 +163,8 @@ export type ProllyCrdtResult = ProllyResult & {
 
 // Node type based on the Node from 'prolly-trees/base'
 export interface Node extends BaseNode {
+  get(key: string): unknown
+  bulk(bulk: ProllyEvent[]): { root: any; blocks: any } | PromiseLike<{ root: any; blocks: any }>
   address: Promise<Link>
   entryList: EntryList;
   chunker: (entry: Entry, distance: number) => boolean;

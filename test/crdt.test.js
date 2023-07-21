@@ -3,48 +3,56 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable mocha/max-top-level-suites */
-import { equals, notEquals, matches } from './helpers.js'
-import { Prolly } from '../dist/prolly.esm.js'
-import { MemoryBlockstore as Blockstore } from '@alanshaw/pail/block'
+import { assert, equals, notEquals, matches } from './helpers.js'
+import { CRDT } from '../dist/crdt.esm.js'
+import { TransactionBlockstore as Blockstore } from '../dist/transaction-blockstore.esm.js'
 
-describe('Fresh prolly crdt', function () {
-  /** @type {Prolly} */
-  let prollyCrdt
+describe('Fresh crdt', function () {
+  /** @type {CRDT} */
+  let crdt
   beforeEach(function () {
     const blocks = new Blockstore()
-    prollyCrdt = new Prolly(blocks, [])
+    crdt = new CRDT(blocks, [])
   })
   it('should have an empty head', async function () {
-    const head = prollyCrdt._head
+    const head = crdt._head
     equals(head.length, 0)
   })
   it('should accept put and return results', async function () {
-    const didPut = await prollyCrdt.put({ key: 'hello', value: { hello: 'world' } })
+    const didPut = await crdt.bulk({ key: 'hello', value: { hello: 'world' } })
     const head = didPut.head
     equals(head.length, 1)
     matches(await didPut.root.address, /vdrhrci/)
   })
 })
 
-describe('Prolly crdt with one record', function () {
-  /** @type {Prolly} */
-  let prollyCrdt, firstPut
+describe('CRDT with one record', function () {
+  /** @type {CRDT} */
+  let crdt, firstPut
+  const blocks = new Blockstore()
   beforeEach(async function () {
-    const blocks = new Blockstore()
-    prollyCrdt = new Prolly(blocks, [])
-    firstPut = await prollyCrdt.put({ key: 'hello', value: { hello: 'world' } })
+    crdt = new CRDT(blocks, [])
+    firstPut = await crdt.bulk({ key: 'hello', value: { hello: 'world' } })
+
     await persistResult(blocks, firstPut)
   })
   it('should have a one-element head', async function () {
-    const head = prollyCrdt._head
+    const head = crdt._head
     equals(head.length, 1)
   })
   it('return the record on get', async function () {
-    const { value } = await prollyCrdt.get('hello')
+    const got = await crdt.get('hello')
+    assert(got.cids, 'should have cids')
+    console.log('got', got)
+    equals(got.cids._cids.size, 1)
+    const value = got.result
     equals(value.hello, 'world')
   })
-  it('should accept put and return results', async function () {
-    const didPut = await prollyCrdt.put({ key: 'nice', value: { nice: 'data' } })
+  it('should accept another put and return results', async function () {
+    const didPut = await crdt.bulk({ key: 'nice', value: { nice: 'data' } })
+
+    await persistResult(blocks, didPut)
+
     const head = didPut.head
     equals(head.length, 1)
     matches(await didPut.root.address, /272pceze/)
@@ -54,7 +62,7 @@ describe('Prolly crdt with one record', function () {
 
 async function persistResult(blocks, result) {
   for (const block of result.additions) {
-    console.log('persisting block', block.cid)
-    await blocks.put(block.cid, block.bytes)
+    console.log('persisting block', block.cid, block.bytes.length)
+    await blocks.bulk(block.cid, block.bytes)
   }
 }
