@@ -5,7 +5,7 @@ import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import * as codec from '@ipld/dag-cbor'
 
 import { EventBlock, EventFetcher, EventLink, advance } from '@alanshaw/pail/clock'
-import { TransactionBlockstore as Blockstore } from './transaction-blockstore'
+import { TransactionBlockstore as Blockstore, Transaction, BlockFetcher } from './transaction-blockstore'
 // @ts-ignore
 import * as Map from 'prolly-trees/map'
 // @ts-ignore
@@ -32,15 +32,16 @@ export class CRDT<T> {
 
   async bulk(updates: DocUpdate[], _options?: object): Promise<ProllyCrdtResult> {
     const prollyRoot = await getProllyRootFromClock(this._blocks, this._head)
+    const tblocks = await this._blocks.transaction()
     if (prollyRoot) { // update existing database
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const { root, blocks } = await prollyRoot.bulk(updates)
-      const { head, event } = await advanceClock(this._blocks, this._head, root as ProllyNode, updates)
+      const { head, event } = await advanceClock(tblocks, this._head, root as ProllyNode, updates)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       return { root, additions: [...blocks, event], head }
     } else { // create and update new database
-      const { root, additions } = await createProllyRoot(this._blocks, updates)
-      const { head, event } = await advanceClock(this._blocks, this._head, root, updates)
+      const { root, additions } = await createProllyRoot(tblocks, updates)
+      const { head, event } = await advanceClock(tblocks, this._head, root, updates)
       this._head = head
       additions.push(event)
       return { root, additions, head }
@@ -73,7 +74,7 @@ export class CRDT<T> {
   }
 }
 
-function makeGetBlock(blocks: Blockstore) {
+function makeGetBlock(blocks: BlockFetcher) {
   return async (address: Link) => {
     const block = await blocks.get(address)
     if (!block) throw new Error(`Missing block ${address}`)
@@ -82,7 +83,7 @@ function makeGetBlock(blocks: Blockstore) {
   }
 }
 
-async function advanceClock(blocks: Blockstore, head: ClockHead, root: ProllyNode, bulk: DocUpdate[]): Promise<{head: ClockHead, event: BlockView}> {
+async function advanceClock(blocks: Transaction, head: ClockHead, root: ProllyNode, bulk: DocUpdate[]): Promise<{head: ClockHead, event: BlockView}> {
   if (!root) throw new Error('missing root')
   const data: EventData = {
     root: (await root.address),
@@ -124,7 +125,7 @@ async function getProllyRootFromClock(blocks: Blockstore, head: ClockHead): Prom
   return null
 }
 
-async function createProllyRoot(blocks: Blockstore, updates: DocUpdate[]): Promise<ProllyResult> {
+async function createProllyRoot(blocks: Transaction, updates: DocUpdate[]): Promise<ProllyResult> {
   if (!updates.sort) throw new Error('updates must be sortable')
   const loadOptions: ProllyOptions = {
     list: updates,

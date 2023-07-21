@@ -10,7 +10,7 @@ import { parse } from 'multiformats/link'
 // Define and export the AnyLink type
 export type AnyLink = Link<unknown, number, number, 1|0>;
 type AnyBlock = { cid: AnyLink, bytes: Uint8Array };
-type BlockFetcher = { get: (link: AnyLink) => Promise<AnyBlock | undefined> };
+export type BlockFetcher = { get: (link: AnyLink) => Promise<AnyBlock | undefined> };
 
 export class MemoryBlockstore implements BlockFetcher {
   private blocks: Map<string, Uint8Array> = new Map()
@@ -65,7 +65,7 @@ export class MultiBlockFetcher {
   }
 }
 
-class Transaction extends MemoryBlockstore {
+export class Transaction extends MemoryBlockstore {
 
 }
 
@@ -74,5 +74,9 @@ export class TransactionBlockstore implements BlockFetcher {
   // private transactions: Set
   put() {
     throw new Error('use a transaction to put')
+  }
+
+  async transaction() {
+    return new Transaction()
   }
 }

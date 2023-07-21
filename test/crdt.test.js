@@ -63,6 +63,6 @@ describe('CRDT with one record', function () {
 async function persistResult(blocks, result) {
   for (const block of result.additions) {
     console.log('persisting block', block.cid, block.bytes.length)
-    await blocks.bulk(block.cid, block.bytes)
+    await blocks.put(block.cid, block.bytes)
   }
 }
