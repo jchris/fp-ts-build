@@ -124,9 +124,10 @@ async function getProllyRootFromClock(blocks: Blockstore, head: ClockHead): Prom
   return null
 }
 
-async function createProllyRoot(blocks: Blockstore, events: DocUpdate[]): Promise<ProllyResult> {
+async function createProllyRoot(blocks: Blockstore, updates: DocUpdate[]): Promise<ProllyResult> {
+  if (!updates.sort) throw new Error('updates must be sortable')
   const loadOptions: ProllyOptions = {
-    list: events,
+    list: updates,
     get: makeGetBlock(blocks),
     ...blockOpts
   }

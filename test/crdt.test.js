@@ -19,7 +19,7 @@ describe('Fresh crdt', function () {
     equals(head.length, 0)
   })
   it('should accept put and return results', async function () {
-    const didPut = await crdt.bulk({ key: 'hello', value: { hello: 'world' } })
+    const didPut = await crdt.bulk([{ key: 'hello', value: { hello: 'world' } }])
     const head = didPut.head
     equals(head.length, 1)
     matches(await didPut.root.address, /vdrhrci/)
@@ -32,7 +32,7 @@ describe('CRDT with one record', function () {
   const blocks = new Blockstore()
   beforeEach(async function () {
     crdt = new CRDT(blocks, [])
-    firstPut = await crdt.bulk({ key: 'hello', value: { hello: 'world' } })
+    firstPut = await crdt.bulk([{ key: 'hello', value: { hello: 'world' } }])
 
     await persistResult(blocks, firstPut)
   })
@@ -49,7 +49,7 @@ describe('CRDT with one record', function () {
     equals(value.hello, 'world')
   })
   it('should accept another put and return results', async function () {
-    const didPut = await crdt.bulk({ key: 'nice', value: { nice: 'data' } })
+    const didPut = await crdt.bulk([{ key: 'nice', value: { nice: 'data' } }])
 
     await persistResult(blocks, didPut)
 
