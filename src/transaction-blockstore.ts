@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/require-await */
-import { parse } from 'multiformats/link'
+// import { parse } from 'multiformats/link'
 import { BlockFetcher, AnyBlock, AnyLink, BulkResult } from './types'
+import { Block } from 'multiformats'
+import { makeCarFile } from './crdt-helpers'
 
 export class MemoryBlockstore implements BlockFetcher {
   private blocks: Map<string, Uint8Array> = new Map()
@@ -59,6 +61,7 @@ export class Transaction extends MemoryBlockstore {
 }
 
 export class TransactionBlockstore implements BlockFetcher {
+  _loader = new Loader()
   private transactions: Set<Transaction> = new Set()
   async put() {
     throw new Error('use a transaction to put')
@@ -75,6 +78,18 @@ export class TransactionBlockstore implements BlockFetcher {
     const t = new Transaction(this)
     this.transactions.add(t)
     const done: BulkResult = await fn(t)
+    if (done) { await this.commit(t, done) }
     return done
+  }
+
+  async commit(t: Transaction, done: BulkResult) {
+    const car = makeCarFile(t, done)
+    this._loader.save(car)
+  }
+}
+
+class Loader {
+  save(car: Block) {
+
   }
 }

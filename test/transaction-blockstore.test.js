@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -51,7 +52,7 @@ describe('TransactionBlockstore with a completed transaction', function () {
   beforeEach(async function () {
     blocks = new Blockstore()
     await blocks.transaction(async (tblocks) => {
-      await tblocks.put('key', 'value')
+      return await tblocks.put('key', 'value')
     })
   })
   it('should get', async function () {

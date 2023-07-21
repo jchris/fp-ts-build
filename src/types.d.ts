@@ -8,7 +8,7 @@ export type ProllyResult = {
   root: ProllyNode
 }
 
-export type BulkResult = ProllyResult & {
+export type BulkResult = {
   head: ClockHead
 }
 
