@@ -11,6 +11,7 @@ export function createBuildSettings (options) {
   const commonSettings = {
     entryPoints,
     bundle: true,
+    sourcemap: true,
     plugins: [
       esbuildPluginTsc({
         force: true
@@ -34,6 +35,7 @@ export function createBuildSettings (options) {
       ...commonSettings,
       outfile: `dist/${filename}.esm.js`,
       format: 'esm',
+      platform: 'node',
       entryPoints: [entryPoint]
     }
 
