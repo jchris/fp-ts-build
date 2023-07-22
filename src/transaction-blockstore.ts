@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/require-await */
 import { parse } from 'multiformats/link'
 import { BlockFetcher, AnyBlock, AnyLink, BulkResult } from './types'
-import { makeCarFile } from './loader-helpers'
-import { CarLoaderFS } from './loader-fs'
+import { Loader } from './loader'
 
 /** forked from
  * https://github.com/alanshaw/pail/blob/main/src/block.js
@@ -66,16 +65,14 @@ export class Transaction extends MemoryBlockstore {
 }
 
 export class TransactionBlockstore implements BlockFetcher {
-  _loader: CarLoaderFS | null = null
-
+  _loader: Loader | null = null
   name: string | null = null
-
   private transactions: Set<Transaction> = new Set()
 
   constructor(name?: string) {
     if (name) {
       this.name = name
-      this._loader = new CarLoaderFS(name)
+      this._loader = new Loader(name)
     }
   }
 
@@ -99,7 +96,7 @@ export class TransactionBlockstore implements BlockFetcher {
   }
 
   async commit(t: Transaction, done: BulkResult) {
-    const car = await makeCarFile(t, done)
-    await this._loader?.save(car)
+    if (!this._loader) return
+    await this._loader.commit(t, done)
   }
 }

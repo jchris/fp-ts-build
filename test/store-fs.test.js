@@ -8,15 +8,15 @@ import { readFile } from 'node:fs/promises'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { equals } from './helpers.js'
 
-import { CarLoaderFS, defaultConfig } from '../dist/loader-fs.esm.js'
+import { CarStoreFS, defaultConfig } from '../dist/store-fs.esm.js'
 
 const decoder = new TextDecoder('utf-8')
 
-describe('CarLoaderFS', function () {
-  /** @type {CarLoaderFS} */
+describe('CarStoreFS', function () {
+  /** @type {CarStoreFS} */
   let loader
   beforeEach(function () {
-    loader = new CarLoaderFS('test')
+    loader = new CarStoreFS('test')
   })
   it('should have a name', function () {
     equals(loader.name, 'test')
@@ -33,11 +33,11 @@ describe('CarLoaderFS', function () {
   })
 })
 
-describe('CarLoaderFS with a saved car', function () {
-  /** @type {CarLoaderFS} */
+describe('CarStoreFS with a saved car', function () {
+  /** @type {CarStoreFS} */
   let loader, car
   beforeEach(async function () {
-    loader = new CarLoaderFS('test2')
+    loader = new CarStoreFS('test2')
     car = {
       cid: 'cid',
       bytes: new Uint8Array([55, 56, 57, 80])
