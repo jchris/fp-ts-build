@@ -2,6 +2,7 @@
 import { parse } from 'multiformats/link'
 import { BlockFetcher, AnyBlock, AnyLink, BulkResult } from './types'
 import { Loader } from './loader'
+import { StoredHeader } from './store'
 
 /** forked from
  * https://github.com/alanshaw/pail/blob/main/src/block.js
@@ -65,14 +66,19 @@ export class Transaction extends MemoryBlockstore {
 }
 
 export class TransactionBlockstore implements BlockFetcher {
-  _loader: Loader | null = null
   name: string | null = null
+  ready: Promise<StoredHeader|null> // todo this will be a map of headers by branch name
+
   private transactions: Set<Transaction> = new Set()
+  private loader: Loader | null = null
 
   constructor(name?: string) {
     if (name) {
       this.name = name
-      this._loader = new Loader(name)
+      this.loader = new Loader(name)
+      this.ready = this.loader.ready
+    } else {
+      this.ready = Promise.resolve(null)
     }
   }
 
@@ -96,7 +102,7 @@ export class TransactionBlockstore implements BlockFetcher {
   }
 
   async commit(t: Transaction, done: BulkResult) {
-    if (!this._loader) return
-    await this._loader.commit(t, done)
+    if (!this.loader) return
+    await this.loader.commit(t, done)
   }
 }

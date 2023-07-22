@@ -45,7 +45,7 @@ describe('TransactionBlockstore with name', function () {
     equals(blocks.name, 'test')
   })
   it('should have a loader', function () {
-    assert(blocks._loader)
+    assert(blocks.loader)
   })
 })
 

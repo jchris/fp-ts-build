@@ -3,20 +3,21 @@ import { EventLink } from '@alanshaw/pail/clock'
 import { TransactionBlockstore as Blockstore } from './transaction-blockstore'
 import { DocUpdate, EventData, BulkResult, CIDCounter } from './types'
 import { getProllyRootFromClock, updateProllyRoot, createProllyRoot, advanceClock } from './crdt-helpers'
-// import { HeaderLoaderFS } from './loader-fs'
+import { StoredHeader } from './store'
 
 export class CRDT {
   name: string | null
 
   private _blocks: Blockstore
   private _head: EventLink<EventData>[]
-  // private _headerLoader: HeaderLoaderFS | null
 
   constructor(name?: string) {
     this.name = name || null
     this._blocks = new Blockstore(name)
-    // if (name) { this._headerLoader = new HeaderLoaderFS(name) }
     this._head = []
+    this.ready = this._blocks.ready.then((header: StoredHeader | null) => {
+
+    })
   }
 
   async bulk(updates: DocUpdate[], _options?: object): Promise<BulkResult> {
@@ -28,8 +29,6 @@ export class CRDT {
       this._head = head
       return { root, head }
     })
-    // this is where the headers should be updated
-    // await this._headerLoader?.save(this._head)
     return tResult
   }
 
