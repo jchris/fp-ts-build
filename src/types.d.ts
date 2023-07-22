@@ -1,7 +1,6 @@
-import { Link, Block, Link } from 'multiformats'
+import { Link, Block } from 'multiformats'
 import { EventLink } from '@alanshaw/pail/clock'
 import { ProllyNode as BaseNode } from 'prolly-trees/base'
-import { AnyLink, ClockHead } from './types'
 
 export type ClockHead = EventLink<any>[]
 export type ProllyResult = {

@@ -8,22 +8,22 @@ import { FORMAT } from './database'
 import { HeaderStore, CarStore, StoredHeader } from './store'
 
 const encoder = new TextEncoder()
-const decoder = new TextDecoder()
 
 export const defaultConfig = {
   dataDir: join(homedir(), '.fireproof', 'v' + FORMAT)
 }
 
 export class HeaderStoreFS extends HeaderStore {
-  async get(branch?: string): Promise<StoredHeader> {
+  async load(branch?: string): Promise<StoredHeader> {
     branch = branch || 'main'
     const filepath = join(defaultConfig.dataDir, this.name, branch + '.json')
     const bytes = await readFile(filepath)
-    const jsonHeader = JSON.parse(decoder.decode(bytes)) as { cid: string}
-    return new StoredHeader(jsonHeader)
+    return this.parseHeader(bytes.toString())
   }
 
   async save(carCid: AnyLink, branch?: string) {
+    branch = branch || 'main'
+    console.log('branch is ', branch)
     const filepath = join(defaultConfig.dataDir, this.name, branch + '.json')
     const bytes = this.makeHeader(carCid)
     await writePathFile(filepath, encoder.encode(bytes))
