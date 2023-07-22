@@ -6,6 +6,10 @@ export function equals(actual, expected) {
   assert(actual === expected, `Expected '${actual} 'to equal '${expected}'`)
 }
 
+export function equalsJSON(actual, expected) {
+  equals(JSON.stringify(actual), JSON.stringify(expected))
+}
+
 export function notEquals(actual, expected) {
   assert(actual !== expected, `Expected '${actual} 'to not equal '${expected}'`)
 }

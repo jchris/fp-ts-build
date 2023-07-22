@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable mocha/max-top-level-suites */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { assert, equals, notEquals, matches } from './helpers.js'
+import { assert, equals, notEquals, matches, equalsJSON } from './helpers.js'
 import { TransactionBlockstore as Blockstore, Transaction } from '../dist/transaction-blockstore.esm.js'
 
 describe('Fresh TransactionBlockstore', function () {
@@ -22,10 +22,10 @@ describe('Fresh TransactionBlockstore', function () {
     const txR = await blocks.transaction((tblocks) => {
       assert(tblocks)
       assert(tblocks instanceof Transaction)
-      return 'xyz'
+      return { head: [] }
     })
     assert(txR)
-    equals(txR, 'xyz')
+    equalsJSON(txR, { head: [] })
   })
 })
 

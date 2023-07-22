@@ -1,6 +1,7 @@
 // External Imports
 import { BlockView, CID, Link } from 'multiformats'
-import { Block, create } from 'multiformats/block'
+import { Block, encode, create } from 'multiformats/block'
+import * as raw from 'multiformats/codecs/raw'
 import * as CBW from '@ipld/car/buffer-writer'
 
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
@@ -9,7 +10,7 @@ import { EventBlock, EventFetcher, advance } from '@alanshaw/pail/clock'
 
 // Local Imports
 import { TransactionBlockstore as Blockstore, Transaction } from './transaction-blockstore'
-import { DocUpdate, ClockHead, ProllyNode, EventData, ProllyOptions, ProllyResult, BlockFetcher, BulkResult, BulkResult } from './types'
+import { DocUpdate, ClockHead, ProllyNode, EventData, ProllyOptions, ProllyResult, BlockFetcher, BulkResult, BulkResult, AnyLink } from './types'
 
 // Ignored Imports
 // @ts-ignore
@@ -85,8 +86,10 @@ export async function updateProllyRoot(
 ): Promise<ProllyResult> {
   const { root, blocks } = (await prollyRoot.bulk(updates)) as { root: ProllyNode; blocks: Block[] }
 
+  /* @type {Block} */
   for (const block of blocks) {
-    await tblocks.put(block.cid, block.bytes)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    await tblocks.put(block.cid as AnyLink, block.bytes as Uint8Array)
   }
 
   return { root }
@@ -118,12 +121,14 @@ export async function createProllyRoot(blocks: Transaction, updates: DocUpdate[]
   return { root }
 }
 
-export async function makeCarFile(t: Transaction, { head }: BulkResult): Block {
+export async function makeCarFile(t: Transaction, { head }: BulkResult): Promise<BlockView<unknown, number, number, 1>> {
+  if (!head) throw new Error('no head')
   const roots = head.map(link => link as CID<unknown, number, number, 1>)
   let size = 0
   const headerSize = CBW.headerLength({ roots })
-  for (const block of t.entries()) {
-    size += CBW.blockLength(block)
+  size += headerSize
+  for (const { cid, bytes } of t.entries()) {
+    size += CBW.blockLength({ cid, bytes } as Block<unknown, number, number, 1>)
   }
   const buffer = new Uint8Array(size)
   const writer = CBW.createWriter(buffer, { headerSize })
@@ -132,9 +137,9 @@ export async function makeCarFile(t: Transaction, { head }: BulkResult): Block {
     writer.addRoot(cid)
   }
 
-  for (const block of t.entries()) {
-    writer.write(block)
+  for (const { cid, bytes } of t.entries()) {
+    writer.write({ cid, bytes } as Block<unknown, number, number, 1>)
   }
   writer.close()
-  return await Block.encode({ value: writer.bytes, hasher: sha256, codec: raw })
+  return await encode({ value: writer.bytes, hasher, codec: raw })
 }

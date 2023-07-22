@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/require-await */
-// import { parse } from 'multiformats/link'
+import { parse } from 'multiformats/link'
 import { BlockFetcher, AnyBlock, AnyLink, BulkResult } from './types'
 import { Block } from 'multiformats'
 import { makeCarFile } from './crdt-helpers'
@@ -83,13 +83,13 @@ export class TransactionBlockstore implements BlockFetcher {
   }
 
   async commit(t: Transaction, done: BulkResult) {
-    const car = makeCarFile(t, done)
-    this._loader.save(car)
+    const car = await makeCarFile(t, done)
+    await this._loader.save(car)
   }
 }
 
 class Loader {
-  save(car: Block) {
+  async save(car: Block) {
 
   }
 }
