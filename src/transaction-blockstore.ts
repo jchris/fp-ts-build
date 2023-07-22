@@ -12,12 +12,6 @@ import { StoredHeader } from './store'
 export class MemoryBlockstore implements BlockFetcher {
   private blocks: Map<string, Uint8Array> = new Map()
 
-  constructor(blocks?: AnyBlock[]) {
-    if (blocks) {
-      this.blocks = new Map(blocks.map(b => [b.cid.toString(), b.bytes]))
-    }
-  }
-
   async get(cid: AnyLink): Promise<AnyBlock | undefined> {
     const bytes = this.blocks.get(cid.toString())
     if (!bytes) return

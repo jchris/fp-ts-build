@@ -3,9 +3,9 @@ import { homedir } from 'node:os'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 
 import { AnyBlock, AnyLink } from './types'
-
-import { FORMAT } from './database'
 import { HeaderStore, CarStore, StoredHeader } from './store'
+
+export const FORMAT = '0.9'
 
 const encoder = new TextEncoder()
 
@@ -14,16 +14,18 @@ export const defaultConfig = {
 }
 
 export class HeaderStoreFS extends HeaderStore {
-  async load(branch?: string): Promise<StoredHeader> {
+  async load(branch?: string): Promise<StoredHeader|null> {
     branch = branch || 'main'
     const filepath = join(defaultConfig.dataDir, this.name, branch + '.json')
-    const bytes = await readFile(filepath)
-    return this.parseHeader(bytes.toString())
+    const bytes = await readFile(filepath).catch((e: Error & { code: string}) => {
+      if (e.code === 'ENOENT') return null
+      throw e
+    })
+    return bytes ? this.parseHeader(bytes.toString()) : null
   }
 
   async save(carCid: AnyLink, branch?: string) {
     branch = branch || 'main'
-    console.log('branch is ', branch)
     const filepath = join(defaultConfig.dataDir, this.name, branch + '.json')
     const bytes = this.makeHeader(carCid)
     await writePathFile(filepath, encoder.encode(bytes))

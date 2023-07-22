@@ -3,8 +3,6 @@ import cargoQueue from 'async/cargoQueue'
 import { CRDT } from './crdt'
 import { Doc, BulkResult, DocUpdate, DbResponse } from './types'
 
-export const FORMAT = '0.9'
-
 export class Database {
   name: string
   config: object
