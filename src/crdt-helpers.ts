@@ -1,6 +1,6 @@
 // External Imports
 import { BlockView, Link } from 'multiformats'
-import { Block, create } from 'multiformats/block'
+import { create } from 'multiformats/block'
 
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import * as codec from '@ipld/dag-cbor'
@@ -8,7 +8,7 @@ import { EventBlock, EventFetcher, advance } from '@alanshaw/pail/clock'
 
 // Local Imports
 import { TransactionBlockstore as Blockstore, Transaction } from './transaction-blockstore'
-import { DocUpdate, ClockHead, ProllyNode, EventData, ProllyOptions, ProllyResult, BlockFetcher, BulkResult, AnyLink } from './types'
+import { DocUpdate, ClockHead, ProllyNode, EventData, ProllyOptions, ProllyResult, BlockFetcher, AnyBlock } from './types'
 
 // Ignored Imports
 // @ts-ignore
@@ -82,12 +82,12 @@ export async function updateProllyRoot(
   prollyRoot: ProllyNode,
   updates: DocUpdate[]
 ): Promise<ProllyResult> {
-  const { root, blocks } = (await prollyRoot.bulk(updates)) as { root: ProllyNode; blocks: Block[] }
+  const { root, blocks } = (await prollyRoot.bulk(updates)) as { root: ProllyNode; blocks: AnyBlock[] }
 
   /* @type {Block} */
   for (const block of blocks) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    await tblocks.put(block.cid as AnyLink, block.bytes as Uint8Array)
+    await tblocks.put(block.cid, block.bytes)
   }
 
   return { root }

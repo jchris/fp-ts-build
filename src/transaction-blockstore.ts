@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/require-await */
 import { parse } from 'multiformats/link'
-import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead } from './types'
+import { BlockFetcher, AnyBlock, AnyLink, BulkResult } from './types'
 import { makeCarFile } from './loader-helpers'
 import { CarLoaderFS } from './loader-fs'
 

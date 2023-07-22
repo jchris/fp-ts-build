@@ -1,11 +1,10 @@
-import { Block, CID } from 'multiformats'
-import { ClockHead } from './types'
+import { ClockHead, AnyLink } from './types'
 
 export class HeaderLoader { // should belong to database?
-  async get(_cid: CID<unknown, number, number, 1>) {
+  async get(_cid: AnyLink) {
   }
 
-  async set(_cid: CID<unknown, number, number, 1>, _head: ClockHead) {
+  async set(_cid: AnyLink, _head: ClockHead) {
   }
 }
 
