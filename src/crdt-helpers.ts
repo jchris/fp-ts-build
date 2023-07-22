@@ -1,8 +1,6 @@
 // External Imports
-import { BlockView, CID, Link } from 'multiformats'
-import { Block, encode, create } from 'multiformats/block'
-import * as raw from 'multiformats/codecs/raw'
-import * as CBW from '@ipld/car/buffer-writer'
+import { BlockView, Link } from 'multiformats'
+import { Block, create } from 'multiformats/block'
 
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import * as codec from '@ipld/dag-cbor'
@@ -10,7 +8,7 @@ import { EventBlock, EventFetcher, advance } from '@alanshaw/pail/clock'
 
 // Local Imports
 import { TransactionBlockstore as Blockstore, Transaction } from './transaction-blockstore'
-import { DocUpdate, ClockHead, ProllyNode, EventData, ProllyOptions, ProllyResult, BlockFetcher, BulkResult, BulkResult, AnyLink } from './types'
+import { DocUpdate, ClockHead, ProllyNode, EventData, ProllyOptions, ProllyResult, BlockFetcher, BulkResult, AnyLink } from './types'
 
 // Ignored Imports
 // @ts-ignore
@@ -119,27 +117,4 @@ export async function createProllyRoot(blocks: Transaction, updates: DocUpdate[]
   if (!root) throw new Error('failed to create root')
 
   return { root }
-}
-
-export async function makeCarFile(t: Transaction, { head }: BulkResult): Promise<BlockView<unknown, number, number, 1>> {
-  if (!head) throw new Error('no head')
-  const roots = head.map(link => link as CID<unknown, number, number, 1>)
-  let size = 0
-  const headerSize = CBW.headerLength({ roots })
-  size += headerSize
-  for (const { cid, bytes } of t.entries()) {
-    size += CBW.blockLength({ cid, bytes } as Block<unknown, number, number, 1>)
-  }
-  const buffer = new Uint8Array(size)
-  const writer = CBW.createWriter(buffer, { headerSize })
-
-  for (const cid of roots) {
-    writer.addRoot(cid)
-  }
-
-  for (const { cid, bytes } of t.entries()) {
-    writer.write({ cid, bytes } as Block<unknown, number, number, 1>)
-  }
-  writer.close()
-  return await encode({ value: writer.bytes, hasher, codec: raw })
 }

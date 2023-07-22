@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/require-await */
 import { parse } from 'multiformats/link'
-import { BlockFetcher, AnyBlock, AnyLink, BulkResult } from './types'
-import { Block } from 'multiformats'
-import { makeCarFile } from './crdt-helpers'
+import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead } from './types'
+import { Block, CID } from 'multiformats'
+import { makeCarFile } from './loader-helpers'
 
 export class MemoryBlockstore implements BlockFetcher {
   private blocks: Map<string, Uint8Array> = new Map()
@@ -85,11 +85,16 @@ export class TransactionBlockstore implements BlockFetcher {
   async commit(t: Transaction, done: BulkResult) {
     const car = await makeCarFile(t, done)
     await this._loader.save(car)
+    await this._loader.setHeader(car.cid, done.head)
   }
 }
-
+// these inherit differently, split them
 class Loader {
-  async save(car: Block) {
+  async setHeader(_cid: CID<unknown, number, number, 1>, _head: ClockHead) {
+    // throw new Error('Method not implemented.')
+  }
+
+  async save(_car: Block) {
 
   }
 }
