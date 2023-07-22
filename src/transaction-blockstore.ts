@@ -1,8 +1,13 @@
 /* eslint-disable @typescript-eslint/require-await */
 import { parse } from 'multiformats/link'
 import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead } from './types'
-import { Block, CID } from 'multiformats'
 import { makeCarFile } from './loader-helpers'
+import { CarLoaderFS } from './loader-fs'
+
+/** forked from
+ * https://github.com/alanshaw/pail/blob/main/src/block.js
+ * thanks Alan
+**/
 
 export class MemoryBlockstore implements BlockFetcher {
   private blocks: Map<string, Uint8Array> = new Map()
@@ -61,9 +66,19 @@ export class Transaction extends MemoryBlockstore {
 }
 
 export class TransactionBlockstore implements BlockFetcher {
-  _loader = new CarLoader()
-  _headers = new HeaderLoader() // maybe this belongs on the CRDT?
+  _loader: CarLoaderFS | null = null
+
+  name: string | null = null
+
   private transactions: Set<Transaction> = new Set()
+
+  constructor(name?: string) {
+    if (name) {
+      this.name = name
+      this._loader = new CarLoaderFS(name)
+    }
+  }
+
   async put() {
     throw new Error('use a transaction to put')
   }
@@ -85,21 +100,6 @@ export class TransactionBlockstore implements BlockFetcher {
 
   async commit(t: Transaction, done: BulkResult) {
     const car = await makeCarFile(t, done)
-    await this._loader.save(car)
-    await this._headers.set(car.cid, done.head)
-  }
-}
-
-class HeaderLoader {
-  async get(_cid: CID<unknown, number, number, 1>) {
-  }
-
-  async set(_cid: CID<unknown, number, number, 1>, _head: ClockHead) {
-  }
-}
-
-class CarLoader {
-  async save(_car: Block) {
-
+    await this._loader?.save(car)
   }
 }

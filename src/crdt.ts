@@ -12,7 +12,7 @@ export class CRDT {
 
   constructor(name?: string) {
     this.name = name || null
-    this._blocks = new Blockstore()
+    this._blocks = new Blockstore(name)
     this._head = []
   }
 
@@ -25,6 +25,7 @@ export class CRDT {
       this._head = head
       return { root, head }
     })
+    // this is where the headers should be updated
     return tResult
   }
 

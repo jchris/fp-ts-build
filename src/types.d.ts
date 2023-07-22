@@ -1,7 +1,7 @@
 import { Link, Block, Link } from 'multiformats'
 import { EventLink } from '@alanshaw/pail/clock'
 import { ProllyNode as BaseNode } from 'prolly-trees/base'
-import { AnyLink } from './types'
+import { AnyLink, ClockHead } from './types'
 
 export type ClockHead = EventLink<any>[]
 export type ProllyResult = {
@@ -54,11 +54,13 @@ export interface ProllyOptions {
   codec: any
   hasher: any
   compare: (a: any, b: any) => number
-}/** forked from
- * https://github.com/alanshaw/pail/blob/main/src/block.js
- * thanks Alan
-**/
+}
 
-export type AnyLink = Link<unknown, number, number, 1 | 0>;
-export type AnyBlock = { cid: AnyLink; bytes: Uint8Array; };
-export type BlockFetcher = { get: (link: AnyLink) => Promise<AnyBlock | undefined>; };
+export type AnyLink = Link<unknown, number, number, 1 | 0>
+export type AnyBlock = { cid: AnyLink; bytes: Uint8Array }
+export type BlockFetcher = { get: (link: AnyLink) => Promise<AnyBlock | undefined> }
+
+export type DbResponse = {
+  id: string
+  clock: ClockHead
+}

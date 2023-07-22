@@ -14,6 +14,12 @@ describe('Fresh TransactionBlockstore', function () {
   beforeEach(function () {
     blocks = new Blockstore()
   })
+  it('should not have a name', function () {
+    assert(!blocks.name)
+  })
+  it('should not have a loader', function () {
+    assert(!blocks._loader)
+  })
   it('should not put', async function () {
     const e = await blocks.put('key', 'value').catch(e => e)
     matches(e.message, /transaction/)
@@ -26,6 +32,20 @@ describe('Fresh TransactionBlockstore', function () {
     })
     assert(txR)
     equalsJSON(txR, { head: [] })
+  })
+})
+
+describe('TransactionBlockstore with name', function () {
+  /** @type {Blockstore} */
+  let blocks
+  beforeEach(function () {
+    blocks = new Blockstore('test')
+  })
+  it('should have a name', function () {
+    equals(blocks.name, 'test')
+  })
+  it('should have a loader', function () {
+    assert(blocks._loader)
   })
 })
 

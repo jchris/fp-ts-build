@@ -1,11 +1,16 @@
+/* eslint-disable @typescript-eslint/require-await */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { build } from 'esbuild'
 import { createBuildSettings } from './settings.js'
 
-async function buildProject () {
+async function buildProject() {
   const buildConfigs = createBuildSettings()
 
   for (const config of buildConfigs) {
-    await build(config)
+    console.log('Building', config.outfile)
+    build(config).catch(() => {
+      console.log('Error', config.outfile)
+    })
   }
 }
 

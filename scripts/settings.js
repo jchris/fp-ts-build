@@ -31,6 +31,7 @@ export function createBuildSettings(options) {
       ...commonSettings,
       outfile: `dist/${filename}.cjs.js`,
       format: 'cjs',
+      platform: 'node',
       entryPoints: [entryPoint]
     }
 

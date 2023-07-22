@@ -1,12 +1,9 @@
 // @ts-ignore
 import cargoQueue from 'async/cargoQueue'
 import { CRDT } from './crdt'
-import { Doc, ClockHead, BulkResult, DocUpdate } from './types'
+import { Doc, BulkResult, DocUpdate, DbResponse } from './types'
 
-type DbResponse = {
-  id: string
-  clock: ClockHead
-}
+export const FORMAT = '0.9'
 
 export class Database {
   name: string
