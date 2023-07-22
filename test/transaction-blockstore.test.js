@@ -47,6 +47,13 @@ describe('TransactionBlockstore with name', function () {
   it('should have a loader', function () {
     assert(blocks.loader)
   })
+  it('should get from loader', async function () {
+    blocks.loader.getBlock = async (cid) => {
+      return { cid, bytes: 'bytes' }
+    }
+    const value = await blocks.get('key')
+    equalsJSON(value, { cid: 'key', bytes: 'bytes' })
+  })
 })
 
 describe('A transaction', function () {

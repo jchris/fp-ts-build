@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/require-await */
 import { parse } from 'multiformats/link'
-import { BlockFetcher, AnyBlock, AnyLink, BulkResult } from './types'
+import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead } from './types'
 import { Loader } from './loader'
 import { StoredHeader } from './store'
 
@@ -67,7 +67,7 @@ export class Transaction extends MemoryBlockstore {
 
 export class TransactionBlockstore implements BlockFetcher {
   name: string | null = null
-  ready: Promise<StoredHeader|null> // todo this will be a map of headers by branch name
+  ready: Promise<{ head: ClockHead }> // todo this will be a map of headers by branch name
 
   private transactions: Set<Transaction> = new Set()
   private loader: Loader | null = null
@@ -78,7 +78,7 @@ export class TransactionBlockstore implements BlockFetcher {
       this.loader = new Loader(name)
       this.ready = this.loader.ready
     } else {
-      this.ready = Promise.resolve(null)
+      this.ready = Promise.resolve({ head: [] })
     }
   }
 
@@ -91,6 +91,8 @@ export class TransactionBlockstore implements BlockFetcher {
       const v = await f.superGet(cid)
       if (v) return v
     }
+    if (!this.loader) return
+    return await this.loader.getBlock(cid)
   }
 
   async transaction(fn: (t: Transaction) => Promise<BulkResult>) {

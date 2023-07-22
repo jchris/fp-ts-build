@@ -15,10 +15,22 @@ describe('Reopening a database', function () {
     const ok = await db.put({ _id: 'test', foo: 'bar' })
     assert(ok)
     equals(ok.id, 'test')
+
+    assert(db._crdt._head)
+    equals(db._crdt._head.length, 1)
+  })
+
+  it('should persist data', async function () {
+    const doc = await db.get('test')
+    equals(doc.foo, 'bar')
   })
 
   it('should have the same data on reopen', async function () {
     const db2 = Fireproof.storage('test-reopen')
+    // await db2._crdt.ready
+    // assert(db2._crdt._head)
+    // equals(db2._crdt._head.length, 1)
+
     const doc = await db2.get('test')
     equals(doc.foo, 'bar')
   })
