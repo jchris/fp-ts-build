@@ -61,7 +61,8 @@ export class Transaction extends MemoryBlockstore {
 }
 
 export class TransactionBlockstore implements BlockFetcher {
-  _loader = new Loader()
+  _loader = new CarLoader()
+  _headers = new HeaderLoader() // maybe this belongs on the CRDT?
   private transactions: Set<Transaction> = new Set()
   async put() {
     throw new Error('use a transaction to put')
@@ -85,15 +86,19 @@ export class TransactionBlockstore implements BlockFetcher {
   async commit(t: Transaction, done: BulkResult) {
     const car = await makeCarFile(t, done)
     await this._loader.save(car)
-    await this._loader.setHeader(car.cid, done.head)
+    await this._headers.set(car.cid, done.head)
   }
 }
-// these inherit differently, split them
-class Loader {
-  async setHeader(_cid: CID<unknown, number, number, 1>, _head: ClockHead) {
-    // throw new Error('Method not implemented.')
+
+class HeaderLoader {
+  async get(_cid: CID<unknown, number, number, 1>) {
   }
 
+  async set(_cid: CID<unknown, number, number, 1>, _head: ClockHead) {
+  }
+}
+
+class CarLoader {
   async save(_car: Block) {
 
   }
