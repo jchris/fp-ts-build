@@ -25,7 +25,6 @@ describe('basic Database', function () {
   it('should put', async function () {
     /** @type {Doc} */
     const doc = { _id: 'hello', value: 'world' }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const ok = await db.put(doc)
     equals(ok.id, 'hello')
   })
@@ -39,6 +38,10 @@ describe('basic Database', function () {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
     const e = await (db.get('missing')).catch(e => e)
     matches(e.message, /Not found/)
+  })
+  it('has no changes', async function () {
+    const { rows } = await db.changes([])
+    equals(rows.length, 0)
   })
 })
 
@@ -72,6 +75,12 @@ describe('basic Database with record', function () {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     const e = await (db.get('hello')).catch(e => e)
     matches(e.message, /Not found/)
+  })
+  it('has changes', async function () {
+    const { rows } = await db.changes([])
+    equals(rows.length, 1)
+    equals(rows[0].key, 'hello')
+    equals(rows[0].value._id, 'hello')
   })
 })
 
@@ -123,6 +132,13 @@ describe('basic Database parallel writes', function () {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       const e = await (db.get(id)).catch(e => e)
       matches(e.message, /Not found/)
+    }
+  })
+  it('has changes', async function () {
+    const { rows } = await db.changes([])
+    equals(rows.length, 10)
+    for (let i = 0; i < 10; i++) {
+      equals(rows[i].key, 'id-' + i)
     }
   })
 })

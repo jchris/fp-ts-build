@@ -1,7 +1,7 @@
 // @ts-ignore
 import cargoQueue from 'async/cargoQueue'
 import { CRDT } from './crdt'
-import { Doc, BulkResult, DocUpdate, DbResponse } from './types'
+import { Doc, BulkResult, DocUpdate, DbResponse, ClockHead } from './types'
 
 export class Database {
   name: string
@@ -30,8 +30,11 @@ export class Database {
   }
 
   async get(id: string): Promise<Doc> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const got = await this._crdt.get(id).catch((e) => { e.message = `Not found: ${id} - ` + e.message; throw e })
+    const got = await this._crdt.get(id).catch(e => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      e.message = `Not found: ${id} - ` + e.message
+      throw e
+    })
     if (!got) throw new Error(`Not found: ${id}`)
     const { doc } = got
     return { _id: id, ...doc }
@@ -45,5 +48,14 @@ export class Database {
         resolve({ id, clock: result?.head } as DbResponse)
       })
     })
+  }
+
+  async changes(since: ClockHead): Promise<{ rows: { key: string; value: Doc }[] }> {
+    const { result } = await this._crdt.changes(since)
+    const rows = result.map(({ key, value }) => ({
+      key,
+      value: { _id: key, ...value } as Doc
+    }))
+    return { rows }
   }
 }

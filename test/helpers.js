@@ -6,7 +6,7 @@ import { mkdir, readdir, rm } from 'fs/promises'
 export { assert }
 
 export function equals(actual, expected) {
-  assert(actual === expected, `Expected '${actual} 'to equal '${expected}'`)
+  assert(actual === expected, `Expected '${actual}' to equal '${expected}'`)
 }
 
 export function equalsJSON(actual, expected) {
