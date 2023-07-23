@@ -1,4 +1,4 @@
-import { TransactionBlockstore as Blockstore } from './transaction-blockstore'
+import { TransactionBlockstore as Blockstore } from './transaction'
 import { DocUpdate, BulkResult, ClockHead } from './types'
 import { clockChangesSince, applyBulkUpdateToCrdt, getValueFromCrdt } from './crdt-helpers'
 

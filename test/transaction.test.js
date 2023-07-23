@@ -6,7 +6,7 @@
 /* eslint-disable mocha/max-top-level-suites */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, equals, notEquals, matches, equalsJSON } from './helpers.js'
-import { TransactionBlockstore as Blockstore, Transaction } from '../dist/transaction-blockstore.esm.js'
+import { TransactionBlockstore as Blockstore, Transaction } from '../dist/transaction.esm.js'
 
 describe('Fresh TransactionBlockstore', function () {
   /** @type {Blockstore} */

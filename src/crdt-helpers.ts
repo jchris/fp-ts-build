@@ -5,7 +5,7 @@ import * as codec from '@ipld/dag-cbor'
 import { put, get, EventData } from '@alanshaw/pail/crdt'
 import { EventFetcher } from '@alanshaw/pail/clock'
 
-import { TransactionBlockstore as Blockstore, Transaction } from './transaction-blockstore'
+import { TransactionBlockstore as Blockstore, Transaction } from './transaction'
 import { DocUpdate, ClockHead, BlockFetcher, AnyLink, DocValue } from './types'
 
 export function makeGetBlock(blocks: BlockFetcher) {

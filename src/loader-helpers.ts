@@ -6,7 +6,7 @@ import * as CBW from '@ipld/car/buffer-writer'
 import * as codec from '@ipld/dag-cbor'
 import { CarReader } from '@ipld/car'
 
-import { Transaction } from './transaction-blockstore'
+import { Transaction } from './transaction'
 import { AnyBlock, BulkResult, ClockHead, AnyLink } from './types'
 
 export async function makeCarFile(

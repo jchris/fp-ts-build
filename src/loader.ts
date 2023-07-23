@@ -2,7 +2,7 @@ import { CarReader } from '@ipld/car'
 
 import { CarStoreFS, HeaderStoreFS } from './store-fs'
 import { makeCarFile, parseCarFile } from './loader-helpers'
-import { Transaction } from './transaction-blockstore'
+import { Transaction } from './transaction'
 import { AnyBlock, AnyLink, BulkResult, ClockHead } from './types'
 import { CID } from 'multiformats'
 
