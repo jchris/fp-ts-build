@@ -24,6 +24,12 @@ export type DocUpdate = {
   value?: DocBody
   del?: boolean
 }
+
+export type DocValue = {
+  doc?: DocBody
+  del?: boolean
+}
+
 export interface EventData {
   root: Link | null
   bulk: DocUpdate[]

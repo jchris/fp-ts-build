@@ -28,16 +28,16 @@ describe('basic Database', function () {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const ok = await db.put(doc)
     equals(ok.id, 'hello')
-    matches(ok.clock, /7qllfhvv3pfi/)
   })
   it('get missing should throw', async function () {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
     const e = await (db.get('missing')).catch(e => e)
     matches(e.message, /Not found/)
   })
-  it('del missing should throw', async function () {
+  it('del missing should result in deleted state', async function () {
+    await db.del('missing')
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
-    const e = await (db.del('missing')).catch(e => e)
+    const e = await (db.get('missing')).catch(e => e)
     matches(e.message, /Not found/)
   })
 })
@@ -49,7 +49,6 @@ describe('basic Database with record', function () {
     db = new Database()
     /** @type {Doc} */
     const doc = { _id: 'hello', value: 'world' }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const ok = await db.put(doc)
     equals(ok.id, 'hello')
   })
@@ -57,6 +56,15 @@ describe('basic Database with record', function () {
     const doc = await db.get('hello')
     assert(doc)
     equals(doc._id, 'hello')
+    equals(doc.value, 'world')
+  })
+  it('should update', async function () {
+    const ok = await db.put({ _id: 'hello', value: 'universe' })
+    equals(ok.id, 'hello')
+    const doc = await db.get('hello')
+    assert(doc)
+    equals(doc._id, 'hello')
+    equals(doc.value, 'universe')
   })
   it('should del last record', async function () {
     const ok = await db.del('hello')
@@ -75,8 +83,7 @@ describe('basic Database parallel writes', function () {
     db = new Database()
     /** @type {Doc} */
     for (let i = 0; i < 10; i++) {
-      const doc = { _id: `id-${i}`, value: 'world' }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      const doc = { _id: `id-${i}`, hello: 'world' }
       writes.push(db.put(doc))
     }
     await Promise.all(writes)
@@ -88,17 +95,15 @@ describe('basic Database parallel writes', function () {
   it('should write all', async function () {
     for (let i = 0; i < 10; i++) {
       const id = `id-${i}`
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
-      const got = await db.get(id).catch(e => e)
-      assert(got)
-      equals(got._id, id)
-      equals(got.value, 'world')
+      const doc = await db.get(id)
+      assert(doc)
+      equals(doc._id, id)
+      equals(doc.hello, 'world')
     }
   })
   it('should del all', async function () {
     for (let i = 0; i < 10; i++) {
       const id = `id-${i}`
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       const ok = await db.del(id)
       equals(ok.id, id)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return

@@ -1,25 +1,11 @@
-// External Imports
-import { BlockView, Link } from 'multiformats'
-import { create } from 'multiformats/block'
-
+import { Link } from 'multiformats'
+import { create, encode, decode } from 'multiformats/block'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import * as codec from '@ipld/dag-cbor'
-import { EventBlock, EventFetcher, advance } from '@alanshaw/pail/clock'
+import { put, get } from '@alanshaw/pail/crdt'
 
-// Local Imports
 import { TransactionBlockstore as Blockstore, Transaction } from './transaction-blockstore'
-import { DocUpdate, ClockHead, ProllyNode, EventData, ProllyOptions, ProllyResult, BlockFetcher, AnyBlock } from './types'
-
-// Ignored Imports
-// @ts-ignore
-import * as Map from 'prolly-trees/map'
-// @ts-ignore
-import { bf, simpleCompare as compare } from 'prolly-trees/utils'
-// @ts-ignore
-import { nocache as cache } from 'prolly-trees/cache'
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-export const blockOpts = { cache, chunker: bf(30), codec, hasher, compare }
+import { DocUpdate, ClockHead, BlockFetcher, AnyLink, DocValue } from './types'
 
 export function makeGetBlock(blocks: BlockFetcher) {
   return async (address: Link) => {
@@ -30,95 +16,49 @@ export function makeGetBlock(blocks: BlockFetcher) {
   }
 }
 
-export async function advanceClock(
-  blocks: Transaction,
+export async function applyBulkUpdateToCrdt(
+  tblocks: Transaction,
   head: ClockHead,
-  root: ProllyNode,
-  bulk: DocUpdate[]
-): Promise<{ head: ClockHead; event: BlockView }> {
-  // if (!root) throw new Error('missing root')
-
-  const data: EventData = {
-    root: root ? await root.address : null,
-    bulk
-  }
-
-  const clockEvent = await EventBlock.create(data, head)
-  await blocks.put(clockEvent.cid, clockEvent.bytes)
-  const didAdvance: ClockHead = await advance(blocks, head, clockEvent.cid)
-
-  return { head: didAdvance, event: clockEvent }
-}
-
-export async function getProllyRootFromClock(blocks: Blockstore, head: ClockHead): Promise<ProllyNode | null> {
-  const events = new EventFetcher(blocks)
-
-  if (head.length === 0) {
-    return null
-  } else if (head.length === 1) {
-    const event = await events.get(head[0])
-    const eventData = event.value.data as EventData
-    if (!eventData) throw new Error(`missing eventData ${head[0].toString()}`)
-    const root = eventData.root
-
-    if (root) {
-      const loadOptions: ProllyOptions = {
-        cid: root,
-        get: makeGetBlock(blocks),
-        ...blockOpts
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-      return (await Map.load(loadOptions)) as ProllyNode
-    }
-  } else {
-    throw new Error(`Multiple heads not implemented yet. head.length = ${head.length}`)
-  }
-
-  return null
-}
-
-export async function updateProllyRoot(
-  blocks: Transaction,
-  prollyRoot: ProllyNode,
-  updates: DocUpdate[]
-): Promise<ProllyResult> {
-  const { root, blocks: bulkBlocks } = (await prollyRoot.bulk(updates)) as { root: ProllyNode; blocks: AnyBlock[] }
-
-  /* @type {Block} */
-  for (const block of bulkBlocks) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    await blocks.put(block.cid, block.bytes)
-  }
-
-  return { root }
-}
-
-export async function createProllyRoot(blocks: Transaction, updates: DocUpdate[]): Promise<ProllyResult> {
+  updates: DocUpdate[],
+  options?: object
+): Promise<{ head: ClockHead }> {
   for (const update of updates) {
-    if (update.del) throw new Error('Not found')
+    const link = await makeLinkForDoc(tblocks, update)
+    const result = await put(tblocks, head, update.key, link, options)
+    for (const { cid, bytes } of [...result.additions, ...result.removals, result.event]) {
+      tblocks.putSync(cid, bytes)
+    }
+    head = result.head
   }
-
-  const loadOptions: ProllyOptions = {
-    list: updates,
-    get: makeGetBlock(blocks),
-    ...blockOpts
-  }
-
-  let root: ProllyNode | null = null
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  for await (const node of Map.create(loadOptions)) {
-    root = node as ProllyNode
-    const { cid, bytes } = await root.block
-    await blocks.put(cid, bytes)
-  }
-
-  if (!root) throw new Error('failed to create root')
-
-  return { root }
+  return { head }
 }
 
-export async function clockChangesSince(blocks: Blockstore, head: ClockHead, since: ClockHead): Promise<{ result: DocUpdate[] }> {
+async function makeLinkForDoc(blocks: Transaction, update: DocUpdate): Promise<AnyLink> {
+  let value: DocValue
+  if (update.del) {
+    value = { del: true }
+  } else {
+    value = { doc: update.value }
+  }
+  const block = await encode({ value, hasher, codec })
+  blocks.putSync(block.cid, block.bytes)
+  return block.cid
+}
 
+export async function getValueFromCrdt(blocks: Blockstore, head: ClockHead, key: string): Promise<DocValue> {
+  const link = await get(blocks, head, key)
+  if (!link) throw new Error(`Not found: ${key}`)
+  const block = await blocks.get(link)
+  if (!block) throw new Error(`Missing block ${link.toString()}`)
+  const { value } = (await decode({ bytes: block.bytes, hasher, codec })) as { value: DocValue }
+  return value
+}
+
+export async function clockChangesSince(
+  _blocks: Blockstore,
+  _head: ClockHead,
+  _since: ClockHead
+): Promise<{ result: DocUpdate[] }> {
+  await Promise.resolve()
+  throw new Error('unimplemented')
 }

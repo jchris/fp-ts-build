@@ -33,8 +33,8 @@ export class Database {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const got = await this._crdt.get(id).catch((e) => { e.message = `Not found: ${id} - ` + e.message; throw e })
     if (!got) throw new Error(`Not found: ${id}`)
-    const { result } = got
-    return { _id: id, ...result }
+    const { doc } = got
+    return { _id: id, ...doc }
   }
 
   async del(id: string): Promise<DbResponse> {

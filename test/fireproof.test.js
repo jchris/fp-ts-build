@@ -39,7 +39,7 @@ describe('Reopening a database', function () {
   })
 
   it.skip('passing slow, should have the same data on reopen after reopen and update', async function () {
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 100; i++) {
       const db = Fireproof.storage('test-reopen')
       const ok = await db.put({ _id: `test${i}`, fire: 'proof'.repeat(50 * 1024) })
       assert(ok)
