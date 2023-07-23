@@ -9,6 +9,7 @@ export type ProllyResult = {
 
 export type BulkResult = {
   head: ClockHead
+  car?: AnyLink
 }
 
 type DocBody = {

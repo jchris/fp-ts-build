@@ -10,6 +10,7 @@ export class Loader {
   name: string
   headerStore: HeaderStoreFS
   carStore: CarStoreFS
+  carLog: AnyLink[] = []
   carsReaders: Map<string, CarReader> = new Map()
   ready: Promise<{ head: ClockHead}> // todo this will be a map of headers by branch name
   constructor(name: string) {
@@ -24,10 +25,12 @@ export class Loader {
     })
   }
 
-  async commit(t: Transaction, done: BulkResult) {
+  async commit(t: Transaction, done: BulkResult): Promise<AnyLink> {
     const car = await makeCarFile(t, done, [...this.carsReaders].reverse().map(([cid]) => (cid)))
     await this.carStore.save(car) // todo we should be adding to the readers group here
+    this.carLog.push(car.cid)
     await this.headerStore.save(car.cid)
+    return car.cid
   }
 
   async ingestCarFile(cid: AnyLink, car: AnyBlock): Promise<{ head: ClockHead, cars: AnyLink[]}> {

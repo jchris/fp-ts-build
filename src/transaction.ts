@@ -58,12 +58,11 @@ export class TransactionBlockstore implements BlockFetcher {
     const t = new Transaction(this)
     this.transactions.add(t)
     const done: BulkResult = await fn(t)
-    if (done) { await this.commit(t, done) }
+    if (done) { return { ...done, car: await this.commit(t, done) } }
     return done
   }
 
-  async commit(t: Transaction, done: BulkResult) {
-    if (!this.loader) return
-    await this.loader.commit(t, done)
+  async commit(t: Transaction, done: BulkResult): Promise<AnyLink | undefined> {
+    return await this.loader?.commit(t, done)
   }
 }
