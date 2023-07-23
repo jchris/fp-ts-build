@@ -3,6 +3,7 @@
 import esbuildPluginTsc from 'esbuild-plugin-tsc'
 import fs from 'fs'
 import path from 'path'
+import { polyfillNode } from 'esbuild-plugin-polyfill-node'
 
 // Obtain all .ts files in the src directory
 const entryPoints = fs
@@ -49,7 +50,12 @@ export function createBuildSettings(options) {
       format: 'iife',
       platform: 'browser',
       target: 'es2015',
-      entryPoints: [entryPoint]
+      entryPoints: [entryPoint],
+      plugins: [
+        polyfillNode({}),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        ...commonSettings.plugins
+      ]
     }
 
     return [cjsConfig, esmConfig, browserConfig]

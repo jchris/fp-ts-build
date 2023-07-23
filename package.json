@@ -44,6 +44,7 @@
     "@typescript-eslint/parser": "^6.1.0",
     "browser-assert": "^1.2.1",
     "esbuild": "^0.18.14",
+    "esbuild-plugin-polyfill-node": "^0.3.0",
     "esbuild-plugin-tsc": "^0.4.0",
     "eslint": "^8.45.0",
     "eslint-config-standard": "^17.1.0",
