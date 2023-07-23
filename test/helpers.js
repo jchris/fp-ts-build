@@ -27,12 +27,8 @@ export async function resetDirectory(dir, name) {
   await mkdir(path, { recursive: true })
 
   const files = await readdir(path)
-  console.log('files', files)
 
   for (const file of files) {
-    // if (file.match(/fptest/)) {
-    console.log('removing', file)
     await rm(join(path, file), { recursive: false, force: true })
-    // }
   }
 }

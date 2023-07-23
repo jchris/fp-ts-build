@@ -33,7 +33,20 @@ export class Loader {
   async ingestCarFile(cid: AnyLink, car: AnyBlock): Promise<{ head: ClockHead, cars: AnyLink[]}> {
     const reader = await CarReader.fromBytes(car.bytes)
     this.carsReaders.set(cid.toString(), reader)
-    return await parseCarFile(reader)
+    const { head, cars } = await parseCarFile(reader)
+    // console.log('ingested car file', cid.toString(), { head, cars: cars.length })
+    await this.getMoreReaders(cars)
+    return { head, cars }
+  }
+
+  async getMoreReaders(cids: AnyLink[]) {
+    for (const cid of cids) {
+      if (this.carsReaders.has(cid.toString())) continue
+      const car = await this.carStore.load(cid)
+      if (!car) throw new Error(`missing car file ${cid.toString()}`)
+      const reader = await CarReader.fromBytes(car.bytes)
+      this.carsReaders.set(cid.toString(), reader)
+    }
   }
 
   async getBlock(cid: CID): Promise<AnyBlock | undefined> {
