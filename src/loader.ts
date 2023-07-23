@@ -21,34 +21,38 @@ export class Loader {
     this.ready = this.headerStore.load('main').then(async header => {
       if (!header) return { head: [] }
       const car = await this.carStore.load(header.car)
-      return await this.ingestCarFile(header.car, car)
+      return await this.ingestCarHead(header.car, car)
     })
   }
 
   async commit(t: Transaction, done: BulkResult): Promise<AnyLink> {
-    const car = await makeCarFile(t, done, [...this.carsReaders].reverse().map(([cid]) => (cid)))
-    await this.carStore.save(car) // todo we should be adding to the readers group here
+    const car = await makeCarFile(t, done, this.carLog)
+    await this.carStore.save(car)
     this.carLog.push(car.cid)
     await this.headerStore.save(car.cid)
     return car.cid
   }
 
-  async ingestCarFile(cid: AnyLink, car: AnyBlock): Promise<{ head: ClockHead, cars: AnyLink[]}> {
+  async loadCar(cid: AnyLink): Promise<CarReader> {
+    if (this.carsReaders.has(cid.toString())) return this.carsReaders.get(cid.toString()) as CarReader
+    const car = await this.carStore.load(cid)
+    if (!car) throw new Error(`missing car file ${cid.toString()}`)
+    const reader = await CarReader.fromBytes(car.bytes)
+    this.carsReaders.set(cid.toString(), reader)
+    return reader
+  }
+
+  async ingestCarHead(cid: AnyLink, car: AnyBlock): Promise<{ head: ClockHead, cars: AnyLink[]}> {
     const reader = await CarReader.fromBytes(car.bytes)
     this.carsReaders.set(cid.toString(), reader)
     const { head, cars } = await parseCarFile(reader)
-    // console.log('ingested car file', cid.toString(), { head, cars: cars.length })
     await this.getMoreReaders(cars)
     return { head, cars }
   }
 
   async getMoreReaders(cids: AnyLink[]) {
     for (const cid of cids) {
-      if (this.carsReaders.has(cid.toString())) continue
-      const car = await this.carStore.load(cid)
-      if (!car) throw new Error(`missing car file ${cid.toString()}`)
-      const reader = await CarReader.fromBytes(car.bytes)
-      this.carsReaders.set(cid.toString(), reader)
+      await this.loadCar(cid)
     }
   }
 

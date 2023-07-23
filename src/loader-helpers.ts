@@ -12,12 +12,12 @@ import { AnyBlock, BulkResult, ClockHead, AnyLink } from './types'
 export async function makeCarFile(
   t: Transaction,
   { head }: BulkResult,
-  cars: string[]
+  cars: AnyLink[]
 ): Promise<BlockView<unknown, number, number, 1>> {
   if (!head) throw new Error('no head')
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const fpCarHeaderBlock = (await encode({
-    value: { fp: { head, cars: cars.map(car => CID.parse(car)) } },
+    value: { fp: { head, cars } },
     hasher,
     codec
   })) as AnyBlock
