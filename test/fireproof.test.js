@@ -2,16 +2,18 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { assert, equals, notEquals, matches, equalsJSON } from './helpers.js'
+import { assert, equals, notEquals, matches, equalsJSON, resetDirectory } from './helpers.js'
 
 import { Fireproof } from '../dist/fireproof.esm.js'
 import { Database } from '../dist/database.esm.js'
+import { CarStoreFS, defaultConfig, HeaderStoreFS } from '../dist/store-fs.esm.js'
 
 describe('Reopening a database', function () {
   /** @type {Database} */
   let db
   beforeEach(async function () {
     // erase the existing test data
+    await resetDirectory(defaultConfig.dataDir, 'test-reopen')
 
     db = Fireproof.storage('test-reopen')
     const ok = await db.put({ _id: 'test', foo: 'bar' })
@@ -36,14 +38,14 @@ describe('Reopening a database', function () {
     equalsJSON(db2._crdt._head, db._crdt._head)
   })
 
-  // it('should have the same data on reopen after reopen and update', async function () {
-  //   for (let i = 0; i < 100; i++) {
-  //     console.log('reopen', i)
-  //     const db = Fireproof.storage('test-reopen')
-  //     const ok = await db.put({ _id: `test${i}`, fire: 'proof'.repeat(10 * 1024) })
-  //     assert(ok)
-  //     const doc = await db.get(`test${i}`)
-  //     equals(doc.fire, 'proof'.repeat(10 * 1024))
-  //   }
-  // })
+  it('should have the same data on reopen after reopen and update', async function () {
+    for (let i = 0; i < 100; i++) {
+      console.log('reopen', i)
+      const db = Fireproof.storage('test-reopen')
+      const ok = await db.put({ _id: `test${i}`, fire: 'proof'.repeat(10 * 1024) })
+      assert(ok)
+      const doc = await db.get(`test${i}`)
+      equals(doc.fire, 'proof'.repeat(10 * 1024))
+    }
+  })
 })
