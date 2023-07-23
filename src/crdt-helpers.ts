@@ -57,7 +57,6 @@ export async function getProllyRootFromClock(blocks: Blockstore, head: ClockHead
     return null
   } else if (head.length === 1) {
     const event = await events.get(head[0])
-    console.log('event', event)
     const eventData = event.value.data as EventData
     if (!eventData) throw new Error(`missing eventData ${head[0].toString()}`)
     const root = eventData.root

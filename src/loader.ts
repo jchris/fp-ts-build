@@ -1,7 +1,7 @@
 import { CarReader } from '@ipld/car'
 
 import { CarStoreFS, HeaderStoreFS } from './store-fs'
-import { makeCarFile } from './loader-helpers'
+import { makeCarFile, parseCarFile } from './loader-helpers'
 import { Transaction } from './transaction-blockstore'
 import { AnyBlock, AnyLink, BulkResult, ClockHead } from './types'
 import { CID } from 'multiformats'
@@ -19,7 +19,8 @@ export class Loader {
     // todo config with multiple branches
     this.ready = this.headerStore.load('main').then(async header => {
       if (!header) return { head: [] }
-      return await this.loadCarFile(header.car)
+      const car = await this.carStore.load(header.car)
+      return await this.ingestCarFile(header.car, car)
     })
   }
 
@@ -29,15 +30,10 @@ export class Loader {
     await this.headerStore.save(car.cid)
   }
 
-  async loadCarFile(cid: AnyLink): Promise<{ head: ClockHead}> {
-    const car = await this.carStore.load(cid)
+  async ingestCarFile(cid: AnyLink, car: AnyBlock): Promise<{ head: ClockHead, cars: AnyLink[]}> {
     const reader = await CarReader.fromBytes(car.bytes)
     this.carsReaders.set(cid.toString(), reader)
-    const roots = await reader.getRoots()
-    const header = await reader.get(roots[0])
-    if (!header) throw new Error('missing header block')
-    const { fp: { head } } = await decode(header)
-    return { head }
+    return await parseCarFile(reader)
   }
 
   async getBlock(cid: CID): Promise<AnyBlock | undefined> {

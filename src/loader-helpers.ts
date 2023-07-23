@@ -1,17 +1,26 @@
 import { BlockView, CID } from 'multiformats'
-import { Block, encode } from 'multiformats/block'
+import { Block, encode, decode } from 'multiformats/block'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import * as raw from 'multiformats/codecs/raw'
 import * as CBW from '@ipld/car/buffer-writer'
 import * as codec from '@ipld/dag-cbor'
+import { CarReader } from '@ipld/car'
 
 import { Transaction } from './transaction-blockstore'
-import { AnyBlock, BulkResult } from './types'
+import { AnyBlock, BulkResult, ClockHead, AnyLink } from './types'
 
-export async function makeCarFile(t: Transaction, { head }: BulkResult, cars: string[]): Promise<BlockView<unknown, number, number, 1>> {
+export async function makeCarFile(
+  t: Transaction,
+  { head }: BulkResult,
+  cars: string[]
+): Promise<BlockView<unknown, number, number, 1>> {
   if (!head) throw new Error('no head')
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-  const fpCarHeaderBlock = await encode({ value: { fp: { head, cars: cars.map((car) => CID.parse(car)) } }, hasher, codec }) as AnyBlock
+  const fpCarHeaderBlock = (await encode({
+    value: { fp: { head, cars: cars.map(car => CID.parse(car)) } },
+    hasher,
+    codec
+  })) as AnyBlock
   await t.put(fpCarHeaderBlock.cid, fpCarHeaderBlock.bytes)
 
   let size = 0
@@ -32,17 +41,13 @@ export async function makeCarFile(t: Transaction, { head }: BulkResult, cars: st
   return await encode({ value: writer.bytes, hasher, codec: raw })
 }
 
-// const value = { fp: { last: innerBlockstore.lastCid, clock: innerBlockstore.head, cars: this.carLog } }
-// const header = await Block.encode({ value, hasher: blockOpts.hasher, codec: blockOpts.codec })
-
-// async readHeaderCar (carCid) {
-//   const carMapReader = await this.getCarReader(carCid)
-//   // await this.getWriteableCarReader(carCid)
-//   // console.log('readHeaderCar', carCid, carMapReader)
-//   // now when we load the root cid from the car, we get our new custom root node
-//   const bytes = await carMapReader.get(carMapReader.root.cid)
-//   const decoded = await Block.decode({ bytes, hasher: blockOpts.hasher, codec: blockOpts.codec })
-//   // @ts-ignore
-//   const { fp: { cars, clock } } = decoded.value
-//   return { cars, clock, reader: carMapReader }
-// }
+export async function parseCarFile(reader: CarReader): Promise<{ head: ClockHead; cars: AnyLink[] }> {
+  const roots = await reader.getRoots()
+  const header = await reader.get(roots[0])
+  if (!header) throw new Error('missing header block')
+  const got = await decode({ bytes: header.bytes, hasher, codec })
+  const {
+    fp: { head, cars }
+  } = got.value as { fp: { head: ClockHead; cars: AnyLink[] } }
+  return { head, cars }
+}
