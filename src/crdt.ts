@@ -9,9 +9,9 @@ export class CRDT {
   private _blocks: Blockstore
   private _head: ClockHead
 
-  constructor(name?: string) {
+  constructor(name?: string, blocks?: Blockstore) {
     this.name = name || null
-    this._blocks = new Blockstore(name)
+    this._blocks = blocks || new Blockstore(name)
     this._head = []
     this.ready = this._blocks.ready.then(({ head }: { head: ClockHead }) => {
       this._head = head // todo multi head support here

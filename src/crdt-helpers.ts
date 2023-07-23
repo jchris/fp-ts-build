@@ -6,7 +6,7 @@ import { put, get, EventData } from '@alanshaw/pail/crdt'
 import { EventFetcher } from '@alanshaw/pail/clock'
 
 import { TransactionBlockstore as Blockstore, Transaction } from './transaction'
-import { DocUpdate, ClockHead, BlockFetcher, AnyLink, DocValue } from './types'
+import { DocUpdate, ClockHead, BlockFetcher, AnyLink, DocValue, BulkResult } from './types'
 
 export function makeGetBlock(blocks: BlockFetcher) {
   return async (address: Link) => {
@@ -22,7 +22,7 @@ export async function applyBulkUpdateToCrdt(
   head: ClockHead,
   updates: DocUpdate[],
   options?: object
-): Promise<{ head: ClockHead }> {
+): Promise<BulkResult> {
   for (const update of updates) {
     const link = await makeLinkForDoc(tblocks, update)
     const result = await put(tblocks, head, update.key, link, options)

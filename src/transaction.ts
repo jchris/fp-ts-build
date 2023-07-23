@@ -30,10 +30,10 @@ export class TransactionBlockstore implements BlockFetcher {
   private transactions: Set<Transaction> = new Set()
   private loader: Loader | null = null
 
-  constructor(name?: string) {
+  constructor(name?: string, loader?: Loader) {
     if (name) {
       this.name = name
-      this.loader = new Loader(name)
+      this.loader = loader || new Loader(name)
       this.ready = this.loader.ready
     } else {
       this.ready = Promise.resolve({ head: [] })
