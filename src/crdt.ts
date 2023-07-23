@@ -57,7 +57,7 @@ export class CRDT {
     return { result, cids }
   }
 
-  changes(since: ClockHead) {
-
+  async changes(since: ClockHead) {
+    return await clockChangesSince(this._blocks, this._head, since)
   }
 }

@@ -2,7 +2,7 @@
 import { parse } from 'multiformats/link'
 import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead } from './types'
 import { Loader } from './loader'
-import { StoredHeader } from './store'
+import { CID } from 'multiformats'
 
 /** forked from
  * https://github.com/alanshaw/pail/blob/main/src/block.js
@@ -86,7 +86,8 @@ export class TransactionBlockstore implements BlockFetcher {
       if (v) return v
     }
     if (!this.loader) return
-    return await this.loader.getBlock(cid)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return await this.loader.getBlock(cid as CID)
   }
 
   async transaction(fn: (t: Transaction) => Promise<BulkResult>) {

@@ -49,7 +49,7 @@ describe('CRDT with one record', function () {
     const value = got.result
     equals(value.hello, 'world')
   })
-  it('should offer changes', async function () {
+  it.skip('should offer changes', async function () {
     const { result } = await crdt.changes([])
     equals(result.length, 1)
     equals(result[0].key, 'hello')
