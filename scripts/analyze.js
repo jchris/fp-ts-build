@@ -8,14 +8,19 @@ async function analyzeProject() {
   const buildConfigs = createBuildSettings({ minify: true, metafile: true })
 
   for (const config of buildConfigs) {
-    const result = await esbuild.build(config)
+    if (!/fireproof/.test(config.outfile)) continue
+    try {
+      const result = await esbuild.build(config)
 
-    if (mode === 'write') {
-      fs.writeFileSync(`build-meta-${result.format}.json`, JSON.stringify(result.metafile))
-    } else {
-      console.log(await esbuild.analyzeMetafile(result.metafile, {
-        verbose: false
-      }))
+      if (mode === 'write') {
+        fs.writeFileSync(`build-meta-${result.format}.json`, JSON.stringify(result.metafile))
+      } else {
+        console.log(await esbuild.analyzeMetafile(result.metafile, {
+          verbose: false
+        }))
+      }
+    } catch (err) {
+      console.error(err)
     }
   }
 }
