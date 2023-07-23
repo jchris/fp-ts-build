@@ -1,11 +1,8 @@
-import { Link, Block } from 'multiformats'
+import { Link } from 'multiformats'
 import { EventLink } from '@alanshaw/pail/clock'
-import { ProllyNode as BaseNode } from 'prolly-trees/base'
+import { EventData } from '@alanshaw/pail/crdt'
 
-export type ClockHead = EventLink<any>[]
-export type ProllyResult = {
-  root: ProllyNode
-}
+export type ClockHead = EventLink<EventData>[]
 
 export type BulkResult = {
   head: ClockHead
@@ -29,32 +26,6 @@ export type DocUpdate = {
 export type DocValue = {
   doc?: DocBody
   del?: boolean
-}
-
-// ProllyNode type based on the ProllyNode from 'prolly-trees/base'
-export interface ProllyNode extends BaseNode {
-  get(key: string): unknown
-  bulk(bulk: DocUpdate[]): { root: any; blocks: any } | PromiseLike<{ root: any; blocks: any }>
-  address: Promise<Link>
-  distance: number
-  compare: (a: any, b: any) => number
-  cache: any
-  block: Promise<Block>
-}
-export interface CIDCounter {
-  add(node: ProllyNode): void
-  all(): Promise<Set<string | Promise<string>>>
-}
-
-export interface ProllyOptions {
-  cid?: Link
-  list?: DocUpdate[]
-  get: (cid: any) => Promise<any>
-  cache: any
-  chunker: (entry: any, distance: number) => boolean
-  codec: any
-  hasher: any
-  compare: (a: any, b: any) => number
 }
 
 export type AnyLink = Link<unknown, number, number, 1 | 0>
