@@ -47,12 +47,6 @@ describe('CRDT with one record', function () {
     const value = got.doc
     equals(value.hello, 'world')
   })
-  it.skip('should offer changes', async function () {
-    const { result } = await crdt.changes([])
-    equals(result.length, 1)
-    equals(result[0].key, 'hello')
-    equals(result[0].value.hello, 'world')
-  })
   it('should accept another put and return results', async function () {
     const didPut = await crdt.bulk([{ key: 'nice', value: { nice: 'data' } }])
     const head = didPut.head
@@ -65,6 +59,12 @@ describe('CRDT with one record', function () {
     assert(didDel.head)
     const got = await crdt.get('hello')
     assert(!got)
+  })
+  it('should offer changes', async function () {
+    const { result } = await crdt.changes([])
+    equals(result.length, 1)
+    equals(result[0].key, 'hello')
+    equals(result[0].value.hello, 'world')
   })
 })
 
@@ -95,5 +95,12 @@ describe('CRDT with a multi-write', function () {
     const got = await crdt.get('queen')
     assert(got)
     equals(got.doc.points, 10)
+  })
+  it('should offer changes', async function () {
+    const { result } = await crdt.changes([])
+    equals(result.length, 2)
+    equals(result[0].key, 'king')
+    equals(result[0].value.points, 10)
+    equals(result[1].key, 'ace')
   })
 })

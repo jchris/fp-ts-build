@@ -30,11 +30,6 @@ export type DocValue = {
   del?: boolean
 }
 
-export interface EventData {
-  root: Link | null
-  bulk: DocUpdate[]
-}
-
 // ProllyNode type based on the ProllyNode from 'prolly-trees/base'
 export interface ProllyNode extends BaseNode {
   get(key: string): unknown

@@ -14,7 +14,8 @@
   "browser": "./dist/fireproof.browser.js",
   "type": "module",
   "scripts": {
-    "build": "node ./scripts/build.js",
+    "build": "npm run clean && node ./scripts/build.js",
+    "clean": "rm -rf dist/*",
     "start": "node ./scripts/serve.js",
     "analyze": "node ./scripts/analyze.js",
     "test:watch": "nodemon -w src -w test -e ts,js --exec \"npm run build && npm run test:node\"",

@@ -2,7 +2,8 @@ import { Link } from 'multiformats'
 import { create, encode, decode } from 'multiformats/block'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import * as codec from '@ipld/dag-cbor'
-import { put, get } from '@alanshaw/pail/crdt'
+import { put, get, EventData } from '@alanshaw/pail/crdt'
+import { EventFetcher } from '@alanshaw/pail/clock'
 
 import { TransactionBlockstore as Blockstore, Transaction } from './transaction-blockstore'
 import { DocUpdate, ClockHead, BlockFetcher, AnyLink, DocValue } from './types'
@@ -47,7 +48,11 @@ async function makeLinkForDoc(blocks: Transaction, update: DocUpdate): Promise<A
 
 export async function getValueFromCrdt(blocks: Blockstore, head: ClockHead, key: string): Promise<DocValue> {
   const link = await get(blocks, head, key)
-  if (!link) throw new Error(`Not found: ${key}`)
+  if (!link) throw new Error(`Missing key ${key}`)
+  return await getValueFromLink(blocks, link)
+}
+
+export async function getValueFromLink(blocks: Blockstore, link: AnyLink): Promise<DocValue> {
   const block = await blocks.get(link)
   if (!block) throw new Error(`Missing block ${link.toString()}`)
   const { value } = (await decode({ bytes: block.bytes, hasher, codec })) as { value: DocValue }
@@ -55,10 +60,31 @@ export async function getValueFromCrdt(blocks: Blockstore, head: ClockHead, key:
 }
 
 export async function clockChangesSince(
-  _blocks: Blockstore,
+  blocks: Blockstore,
   _head: ClockHead,
   _since: ClockHead
 ): Promise<{ result: DocUpdate[] }> {
-  await Promise.resolve()
-  throw new Error('unimplemented')
+  const eventsFetcher = new EventFetcher<EventData>(blocks)
+  const updates = await gatherUpdates(blocks, eventsFetcher, _head, _since)
+
+  return { result: updates }
+}
+
+async function gatherUpdates(blocks: Blockstore, eventsFetcher: EventFetcher<EventData>, head: ClockHead, since: ClockHead, updates: DocUpdate[] = []): Promise<DocUpdate[]> {
+  for (const link of since) {
+    if (head.includes(link)) {
+      throw new Error('found since in head, this is good, remove this error ' + updates.length)
+      return updates
+    }
+  }
+  for (const link of head) {
+    const { value: event } = await eventsFetcher.get(link)
+    const { key, value } = event.data
+    const docValue = await getValueFromLink(blocks, value)
+    updates.push({ key, value: docValue.doc, del: docValue.del })
+    if (event.parents) {
+      updates = await gatherUpdates(blocks, eventsFetcher, event.parents, since, updates)
+    }
+  }
+  return updates
 }

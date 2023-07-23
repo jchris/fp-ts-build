@@ -26,7 +26,7 @@ export class Loader {
 
   async commit(t: Transaction, done: BulkResult) {
     const car = await makeCarFile(t, done, [...this.carsReaders].reverse().map(([cid]) => (cid)))
-    await this.carStore.save(car)
+    await this.carStore.save(car) // todo we should be adding to the readers group here
     await this.headerStore.save(car.cid)
   }
 
