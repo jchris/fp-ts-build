@@ -49,6 +49,12 @@ describe('CRDT with one record', function () {
     const value = got.result
     equals(value.hello, 'world')
   })
+  it('should offer changes', async function () {
+    const { result } = await crdt.changes([])
+    equals(result.length, 1)
+    equals(result[0].key, 'hello')
+    equals(result[0].value.hello, 'world')
+  })
   it('should accept another put and return results', async function () {
     const didPut = await crdt.bulk([{ key: 'nice', value: { nice: 'data' } }])
 

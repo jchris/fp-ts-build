@@ -79,23 +79,22 @@ export async function getProllyRootFromClock(blocks: Blockstore, head: ClockHead
 }
 
 export async function updateProllyRoot(
-  tblocks: Transaction,
+  blocks: Transaction,
   prollyRoot: ProllyNode,
   updates: DocUpdate[]
 ): Promise<ProllyResult> {
-  const { root, blocks } = (await prollyRoot.bulk(updates)) as { root: ProllyNode; blocks: AnyBlock[] }
+  const { root, blocks: bulkBlocks } = (await prollyRoot.bulk(updates)) as { root: ProllyNode; blocks: AnyBlock[] }
 
   /* @type {Block} */
-  for (const block of blocks) {
+  for (const block of bulkBlocks) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    await tblocks.put(block.cid, block.bytes)
+    await blocks.put(block.cid, block.bytes)
   }
 
   return { root }
 }
 
 export async function createProllyRoot(blocks: Transaction, updates: DocUpdate[]): Promise<ProllyResult> {
-  // if any update has a del, throw not found
   for (const update of updates) {
     if (update.del) throw new Error('Not found')
   }
@@ -118,4 +117,8 @@ export async function createProllyRoot(blocks: Transaction, updates: DocUpdate[]
   if (!root) throw new Error('failed to create root')
 
   return { root }
+}
+
+export async function clockChangesSince(blocks: Blockstore, head: ClockHead, since: ClockHead): Promise<{ result: DocUpdate[] }> {
+
 }

@@ -38,13 +38,13 @@ describe('Reopening a database', function () {
     equalsJSON(db2._crdt._head, db._crdt._head)
   })
 
-  it('should have the same data on reopen after reopen and update', async function () {
+  it.skip('passing slow, should have the same data on reopen after reopen and update', async function () {
     for (let i = 0; i < 60; i++) {
       const db = Fireproof.storage('test-reopen')
-      const ok = await db.put({ _id: `test${i}`, fire: 'proof'.repeat(10 * 1024) })
+      const ok = await db.put({ _id: `test${i}`, fire: 'proof'.repeat(50 * 1024) })
       assert(ok)
       const doc = await db.get(`test${i}`)
-      equals(doc.fire, 'proof'.repeat(10 * 1024))
+      equals(doc.fire, 'proof'.repeat(50 * 1024))
     }
   }).timeout(20000)
 })

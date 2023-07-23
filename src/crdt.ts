@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import { EventLink } from '@alanshaw/pail/clock'
 import { TransactionBlockstore as Blockstore } from './transaction-blockstore'
-import { DocUpdate, EventData, BulkResult, CIDCounter, ClockHead } from './types'
-import { getProllyRootFromClock, updateProllyRoot, createProllyRoot, advanceClock } from './crdt-helpers'
+import { DocUpdate, BulkResult, CIDCounter, ClockHead } from './types'
+import { getProllyRootFromClock, updateProllyRoot, createProllyRoot, advanceClock, clockChangesSince } from './crdt-helpers'
 // import { StoredHeader } from './store'
 
 export class CRDT {
@@ -10,16 +9,28 @@ export class CRDT {
   ready: Promise<void>
 
   private _blocks: Blockstore
-  private _head: EventLink<EventData>[]
+  private _head: ClockHead
 
   constructor(name?: string) {
     this.name = name || null
     this._blocks = new Blockstore(name)
     this._head = []
     this.ready = this._blocks.ready.then(({ head }: { head: ClockHead }) => {
-      this._head = head
+      this._head = head // todo multi head support here
     })
   }
+
+  /* this is the way from Pail, I think we can skip the historical event application when head length == 1
+// zoom back to lca for root
+// load root from lca
+// calculate events from lca to head
+// apply the events to the root
+// (in the below this could be prollyRootWithEvents) wanna get the events while we are in there
+
+// now do my new update
+// record the new root with the new event
+// prepare the result
+*/
 
   async bulk(updates: DocUpdate[], _options?: object): Promise<BulkResult> {
     await this.ready
@@ -28,7 +39,7 @@ export class CRDT {
     const tResult: BulkResult = await this._blocks.transaction(async tblocks => {
       const { root } = prollyRoot ? await updateProllyRoot(tblocks, prollyRoot, updates) : await createProllyRoot(tblocks, updates)
       const { head } = await advanceClock(tblocks, this._head, root, updates)
-      this._head = head
+      this._head = head // we want multi head support here if allowing calls to bulk in parallel
       return { root, head }
     })
     return tResult
@@ -44,5 +55,9 @@ export class CRDT {
     if (!prollyRoot) throw new Error('no root')
     const { result, cids } = await prollyRoot.get(key) as { result: DocUpdate, cids: CIDCounter }
     return { result, cids }
+  }
+
+  changes(since: ClockHead) {
+
   }
 }
