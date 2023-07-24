@@ -1,6 +1,6 @@
 {
   "name": "@fireproof/core",
-  "version": "0.10.0-dev",
+  "version": "0.10.3-dev",
   "description": "Immutable embedded distributed database for the web",
   "main": "dist/fireproof.cjs.js",
   "module": "dist/fireproof.esm.js",
@@ -12,9 +12,13 @@
     "./browser": "./dist/fireproof.browser.js"
   },
   "browser": "./dist/fireproof.browser.js",
+  "files": [
+    "dist/fireproof.*"
+  ],
   "type": "module",
   "scripts": {
     "build": "npm run clean && node ./scripts/build.js",
+    "prepublishOnly": "npm run build",
     "clean": "rm -rf dist/*",
     "start": "node ./scripts/serve.js",
     "analyze": "node ./scripts/analyze.js",

@@ -13,26 +13,28 @@ export class CarStoreIDB extends CarStore {
   async withDB(dbWorkFun: (arg0: any) => any) {
     if (!this.idb) {
       const dbName = `fp.${FORMAT}.${this.keyId}.${this.name}.valet`
-      const options = {
-        upgrade(db: IDBDatabase) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      this.idb = await openDB(dbName, 1, {
+        upgrade(db): void {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
           db.createObjectStore('cars')
         }
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      this.idb = await openDB(dbName, 0, options)
+      })
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await dbWorkFun(this.idb)
   }
 
   async load(cid: AnyLink): Promise<AnyBlock> {
+    console.log('loading', cid.toString())
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await this.withDB(async (db: IDBPDatabase<unknown>) => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       const tx = db.transaction(['cars'], 'readonly')
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       const bytes = (await tx.objectStore('cars').get(cid.toString())) as Uint8Array
-      if (!bytes) throw new Error(`missing block ${cid.toString()}`)
+      if (!bytes) throw new Error(`missing idb block ${cid.toString()}`)
+      console.log('loaded', cid.toString())
       return { cid, bytes }
     })
   }
