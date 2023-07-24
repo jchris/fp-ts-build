@@ -63,6 +63,7 @@
     "@alanshaw/pail": "^0.3.3",
     "@ipld/dag-cbor": "^9.0.3",
     "async": "^3.2.4",
+    "idb": "^7.1.1",
     "multiformats": "^12.0.1",
     "prolly-trees": "^1.0.4"
   }

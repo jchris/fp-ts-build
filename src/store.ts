@@ -14,7 +14,7 @@ export class HeaderStore {
     this.name = name
   }
 
-  makeHeader(car: AnyLink) {
+  makeHeader(car: AnyLink): string {
     return JSON.stringify({ car: car.toString() })
   }
 
