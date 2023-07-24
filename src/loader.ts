@@ -1,6 +1,7 @@
 import { CarReader } from '@ipld/car'
 
-import { CarStoreFS, HeaderStoreFS } from './store-fs'
+// import { CarStoreFS, HeaderStoreFS } from './store-fs'
+import { CarStoreIDB as CarStore, HeaderStoreLS as HeaderStore } from './store-browser'
 import { makeCarFile, parseCarFile } from './loader-helpers'
 import { Transaction } from './transaction'
 import { AnyBlock, AnyLink, BulkResult, ClockHead } from './types'
@@ -8,15 +9,15 @@ import { CID } from 'multiformats'
 
 export class Loader {
   name: string
-  headerStore: HeaderStoreFS
-  carStore: CarStoreFS
+  headerStore: HeaderStore
+  carStore: CarStore
   carLog: AnyLink[] = []
   carsReaders: Map<string, CarReader> = new Map()
   ready: Promise<{ head: ClockHead}> // todo this will be a map of headers by branch name
   constructor(name: string) {
     this.name = name
-    this.headerStore = new HeaderStoreFS(name)
-    this.carStore = new CarStoreFS(name)
+    this.headerStore = new HeaderStore(name)
+    this.carStore = new CarStore(name)
     // todo config with multiple branches
     this.ready = this.headerStore.load('main').then(async header => {
       if (!header) return { head: [] }

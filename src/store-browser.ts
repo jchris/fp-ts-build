@@ -1,11 +1,11 @@
 import { openDB, IDBPDatabase } from 'idb'
 
 import { AnyBlock, AnyLink } from './types'
-import { HeaderStore, StoredHeader } from './store'
+import { CarStore, HeaderStore, StoredHeader } from './store'
 
 export const FORMAT = '0.9'
 
-export class CarStoreIDB {
+export class CarStoreIDB extends CarStore {
   keyId: string = 'public'
   // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   idb: IDBPDatabase<unknown> | null = null
