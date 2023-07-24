@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import assert from 'assert'
-// import { join, dirname } from 'node:path'
-// import { mkdir, readdir, rm } from 'fs/promises'
+import { join } from 'node:path'
+import { mkdir, readdir, rm } from 'fs/promises'
 
 export { assert }
 

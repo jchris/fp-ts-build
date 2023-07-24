@@ -62,17 +62,17 @@ export class HeaderStoreLS extends HeaderStore {
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async load(branch: string = 'main'): Promise<StoredHeader | null> {
-    // try {
-    const bytes = localStorage.getItem(this.headerKey(branch))
-    return bytes ? this.parseHeader(bytes.toString()) : null
-    // } catch (e) {}
+    try {
+      const bytes = localStorage.getItem(this.headerKey(branch))
+      return bytes ? this.parseHeader(bytes.toString()) : null
+    } catch (e) {}
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async save(carCid: AnyLink, branch: string = 'main') {
-    // try {
-    const headerKey = this.headerKey(branch)
-    return localStorage.setItem(headerKey, this.makeHeader(carCid))
-    // } catch (e) {}
+    try {
+      const headerKey = this.headerKey(branch)
+      return localStorage.setItem(headerKey, this.makeHeader(carCid))
+    } catch (e) {}
   }
 }
