@@ -4,7 +4,6 @@ import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import * as codec from '@ipld/dag-cbor'
 import { put, get, entries, EventData } from '@alanshaw/pail/crdt'
 import { EventFetcher } from '@alanshaw/pail/clock'
-import { MemoryBlockstore } from '@alanshaw/pail/block'
 import { TransactionBlockstore as Blockstore, Transaction } from './transaction'
 import { DocUpdate, ClockHead, BlockFetcher, AnyLink, DocValue, BulkResult } from './types'
 
@@ -65,7 +64,8 @@ export async function clockChangesSince(
   since: ClockHead
 ): Promise<{ result: DocUpdate[] }> {
   const eventsFetcher = new EventFetcher<EventData>(blocks)
-  const updates = await gatherUpdates(blocks, eventsFetcher, head, since)
+  const keys: Set<string> = new Set()
+  const updates = await gatherUpdates(blocks, eventsFetcher, head, since, [], keys)
   return { result: updates.reverse() }
 }
 
@@ -74,7 +74,8 @@ async function gatherUpdates(
   eventsFetcher: EventFetcher<EventData>,
   head: ClockHead,
   since: ClockHead,
-  updates: DocUpdate[] = []
+  updates: DocUpdate[] = [],
+  keys: Set<string>
 ): Promise<DocUpdate[]> {
   for (const link of since) {
     if (head.includes(link)) {
@@ -85,10 +86,12 @@ async function gatherUpdates(
   for (const link of head) {
     const { value: event } = await eventsFetcher.get(link)
     const { key, value } = event.data
+    if (keys.has(key)) continue
+    keys.add(key)
     const docValue = await getValueFromLink(blocks, value)
     updates.push({ key, value: docValue.doc, del: docValue.del })
     if (event.parents) {
-      updates = await gatherUpdates(blocks, eventsFetcher, event.parents, since, updates)
+      updates = await gatherUpdates(blocks, eventsFetcher, event.parents, since, updates, keys)
     }
   }
   return updates
@@ -110,7 +113,7 @@ export async function doCompact(blocks: Blockstore, head: ClockHead) {
     await newBlocks.put(cid, bl.bytes)
   }
 
-  await blocks.compact(newBlocks)
+  await blocks.compact(newBlocks, head)
 }
 
 class LoggingFetcher implements BlockFetcher {

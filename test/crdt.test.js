@@ -164,8 +164,9 @@ describe('Compact a CRDT with writes', function () {
     equals(blz.length, 25)
   })
   it('should start with changes', async function () {
-    const chs = await crdt.changes([])
-    equals(chs.result[0].key, 'ace')
+    const { result } = await crdt.changes([])
+    equals(result.length, 2)
+    equals(result[0].key, 'ace')
   })
   it('should have fewer blocks after compact', async function () {
     await crdt.compact()
