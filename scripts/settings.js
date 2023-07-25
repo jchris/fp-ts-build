@@ -46,7 +46,7 @@ export function createBuildSettings(options) {
 
     const browserConfig = {
       ...commonSettings,
-      outfile: `dist/${filename}.browser.js`,
+      outfile: `dist/${filename}.browser.iife.js`,
       format: 'iife',
       platform: 'browser',
       target: 'es2015',
@@ -58,7 +58,19 @@ export function createBuildSettings(options) {
       ]
     }
 
-    return [cjsConfig, esmConfig, browserConfig]
+    const browserESMConfig = {
+      ...browserConfig,
+      outfile: `dist/${filename}.browser.esm.js`,
+      format: 'esm'
+    }
+
+    const browserCJSConfig = {
+      ...browserConfig,
+      outfile: `dist/${filename}.browser.cjs.js`,
+      format: 'cjs'
+    }
+
+    return [cjsConfig, esmConfig, browserConfig, browserESMConfig, browserCJSConfig]
   })
 
   return configs.flat()

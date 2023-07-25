@@ -1,6 +1,6 @@
 {
   "name": "@fireproof/core",
-  "version": "0.10.3-dev",
+  "version": "0.10.5-dev",
   "description": "Immutable embedded distributed database for the web",
   "main": "dist/fireproof.cjs.js",
   "module": "dist/fireproof.esm.js",
@@ -9,10 +9,15 @@
       "import": "./dist/fireproof.esm.js",
       "require": "./dist/fireproof.cjs.js"
     },
-    "./browser": "./dist/fireproof.browser.js"
+    "./browser": {
+      "import": "./dist/fireproof.browser.esm.js",
+      "require": "./dist/fireproof.browser.cjs.js",
+      "script": "./dist/fireproof.browser.iife.js"
+    }
   },
-  "browser": "./dist/fireproof.browser.js",
+  "browser": "./dist/fireproof.browser.iife.js",
   "files": [
+    "src",
     "dist/fireproof.*"
   ],
   "type": "module",
