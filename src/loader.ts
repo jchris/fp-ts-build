@@ -1,7 +1,7 @@
 import { CarReader } from '@ipld/car'
 
-// import { CarStoreFS, HeaderStoreFS } from './store-fs'
-import { CarStoreIDB as CarStore, HeaderStoreLS as HeaderStore } from './store-browser'
+import { CarStoreFS as CarStore, HeaderStoreFS as HeaderStore } from './store-fs'
+// import { CarStoreIDB as CarStore, HeaderStoreLS as HeaderStore } from './store-browser'
 import { makeCarFile, parseCarFile } from './loader-helpers'
 import { Transaction } from './transaction'
 import { AnyBlock, AnyLink, BulkResult, ClockHead } from './types'
