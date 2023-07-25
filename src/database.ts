@@ -20,11 +20,13 @@ export class Database {
 
   async put(doc: Doc): Promise<DbResponse> {
     const { _id, ...value } = doc
+    const docId = _id || 'f' + Math.random().toString(36).slice(2) // todo uuid v7
+
     return await new Promise<DbResponse>((resolve, reject) => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-      this._writeQueue.push({ key: _id, value }, function (err: Error | null, result?: BulkResult) {
+      this._writeQueue.push({ key: docId, value }, function (err: Error | null, result?: BulkResult) {
         if (err) reject(err)
-        resolve({ id: doc._id, clock: result?.head } as DbResponse)
+        resolve({ id: docId, clock: result?.head } as DbResponse)
       })
     })
   }

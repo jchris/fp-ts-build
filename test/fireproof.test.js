@@ -1,3 +1,4 @@
+/* eslint-disable mocha/max-top-level-suites */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -7,6 +8,28 @@ import { assert, equals, notEquals, matches, equalsJSON, resetDirectory } from '
 import { Fireproof } from '../dist/fireproof.esm.js'
 import { Database } from '../dist/database.esm.js'
 import { CarStoreFS, defaultConfig, HeaderStoreFS } from '../dist/store-fs.esm.js'
+
+describe('basic database', function () {
+  /** @type {Database} */
+  let db
+  beforeEach(async function () {
+    // erase the existing test data
+    await resetDirectory(defaultConfig.dataDir, 'test-basic')
+
+    db = Fireproof.storage('test-basic')
+  })
+  it('can put with id', async function () {
+    const ok = await db.put({ _id: 'test', foo: 'bar' })
+    assert(ok)
+    equals(ok.id, 'test')
+  })
+  it('can put without id', async function () {
+    const ok = await db.put({ foo: 'bam' })
+    assert(ok)
+    const got = await db.get(ok.id)
+    equals(got.foo, 'bam')
+  })
+})
 
 describe('Reopening a database', function () {
   /** @type {Database} */
