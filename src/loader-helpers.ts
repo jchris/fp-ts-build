@@ -12,12 +12,20 @@ import { AnyBlock, BulkResult, ClockHead, AnyLink } from './types'
 export async function makeCarFile(
   t: Transaction,
   { head }: BulkResult,
-  cars: AnyLink[]
+  cars: AnyLink[],
+  compact: boolean = false
 ): Promise<BlockView<unknown, number, number, 1>> {
   if (!head) throw new Error('no head')
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+
+  let value
+  if (compact) {
+    value = { fp: { head, cars: [], compact: cars } }
+  } else {
+    value = { fp: { head, cars, compact: [] } }
+  }
+
   const fpCarHeaderBlock = (await encode({
-    value: { fp: { head, cars } },
+    value,
     hasher,
     codec
   })) as AnyBlock
@@ -41,13 +49,15 @@ export async function makeCarFile(
   return await encode({ value: writer.bytes, hasher, codec: raw })
 }
 
-export async function parseCarFile(reader: CarReader): Promise<{ head: ClockHead; cars: AnyLink[] }> {
+export async function parseCarFile(
+  reader: CarReader
+): Promise<{ head: ClockHead; cars: AnyLink[]; compact: AnyLink[] }> {
   const roots = await reader.getRoots()
   const header = await reader.get(roots[0])
   if (!header) throw new Error('missing header block')
   const got = await decode({ bytes: header.bytes, hasher, codec })
   const {
-    fp: { head, cars }
-  } = got.value as { fp: { head: ClockHead; cars: AnyLink[] } }
-  return { head, cars }
+    fp: { head, cars, compact }
+  } = got.value as { fp: { head: ClockHead; cars: AnyLink[]; compact: AnyLink[] } }
+  return { head, cars, compact }
 }

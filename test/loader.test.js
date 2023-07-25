@@ -1,7 +1,13 @@
+/* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable mocha/max-top-level-suites */
+
+import * as codec from '@ipld/dag-cbor'
+import { sha256 as hasher } from 'multiformats/hashes/sha2'
+import { encode } from 'multiformats/block'
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, matches, equals, resetDirectory, notEquals } from './helpers.js'
 
@@ -9,9 +15,93 @@ import { parseCarFile } from '../dist/loader-helpers.esm.js'
 
 import { Loader } from '../dist/loader.esm.js'
 import { CRDT } from '../dist/crdt.esm.js'
-import { TransactionBlockstore as Blockstore } from '../dist/transaction.esm.js'
+import { TransactionBlockstore as Blockstore, Transaction } from '../dist/transaction.esm.js'
 
 import { defaultConfig } from '../dist/store-fs.esm.js'
+
+describe('basic Loader', function () {
+  let loader, block, t
+  beforeEach(async function () {
+    await resetDirectory(defaultConfig.dataDir, 'test-loader-commit')
+    t = new Transaction({})
+    loader = new Loader('test-loader-commit')
+    block = (await encode({
+      value: { hello: 'world' },
+      hasher,
+      codec
+    }))
+    await t.put(block.cid, block.bytes)
+  })
+  it('should have an empty car log', function () {
+    equals(loader.carLog.length, 0)
+  })
+  it('should commit', async function () {
+    const carCid = await loader.commit(t, { head: [block.cid] })
+    equals(loader.carLog.length, 1)
+    const reader = await loader.loadCar(carCid)
+    assert(reader)
+    const parsed = await parseCarFile(reader)
+    assert(parsed.cars)
+    equals(parsed.cars.length, 0)
+    assert(parsed.head)
+  })
+})
+
+describe('basic Loader with two commits', function () {
+  let loader, block, block2, t, carCid
+  beforeEach(async function () {
+    await resetDirectory(defaultConfig.dataDir, 'test-loader-two-commit')
+    t = new Transaction({})
+    loader = new Loader('test-loader-two-commit')
+    block = (await encode({
+      value: { hello: 'world' },
+      hasher,
+      codec
+    }))
+    await t.put(block.cid, block.bytes)
+    await loader.commit(t, { head: [block.cid] })
+
+    block2 = (await encode({
+      value: { hello: 'universe' },
+      hasher,
+      codec
+    }))
+
+    await t.put(block2.cid, block2.bytes)
+    carCid = await loader.commit(t, { head: [block2.cid] })
+  })
+  it('should have a car log', function () {
+    equals(loader.carLog.length, 2)
+  })
+  it('should commit', async function () {
+    const reader = await loader.loadCar(carCid)
+    assert(reader)
+    const parsed = await parseCarFile(reader)
+    assert(parsed.cars)
+    equals(parsed.compact.length, 0)
+    equals(parsed.cars.length, 1)
+    assert(parsed.head)
+  })
+  it('should compact', async function () {
+    const compactCid = await loader.commit(t, { head: [block2.cid] }, true)
+    equals(loader.carLog.length, 1)
+
+    const reader = await loader.loadCar(compactCid)
+    assert(reader)
+    const parsed = await parseCarFile(reader)
+    assert(parsed.cars)
+    equals(parsed.compact.length, 2)
+    equals(parsed.cars.length, 0)
+    assert(parsed.head)
+  })
+  it('compact should erase old files', async function () {
+    await loader.commit(t, { head: [block2.cid] }, true)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    const e = await loader.loadCar(carCid).catch(e => e)
+    assert(e)
+    matches(e.message, 'ENOENT')
+  })
+})
 
 describe('Loader with a committed transaction', function () {
   /** @type {Loader} */

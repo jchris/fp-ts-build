@@ -95,6 +95,10 @@ describe('TransactionBlockstore with a completed transaction', function () {
       return await tblocks.put(cid2, 'value2')
     })
   })
+  it('should have transactions', async function () {
+    const ts = blocks.transactions
+    equals(ts.size, 2)
+  })
   it('should get', async function () {
     const value = await blocks.get(cid)
     equals(value.cid, cid)
@@ -109,5 +113,12 @@ describe('TransactionBlockstore with a completed transaction', function () {
       blz.push(blk)
     }
     equals(blz.length, 2)
+  })
+  it('should compact', async function () {
+    const compactT = new Transaction(blocks)
+    await compactT.put(cid2, 'valueX')
+    await blocks.compact(compactT)
+    equals(blocks.transactions.size, 1)
+    assert(blocks.transactions.has(compactT))
   })
 })

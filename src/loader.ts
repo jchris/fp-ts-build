@@ -26,10 +26,17 @@ export class Loader {
     })
   }
 
-  async commit(t: Transaction, done: BulkResult): Promise<AnyLink> {
-    const car = await makeCarFile(t, done, this.carLog)
+  async commit(t: Transaction, done: BulkResult, compact: boolean = false): Promise<AnyLink> {
+    const car = await makeCarFile(t, done, this.carLog, compact)
     await this.carStore.save(car)
-    this.carLog.push(car.cid)
+    if (compact) { // test this
+      for (const cid of this.carLog) {
+        await this.carStore.remove(cid)
+      }
+      this.carLog = [car.cid]
+    } else {
+      this.carLog.push(car.cid)
+    }
     await this.headerStore.save(car.cid)
     return car.cid
   }

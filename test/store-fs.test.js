@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -17,20 +18,20 @@ const decoder = new TextDecoder('utf-8')
 
 describe('CarStoreFS', function () {
   /** @type {CarStoreFS} */
-  let loader
+  let store
   beforeEach(function () {
-    loader = new CarStoreFS('test')
+    store = new CarStoreFS('test')
   })
   it('should have a name', function () {
-    equals(loader.name, 'test')
+    equals(store.name, 'test')
   })
   it('should save a car', async function () {
     const car = {
       cid: 'cid',
       bytes: new Uint8Array([55, 56, 57])
     }
-    await loader.save(car)
-    const path = join(defaultConfig.dataDir, loader.name, car.cid + '.car')
+    await store.save(car)
+    const path = join(defaultConfig.dataDir, store.name, car.cid + '.car')
     const data = await readFile(path)
     equals(data.toString(), decoder.decode(car.bytes))
   })
@@ -38,41 +39,46 @@ describe('CarStoreFS', function () {
 
 describe('CarStoreFS with a saved car', function () {
   /** @type {CarStoreFS} */
-  let loader, car
+  let store, car
   beforeEach(async function () {
-    loader = new CarStoreFS('test2')
+    store = new CarStoreFS('test2')
     car = {
       cid: 'cid',
       bytes: new Uint8Array([55, 56, 57, 80])
     }
-    await loader.save(car)
+    await store.save(car)
   })
   it('should have a car', async function () {
-    const path = join(defaultConfig.dataDir, loader.name, car.cid + '.car')
+    const path = join(defaultConfig.dataDir, store.name, car.cid + '.car')
     const data = await readFile(path)
     equals(data.toString(), decoder.decode(car.bytes))
   })
   it('should load a car', async function () {
-    const loaded = await loader.load(car.cid)
+    const loaded = await store.load(car.cid)
     equals(loaded.cid, car.cid)
     equals(loaded.bytes.constructor.name, 'Uint8Array')
     equals(loaded.bytes.toString(), car.bytes.toString())
+  })
+  it('should remove a car', async function () {
+    await store.remove(car.cid)
+    const error = await store.load(car.cid).catch(e => e)
+    matches(error.message, 'ENOENT')
   })
 })
 
 describe('HeaderStoreFS', function () {
   /** @type {HeaderStoreFS} */
-  let loader
+  let store
   beforeEach(function () {
-    loader = new HeaderStoreFS('test')
+    store = new HeaderStoreFS('test')
   })
   it('should have a name', function () {
-    equals(loader.name, 'test')
+    equals(store.name, 'test')
   })
   it('should save a header', async function () {
     const cid = CID.parse('bafybeia4luuns6dgymy5kau5rm7r4qzrrzg6cglpzpogussprpy42cmcn4')
-    await loader.save(cid)
-    const path = join(defaultConfig.dataDir, loader.name, 'main.json')
+    await store.save(cid)
+    const path = join(defaultConfig.dataDir, store.name, 'main.json')
     const file = await readFile(path)
     const header = JSON.parse(file.toString())
     assert(header)
@@ -83,14 +89,14 @@ describe('HeaderStoreFS', function () {
 
 describe('HeaderStoreFS with a saved header', function () {
   /** @type {HeaderStoreFS} */
-  let loader
+  let store
   beforeEach(async function () {
-    loader = new HeaderStoreFS('test-saved-header')
+    store = new HeaderStoreFS('test-saved-header')
     const cid = CID.parse('bafybeia4luuns6dgymy5kau5rm7r4qzrrzg6cglpzpogussprpy42cmcn4')
-    await loader.save(cid)
+    await store.save(cid)
   })
   it('should have a header', async function () {
-    const path = join(defaultConfig.dataDir, loader.name, 'main.json')
+    const path = join(defaultConfig.dataDir, store.name, 'main.json')
     const data = await readFile(path)
     matches(data, /car/)
     const header = JSON.parse(data.toString())
@@ -98,7 +104,7 @@ describe('HeaderStoreFS with a saved header', function () {
     assert(header.car)
   })
   it('should load a header', async function () {
-    const loaded = await loader.load()
+    const loaded = await store.load()
     assert(loaded)
     assert(loaded.car)
   })

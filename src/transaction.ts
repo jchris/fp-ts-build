@@ -67,10 +67,11 @@ export class TransactionBlockstore implements BlockFetcher {
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async compact(t: Transaction) {
+  async compact(t: Transaction, head: ClockHead) {
     this.transactions.clear()
     this.transactions.add(t)
     // todo replace cars
+    return await this.loader?.commit(t, { head }, true)
   }
 
   async * entries(): AsyncIterableIterator<AnyBlock> {

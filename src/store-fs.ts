@@ -1,6 +1,6 @@
 import { join, dirname } from 'node:path'
 import { homedir } from 'node:os'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises'
 
 import { AnyBlock, AnyLink } from './types'
 import { HeaderStore, CarStore, StoredHeader } from './store'
@@ -42,6 +42,11 @@ export class CarStoreFS extends CarStore {
     const filepath = join(defaultConfig.dataDir, this.name, cid.toString() + '.car')
     const bytes = await readFile(filepath)
     return { cid, bytes: new Uint8Array(bytes) }
+  }
+
+  async remove(cid: AnyLink) {
+    const filepath = join(defaultConfig.dataDir, this.name, cid.toString() + '.car')
+    await unlink(filepath)
   }
 }
 
