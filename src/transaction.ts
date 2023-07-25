@@ -65,4 +65,22 @@ export class TransactionBlockstore implements BlockFetcher {
   async commit(t: Transaction, done: BulkResult): Promise<AnyLink | undefined> {
     return await this.loader?.commit(t, done)
   }
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async compact(t: Transaction) {
+    this.transactions.clear()
+    this.transactions.add(t)
+    // todo replace cars
+  }
+
+  async * entries(): AsyncIterableIterator<AnyBlock> {
+    const seen: Set<string> = new Set()
+    for (const t of this.transactions) {
+      for await (const blk of t.entries()) {
+        if (seen.has(blk.cid.toString())) continue
+        seen.add(blk.cid.toString())
+        yield blk
+      }
+    }
+  }
 }

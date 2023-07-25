@@ -4,6 +4,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable mocha/max-top-level-suites */
+import { CID } from 'multiformats'
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, equals, notEquals, matches, equalsJSON } from './helpers.js'
 import { TransactionBlockstore as Blockstore, Transaction } from '../dist/transaction.esm.js'
@@ -65,26 +67,47 @@ describe('A transaction', function () {
     blocks.transactions.add(tblocks)
   })
   it('should put and get', async function () {
-    await tblocks.put('key', 'bytes')
+    const cid = CID.parse('bafybeia4luuns6dgymy5kau5rm7r4qzrrzg6cglpzpogussprpy42cmcn4')
+
+    await tblocks.put(cid, 'bytes')
     assert(blocks.transactions.has(tblocks))
-    const got = await tblocks.get('key')
+    const got = await tblocks.get(cid)
     assert(got)
-    equals(got.cid, 'key')
+    equals(got.cid, cid)
     equals(got.bytes, 'bytes')
   })
 })
 
 describe('TransactionBlockstore with a completed transaction', function () {
-  let blocks
+  let blocks, cid, cid2
+
   beforeEach(async function () {
+    cid = CID.parse('bafybeia4luuns6dgymy5kau5rm7r4qzrrzg6cglpzpogussprpy42cmcn4')
+    cid2 = CID.parse('bafybeibgouhn5ktecpjuovt52zamzvm4dlve5ak7x6d5smms3itkhplnhm')
+
     blocks = new Blockstore()
     await blocks.transaction(async (tblocks) => {
-      return await tblocks.put('key', 'value')
+      await tblocks.put(cid, 'value')
+      return await tblocks.put(cid2, 'value2')
+    })
+    await blocks.transaction(async (tblocks) => {
+      await tblocks.put(cid, 'value')
+      return await tblocks.put(cid2, 'value2')
     })
   })
   it('should get', async function () {
-    const value = await blocks.get('key')
-    equals(value.cid, 'key')
+    const value = await blocks.get(cid)
+    equals(value.cid, cid)
     equals(value.bytes, 'value')
+
+    const value2 = await blocks.get(cid2)
+    equals(value2.bytes, 'value2')
+  })
+  it('should yield entries', async function () {
+    const blz = []
+    for await (const blk of blocks.entries()) {
+      blz.push(blk)
+    }
+    equals(blz.length, 2)
   })
 })

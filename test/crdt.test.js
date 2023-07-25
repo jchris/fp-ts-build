@@ -140,3 +140,49 @@ describe('CRDT with two multi-writes', function () {
     equals(result[3].key, 'jack')
   })
 })
+
+describe('Compact a CRDT with writes', function () {
+  /** @type {CRDT} */
+  let crdt
+  beforeEach(async function () {
+    crdt = new CRDT()
+    for (let i = 0; i < 10; i++) {
+      const bulk = [{ key: 'ace', value: { points: 11 } }, { key: 'king', value: { points: 10 } }]
+      await crdt.bulk(bulk)
+    }
+  })
+  it('has data', async function () {
+    const got = await crdt.get('ace')
+    assert(got.doc)
+    equals(got.doc.points, 11)
+  })
+  it('should start with blocks', async function () {
+    const blz = []
+    for await (const blk of crdt._blocks.entries()) {
+      blz.push(blk)
+    }
+    equals(blz.length, 25)
+  })
+  it('should start with changes', async function () {
+    const chs = await crdt.changes([])
+    equals(chs.result[0].key, 'ace')
+  })
+  it('should have fewer blocks after compact', async function () {
+    await crdt.compact()
+    const blz = []
+    for await (const blk of crdt._blocks.entries()) {
+      blz.push(blk)
+    }
+    equals(blz.length, 4)
+  })
+  it('should have data after compact', async function () {
+    await crdt.compact()
+    const got = await crdt.get('ace')
+    assert(got.doc)
+    equals(got.doc.points, 11)
+  })
+  it('should have changes after compact', async function () {
+    const chs = await crdt.changes([])
+    equals(chs.result[0].key, 'ace')
+  })
+})

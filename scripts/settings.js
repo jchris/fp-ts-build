@@ -28,13 +28,7 @@ export function createBuildSettings(options) {
   const configs = entryPoints.map(entryPoint => {
     const filename = path.basename(entryPoint, '.ts')
 
-    const cjsConfig = {
-      ...commonSettings,
-      outfile: `dist/${filename}.cjs.js`,
-      format: 'cjs',
-      platform: 'node',
-      entryPoints: [entryPoint]
-    }
+    const builds = []
 
     const esmConfig = {
       ...commonSettings,
@@ -44,33 +38,51 @@ export function createBuildSettings(options) {
       entryPoints: [entryPoint]
     }
 
-    const browserConfig = {
-      ...commonSettings,
-      outfile: `dist/${filename}.browser.iife.js`,
-      format: 'iife',
-      platform: 'browser',
-      target: 'es2015',
-      entryPoints: [entryPoint],
-      plugins: [
-        polyfillNode({}),
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        ...commonSettings.plugins
-      ]
+    builds.push(esmConfig)
+
+    if (/fireproof/.test(entryPoint)) {
+      const cjsConfig = {
+        ...commonSettings,
+        outfile: `dist/${filename}.cjs.js`,
+        format: 'cjs',
+        platform: 'node',
+        entryPoints: [entryPoint]
+      }
+      builds.push(cjsConfig)
+
+      const browserIIFEConfig = {
+        ...commonSettings,
+        outfile: `dist/${filename}.browser.iife.js`,
+        format: 'iife',
+        platform: 'browser',
+        target: 'es2015',
+        entryPoints: [entryPoint],
+        plugins: [
+          polyfillNode({}),
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          ...commonSettings.plugins
+        ]
+      }
+
+      builds.push(browserIIFEConfig)
+
+      const browserESMConfig = {
+        ...browserIIFEConfig,
+        outfile: `dist/${filename}.browser.esm.js`,
+        format: 'esm'
+      }
+
+      builds.push(browserESMConfig)
+
+      const browserCJSConfig = {
+        ...browserIIFEConfig,
+        outfile: `dist/${filename}.browser.cjs.js`,
+        format: 'cjs'
+      }
+      builds.push(browserCJSConfig)
     }
 
-    const browserESMConfig = {
-      ...browserConfig,
-      outfile: `dist/${filename}.browser.esm.js`,
-      format: 'esm'
-    }
-
-    const browserCJSConfig = {
-      ...browserConfig,
-      outfile: `dist/${filename}.browser.cjs.js`,
-      format: 'cjs'
-    }
-
-    return [cjsConfig, esmConfig, browserConfig, browserESMConfig, browserCJSConfig]
+    return builds
   })
 
   return configs.flat()

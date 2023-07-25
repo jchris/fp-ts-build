@@ -1,6 +1,6 @@
 import { TransactionBlockstore as Blockstore } from './transaction'
 import { DocUpdate, BulkResult, ClockHead } from './types'
-import { clockChangesSince, applyBulkUpdateToCrdt, getValueFromCrdt } from './crdt-helpers'
+import { clockChangesSince, applyBulkUpdateToCrdt, getValueFromCrdt, doCompact } from './crdt-helpers'
 
 export class CRDT {
   name: string | null
@@ -41,5 +41,9 @@ export class CRDT {
 
   async changes(since: ClockHead) {
     return await clockChangesSince(this._blocks, this._head, since)
+  }
+
+  async compact() {
+    return await doCompact(this._blocks, this._head)
   }
 }
