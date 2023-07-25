@@ -4,9 +4,13 @@ import { Database } from './database'
 
 export class Indexer {
   database: Database
+  name: string
+  mapFn: Function
 
-  constructor(database: Database, name: string, mapper: Function) {
+  constructor(database: Database, name: string, mapFn: Function) {
     this.database = database
+    this.name = name
+    this.mapFn = mapFn
   }
 
   async query() {

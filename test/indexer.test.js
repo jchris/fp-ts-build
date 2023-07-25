@@ -26,6 +26,8 @@ describe('basic Indexer', function () {
   })
   it('should have properties', function () {
     equals(indexer.database, db)
+    equals(indexer.name, 'hello')
+    assert(indexer.mapFn)
   })
   it('should call the map function on first query', async function () {
     didMap = false
