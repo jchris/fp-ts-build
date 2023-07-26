@@ -1,11 +1,15 @@
 import { parse } from 'multiformats/link'
-import { AnyLink } from './types'
+import { AnyLink, ClockHead } from './types'
 import { Database } from './database'
+
+import { updateIndex } from './indexer-helpers'
 
 export class Indexer {
   database: Database
   name: string
   mapFn: Function
+  indexHead: ClockHead = []
+  indexRoot: ProllyNode
 
   constructor(database: Database, name: string, mapFn: Function) {
     this.database = database
@@ -14,6 +18,6 @@ export class Indexer {
   }
 
   async query() {
-
+    const indexRoot = await updateIndex(this.database, this.indexHead, this.mapFn)
   }
 }
