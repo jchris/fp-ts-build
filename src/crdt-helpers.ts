@@ -62,11 +62,11 @@ export async function clockChangesSince(
   blocks: Blockstore,
   head: ClockHead,
   since: ClockHead
-): Promise<{ result: DocUpdate[] }> {
+): Promise<{ result: DocUpdate[], head: ClockHead }> {
   const eventsFetcher = new EventFetcher<EventData>(blocks)
   const keys: Set<string> = new Set()
   const updates = await gatherUpdates(blocks, eventsFetcher, head, since, [], keys)
-  return { result: updates.reverse() }
+  return { result: updates.reverse(), head }
 }
 
 async function gatherUpdates(

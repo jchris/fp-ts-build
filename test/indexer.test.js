@@ -19,13 +19,13 @@ describe('basic Indexer', function () {
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
-    indexer = new Indexer(db, 'hello', (doc) => {
+    indexer = new Indexer(db._crdt, 'hello', (doc) => {
       didMap = true
       return doc.title
     })
   })
   it('should have properties', function () {
-    equals(indexer.database, db)
+    equals(indexer.crdt, db._crdt)
     equals(indexer.name, 'hello')
     assert(indexer.mapFn)
   })

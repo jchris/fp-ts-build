@@ -36,3 +36,34 @@ export type DbResponse = {
   id: string
   clock: ClockHead
 }
+
+export type ChangesResponse = {
+  clock: ClockHead
+  rows: { key: string; value: Doc }[]
+}
+
+// ProllyNode type based on the ProllyNode from 'prolly-trees/base'
+export interface ProllyNode extends BaseNode {
+  get(key: string): unknown
+  bulk(bulk: DocUpdate[]): { root: any; blocks: any } | PromiseLike<{ root: any; blocks: any }>
+  address: Promise<Link>
+  distance: number
+  compare: (a: any, b: any) => number
+  cache: any
+  block: Promise<Block>
+}
+// export interface CIDCounter {
+//   add(node: ProllyNode): void
+//   all(): Promise<Set<string | Promise<string>>>
+// }
+
+export interface ProllyOptions {
+  cid?: Link
+  list?: DocUpdate[]
+  get: (cid: any) => Promise<any>
+  cache: any
+  chunker: (entry: any, distance: number) => boolean
+  codec: any
+  hasher: any
+  compare: (a: any, b: any) => number
+}
