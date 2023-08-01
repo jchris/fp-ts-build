@@ -9,13 +9,13 @@ import * as codec from '@ipld/dag-cbor'
 // @ts-ignore
 import charwise from 'charwise'
 // @ts-ignore
-import * as Map from 'prolly-trees/map'
+import * as DbIndex from 'prolly-trees/db-index'
 // @ts-ignore
 import { bf, simpleCompare } from 'prolly-trees/utils'
 // @ts-ignore
 import { nocache as cache } from 'prolly-trees/cache'
 
-import { AnyLink, DocUpdate, MapFn, DocFragment, StaticProllyOptions, BlockFetcher, ProllyNode, IndexUpdate, QueryOpts } from './types'
+import { AnyLink, DocUpdate, MapFn, DocFragment, StaticProllyOptions, BlockFetcher, ProllyNode, IndexKey, IndexUpdate, QueryOpts } from './types'
 import { Transaction } from './transaction'
 
 export class IndexTree {
@@ -96,7 +96,7 @@ export async function bulkIndex(tblocks: Transaction, inIndex: IndexTree, indexE
       let returnRootBlock: Block | null = null
       let returnNode: ProllyNode | null = null
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-      for await (const node of await Map.create({ get: makeProllyGetBlock(tblocks), list: indexEntries, ...opts }) as ProllyNode[]) {
+      for await (const node of await DbIndex.create({ get: makeProllyGetBlock(tblocks), list: indexEntries, ...opts }) as ProllyNode[]) {
         const block = await node.block as Block
         await tblocks.put(block.cid, block.bytes)
         returnRootBlock = block
@@ -106,7 +106,7 @@ export async function bulkIndex(tblocks: Transaction, inIndex: IndexTree, indexE
       return { root: returnNode, cid: returnRootBlock.cid }
     } else {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-      inIndex.root = await Map.load({ cid: inIndex.cid, get: makeProllyGetBlock(tblocks), ...opts }) as ProllyNode
+      inIndex.root = await DbIndex.load({ cid: inIndex.cid, get: makeProllyGetBlock(tblocks), ...opts }) as ProllyNode
     }
   }
   const { root, blocks: newBlocks } = await inIndex.root.bulk(indexEntries)
@@ -122,8 +122,10 @@ export async function bulkIndex(tblocks: Transaction, inIndex: IndexTree, indexE
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-export async function applyQuery(resp: { result: any[] }, query: QueryOpts) {
-  // console.log('applyQuery', resp, query)
+export async function applyQuery(resp: { result: IndexUpdate[] }, query: QueryOpts) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+  resp.result = resp.result.map(({ key: [k, id], value }) => ({ key: k, id, row: value }))
+
   if (query.descending) {
     resp.result = resp.result.reverse()
   }
@@ -138,5 +140,16 @@ export async function applyQuery(resp: { result: any[] }, query: QueryOpts) {
   //     })
   //   )
   // }
-  return resp
+  return {
+    rows: resp.result.map(row => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+      row.key = (charwise.decode(row.key) as IndexKey)
+      return row
+    })
+  }
+}
+
+export function encodeRange(range: [IndexKey, IndexKey]): [IndexKey, IndexKey] {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+  return range.map(key => charwise.encode(key) as IndexKey) as [IndexKey, IndexKey]
 }

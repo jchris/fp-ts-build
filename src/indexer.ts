@@ -1,6 +1,6 @@
 import { ClockHead, DocUpdate, MapFn, IndexUpdate, IndexerResult, QueryOpts } from './types'
 import { TransactionBlockstore as Blockstore } from './transaction'
-import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery } from './indexer-helpers'
+import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery, encodeRange } from './indexer-helpers'
 import { CRDT } from './crdt'
 
 export class Indexer {
@@ -22,13 +22,19 @@ export class Indexer {
   async query(opts: QueryOpts = {}) {
     await this._updateIndex()
     if (!this.byKey.root) return { result: [] }
+
+    if (opts.range) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+      const { result, ...all } = await this.byKey.root.range(...encodeRange(opts.range))
+
+      // const { result, ...all } = await this.byKey.root.getAllEntries()
+
+      return await applyQuery({ result, ...all }, opts)
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const { result, ...all } = await this.byKey.root.getAllEntries()
-    const inRows = result.map(({ key: [k, id], value }) => ({ key: k, id, row: value }))
-    return await applyQuery(
-      { result: inRows, ...all },
-      opts
-    )
+    return await applyQuery({ result, ...all }, opts)
   }
 
   async _updateIndex() {

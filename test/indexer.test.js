@@ -41,7 +41,26 @@ describe('basic Indexer', function () {
     assert(!didMap)
   })
   it('should get results', async function () {
-    const results = await indexer.query()
-    assert(results)
+    const result = await indexer.query()
+    assert(result)
+    assert(result.rows)
+    equals(result.rows.length, 3)
+  })
+  it('should be in order', async function () {
+    const { rows } = await indexer.query()
+    equals(rows[0].key, 'amazing')
+  })
+  it('should work with limit', async function () {
+    const { rows } = await indexer.query({ limit: 1 })
+    equals(rows.length, 1)
+  })
+  it('should work with descending', async function () {
+    const { rows } = await indexer.query({ descending: true })
+    equals(rows[0].key, 'creative')
+  })
+  it('should range query', async function () {
+    const { rows } = await indexer.query({ range: ['b', 'd'] })
+    // console.log(rows)
+    equals(rows[0].key, 'creative')
   })
 })

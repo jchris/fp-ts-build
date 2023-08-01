@@ -29,8 +29,10 @@ export type DocValue = {
   del?: boolean
 }
 
+export type IndexKey = [string, string] | string
+
 export type IndexUpdate = {
-  key: [string, string] | string
+  key: IndexKey
   value?: DocFragment
   del?: boolean
 }
@@ -45,7 +47,12 @@ export type IndexerResult = {
   byKey: IdxTree
 }
 
-export type QueryOpts = { descending?: boolean; limit?: number; includeDocs?: boolean }
+export type QueryOpts = {
+  descending?: boolean
+  limit?: number
+  includeDocs?: boolean
+  range?: [IndexKey, IndexKey]
+}
 
 export type AnyLink = Link<unknown, number, number, 1 | 0>
 export type AnyBlock = { cid: AnyLink; bytes: Uint8Array }
@@ -64,7 +71,8 @@ export type ChangesResponse = {
 // ProllyNode type based on the ProllyNode from 'prolly-trees/base'
 export interface ProllyNode extends BaseNode {
   getAllEntries(): PromiseLike<{ [x: string]: any; result: IndexUpdate[] }>
-  getMany(removeIds: string[]): Promise<{result: any[]}>
+  getMany(removeIds: string[]): Promise<{ [x: string]: any; result: IndexKey[] }>
+  range(a: IndexKey, b: IndexKey): Promise<{ result: IndexUpdate[] }>
   get(key: string): unknown
   bulk(bulk: IndexUpdate[]): PromiseLike<{ root: ProllyNode | null; blocks: Block[] }>
   address: Promise<Link>
