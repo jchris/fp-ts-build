@@ -36,7 +36,8 @@ export type IndexUpdate = {
 }
 
 export type IndexerResult = {
-
+  byId: AnyLink | null
+  byKey: AnyLink | null
 }
 
 export type AnyLink = Link<unknown, number, number, 1 | 0>
@@ -88,8 +89,3 @@ export type DocFragment = string | number | boolean | null | DocFragment[] | { [
 type CallbackFn = (k: string, v: DocFragment) => void
 
 export type MapFn = (doc: Doc, map: CallbackFn) => DocBody | null
-
-export class IndexTree {
-  cid: AnyLink | null = null
-  root: ProllyNode | null = null
-}

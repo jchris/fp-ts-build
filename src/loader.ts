@@ -4,7 +4,10 @@ import { CarStoreFS as CarStore, HeaderStoreFS as HeaderStore } from './store-fs
 // import { CarStoreIDB as CarStore, HeaderStoreLS as HeaderStore } from './store-browser'
 import { makeCarFile, parseCarFile } from './loader-helpers'
 import { Transaction } from './transaction'
-import { AnyBlock, AnyLink, BulkResult, ClockHead, IndexTree } from './types'
+import {
+  AnyBlock, AnyLink, BulkResult, ClockHead
+  // , IndexTree
+} from './types'
 import { CID } from 'multiformats'
 
 export class Loader {
@@ -13,7 +16,7 @@ export class Loader {
   carStore: CarStore
   carLog: AnyLink[] = []
   carsReaders: Map<string, CarReader> = new Map()
-  ready: Promise<{ head: ClockHead}> // todo this will be a map of headers by branch name
+  ready: Promise<{ head: ClockHead }> // todo this will be a map of headers by branch name
   currentHead: ClockHead | null = null
   constructor(name: string) {
     this.name = name
@@ -69,7 +72,7 @@ export class Loader {
     return reader
   }
 
-  async ingestCarHead(cid: AnyLink, car: AnyBlock): Promise<{ head: ClockHead, cars: AnyLink[]}> {
+  async ingestCarHead(cid: AnyLink, car: AnyBlock): Promise<{ head: ClockHead, cars: AnyLink[] }> {
     const reader = await CarReader.fromBytes(car.bytes)
     this.carsReaders.set(cid.toString(), reader)
     const { head, cars } = await parseCarFile(reader)

@@ -1,5 +1,8 @@
 import { BlockView, Link, Block } from 'multiformats'
-import { create, encode, decode } from 'multiformats/block'
+import {
+  create
+  // , encode, decode
+} from 'multiformats/block'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import * as codec from '@ipld/dag-cbor'
 
@@ -12,24 +15,33 @@ import { bf, simpleCompare } from 'prolly-trees/utils'
 // @ts-ignore
 import { nocache as cache } from 'prolly-trees/cache'
 
-import { ClockHead, DocUpdate, MapFn, DocFragment, IndexTree, BulkResult, StaticProllyOptions, BlockFetcher, ProllyNode, IndexUpdate } from './types'
-import { CRDT } from './crdt'
+import { AnyLink, DocUpdate, MapFn, DocFragment, StaticProllyOptions, BlockFetcher, ProllyNode, IndexUpdate } from './types'
 import { Transaction } from './transaction'
 
-const compare = (a, b) => {
-  const [aKey, aRef] = a
-  const [bKey, bRef] = b
-  const comp = simpleCompare(aKey, bKey)
-  if (comp !== 0) return comp
-  return refCompare(aRef, bRef)
+export class IndexTree {
+  cid: AnyLink | null = null
+  root: ProllyNode | null = null
 }
 
-const refCompare = (aRef, bRef) => {
+type CompareRef = string | number
+type CompareKey = [string | number, CompareRef]
+
+const refCompare = (aRef: CompareRef, bRef: CompareRef) => {
   if (Number.isNaN(aRef)) return -1
   if (Number.isNaN(bRef)) throw new Error('ref may not be Infinity or NaN')
-  if (aRef === Infinity) return 1 // need to test this on equal docids!
+  if (aRef === Infinity) return 1
   // if (!Number.isFinite(bRef)) throw new Error('ref may not be Infinity or NaN')
-  return simpleCompare(aRef, bRef)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  return simpleCompare(aRef, bRef) as number
+}
+
+const compare = (a: CompareKey, b: CompareKey) => {
+  const [aKey, aRef] = a
+  const [bKey, bRef] = b
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+  const comp: number = simpleCompare(aKey, bKey)
+  if (comp !== 0) return comp
+  return refCompare(aRef, bRef)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call

@@ -1,6 +1,6 @@
-import { ClockHead, DocUpdate, MapFn, IndexTree, IndexUpdate, IndexerResult } from './types'
-import { TransactionBlockstore as Blockstore, Transaction } from './transaction'
-import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts } from './indexer-helpers'
+import { ClockHead, DocUpdate, MapFn, IndexUpdate, IndexerResult } from './types'
+import { TransactionBlockstore as Blockstore } from './transaction'
+import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree } from './indexer-helpers'
 import { CRDT } from './crdt'
 
 export class Indexer {
