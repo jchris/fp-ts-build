@@ -35,9 +35,14 @@ export type IndexUpdate = {
   del?: boolean
 }
 
+type IdxTree = {
+  cid: AnyLink | null
+  root: ProllyNode | null
+}
+
 export type IndexerResult = {
-  byId: AnyLink | null
-  byKey: AnyLink | null
+  byId: IdxTree
+  byKey: IdxTree
 }
 
 export type AnyLink = Link<unknown, number, number, 1 | 0>

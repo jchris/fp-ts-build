@@ -21,13 +21,14 @@ export class Indexer {
 
   async query() {
     await this._updateIndex()
+    if (!this.byKey.root) return { result: [] }
   }
 
   async _updateIndex() {
     const { result, head } = await this.crdt.changes(this.indexHead)
     if (result.length === 0) {
       this.indexHead = head
-      return
+      return { byId: this.byId, byKey: this.byKey }
     }
     let staleKeyIndexEntries: IndexUpdate[] = []
     let removeIdIndexEntries: IndexUpdate[] = []
@@ -47,7 +48,8 @@ export class Indexer {
         byIdOpts
       )
       this.byKey = await bulkIndex(tblocks, this.byKey, staleKeyIndexEntries.concat(indexEntries), byKeyOpts)
-      return { byId: this.byId.cid, byKey: this.byKey.cid }
+      this.indexHead = head
+      return { byId: this.byId, byKey: this.byKey }
     })
   }
 }

@@ -79,7 +79,6 @@ async function gatherUpdates(
 ): Promise<DocUpdate[]> {
   for (const link of since) {
     if (head.includes(link)) {
-      throw new Error('found since in head, this is good, remove this error ' + updates.length)
       return updates
     }
   }

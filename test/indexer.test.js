@@ -33,6 +33,9 @@ describe('basic Indexer', function () {
     didMap = false
     await indexer.query()
     assert(didMap)
+  })
+  it('should not call the map function on second query', async function () {
+    await indexer.query()
     didMap = false
     await indexer.query()
     assert(!didMap)

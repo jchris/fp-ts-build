@@ -104,6 +104,17 @@ describe('CRDT with a multi-write', function () {
     equals(result[0].value.points, 11)
     equals(result[1].key, 'king')
   })
+  it('should offer changes since', async function () {
+    /** @type {BulkResult} */
+    const secondPut = await crdt.bulk([{ key: 'queen', value: { points: 10 } }, { key: 'jack', value: { points: 10 } }])
+    assert(secondPut.head)
+    const { result: r2, head: h2 } = await crdt.changes([])
+    equals(r2.length, 4)
+    const { result: r3 } = await crdt.changes(firstPut.head)
+    equals(r3.length, 4)
+    const { result: r4 } = await crdt.changes(h2)
+    equals(r4.length, 0)
+  })
 })
 
 describe('CRDT with two multi-writes', function () {
