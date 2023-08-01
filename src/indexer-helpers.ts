@@ -15,7 +15,7 @@ import { bf, simpleCompare } from 'prolly-trees/utils'
 // @ts-ignore
 import { nocache as cache } from 'prolly-trees/cache'
 
-import { AnyLink, DocUpdate, MapFn, DocFragment, StaticProllyOptions, BlockFetcher, ProllyNode, IndexUpdate } from './types'
+import { AnyLink, DocUpdate, MapFn, DocFragment, StaticProllyOptions, BlockFetcher, ProllyNode, IndexUpdate, QueryOpts } from './types'
 import { Transaction } from './transaction'
 
 export class IndexTree {
@@ -119,4 +119,24 @@ export async function bulkIndex(tblocks: Transaction, inIndex: IndexTree, indexE
   } else {
     return { root: null, cid: null }
   }
+}
+
+// eslint-disable-next-line @typescript-eslint/require-await
+export async function applyQuery(resp: { result: any[] }, query: QueryOpts) {
+  // console.log('applyQuery', resp, query)
+  if (query.descending) {
+    resp.result = resp.result.reverse()
+  }
+  if (query.limit) {
+    resp.result = resp.result.slice(0, query.limit)
+  }
+  // if (query.includeDocs) {
+  //   resp.result = await Promise.all(
+  //     resp.result.map(async row => {
+  //       const doc = await this.database.get(row.id)
+  //       return { ...row, doc }
+  //     })
+  //   )
+  // }
+  return resp
 }

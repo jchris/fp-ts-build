@@ -45,6 +45,8 @@ export type IndexerResult = {
   byKey: IdxTree
 }
 
+export type QueryOpts = { descending?: boolean; limit?: number; includeDocs?: boolean }
+
 export type AnyLink = Link<unknown, number, number, 1 | 0>
 export type AnyBlock = { cid: AnyLink; bytes: Uint8Array }
 export type BlockFetcher = { get: (link: AnyLink) => Promise<AnyBlock | undefined> }
@@ -61,6 +63,7 @@ export type ChangesResponse = {
 
 // ProllyNode type based on the ProllyNode from 'prolly-trees/base'
 export interface ProllyNode extends BaseNode {
+  getAllEntries(): PromiseLike<{ [x: string]: any; result: IndexUpdate[] }>
   getMany(removeIds: string[]): Promise<{result: any[]}>
   get(key: string): unknown
   bulk(bulk: IndexUpdate[]): PromiseLike<{ root: ProllyNode | null; blocks: Block[] }>
