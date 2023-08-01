@@ -1,4 +1,4 @@
-import { ClockHead, DocUpdate, MapFn, IndexUpdate, IndexerResult, QueryOpts } from './types'
+import { ClockHead, DocUpdate, MapFn, IndexUpdate, IndexerResult, QueryOpts, DocFragment } from './types'
 import { TransactionBlockstore as Blockstore } from './transaction'
 import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery, encodeRange, encodeKey } from './indexer-helpers'
 import { CRDT } from './crdt'
@@ -7,7 +7,8 @@ export class Indexer {
   blocks: Blockstore
   crdt: CRDT
   name: string
-  mapFn: MapFn
+  mapFn: MapFn | null = null
+  mapFnString: string = ''
   byKey = new IndexTree()
   byId = new IndexTree()
   indexHead: ClockHead = []
@@ -16,7 +17,26 @@ export class Indexer {
     this.blocks = blocks
     this.crdt = crdt
     this.name = name
-    this.mapFn = mapFn
+    this.applyMapFn(mapFn)
+  }
+
+  applyMapFn(mapFn: string | MapFn, _name?: string) {
+    if (typeof mapFn === 'string') {
+      this.mapFnString = mapFn
+      const regex = /^[a-zA-Z0-9 ]+$/
+      if (regex.test(mapFn)) {
+        this.mapFn = (doc) => {
+          if (doc[mapFn]) return doc[mapFn] as DocFragment
+        }
+        // this.includeDocsDefault = true
+      }
+    } else {
+      this.mapFn = mapFn
+      this.mapFnString = mapFn.toString()
+    }
+    // const matches = /=>\s*(.*)/.exec(this.mapFnString)
+    // this.includeDocsDefault = this.includeDocsDefault || (matches && matches.length > 0)
+    // this.name = name || this.makeName()
   }
 
   async query(opts: QueryOpts = {}) {
@@ -25,17 +45,24 @@ export class Indexer {
     if (opts.range) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       const { result, ...all } = await this.byKey.root.range(...encodeRange(opts.range))
-      return await applyQuery({ result, ...all }, opts)
+      return await applyQuery(this.crdt, { result, ...all }, opts)
     }
     if (opts.key) {
       const encodedKey = encodeKey(opts.key)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-      return await applyQuery(await this.byKey.root.get(encodedKey), opts)
+      return await applyQuery(this.crdt, await this.byKey.root.get(encodedKey), opts)
     }
-
+    if (opts.prefix) {
+      // ensure prefix is an array
+      if (!Array.isArray(opts.prefix)) opts.prefix = [opts.prefix]
+      const start = [...opts.prefix, NaN]
+      const end = [...opts.prefix, Infinity]
+      const encodedR = encodeRange([start, end])
+      return await applyQuery(this.crdt, await this.byKey.root.range(...encodedR), opts)
+    }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const { result, ...all } = await this.byKey.root.getAllEntries() // funky return type
-    return await applyQuery({ result: result.map(({ key: [k, id], value }) => ({ key: k, id, row: value })), ...all }, opts)
+    return await applyQuery(this.crdt, { result: result.map(({ key: [k, id], value }) => ({ key: k, id, row: value })), ...all }, opts)
   }
 
   async _updateIndex() {

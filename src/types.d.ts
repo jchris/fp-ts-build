@@ -37,6 +37,12 @@ export type IndexUpdate = {
   del?: boolean
 }
 
+export type IndexRow = {
+  key: IndexKey
+  value?: DocFragment
+  del?: boolean
+}
+
 type IdxTree = {
   cid: AnyLink | null
   root: ProllyNode | null
@@ -52,7 +58,8 @@ export type QueryOpts = {
   limit?: number
   includeDocs?: boolean
   range?: [IndexKey, IndexKey]
-  key?: string
+  key?: string // these two can be richer than keys...
+  prefix?: string | [string]
 }
 
 export type AnyLink = Link<unknown, number, number, 1 | 0>
@@ -105,4 +112,4 @@ export type DocFragment = string | number | boolean | null | DocFragment[] | { [
 
 type CallbackFn = (k: string, v: DocFragment) => void
 
-export type MapFn = (doc: Doc, map: CallbackFn) => DocBody | null
+export type MapFn = (doc: Doc, map: CallbackFn) => DocFragment | void

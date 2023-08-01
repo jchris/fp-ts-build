@@ -17,6 +17,7 @@ import { nocache as cache } from 'prolly-trees/cache'
 
 import { AnyLink, DocUpdate, MapFn, DocFragment, StaticProllyOptions, BlockFetcher, ProllyNode, IndexKey, IndexUpdate, QueryOpts } from './types'
 import { Transaction } from './transaction'
+import { CRDT } from './crdt'
 
 export class IndexTree {
   cid: AnyLink | null = null
@@ -122,7 +123,7 @@ export async function bulkIndex(tblocks: Transaction, inIndex: IndexTree, indexE
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-export async function applyQuery(resp: { result: IndexUpdate[] }, query: QueryOpts) {
+export async function applyQuery(crdt: CRDT, resp: { result: IndexRow[] }, query: QueryOpts) {
   // console.log('pre-result', resp.result)
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 
@@ -132,14 +133,14 @@ export async function applyQuery(resp: { result: IndexUpdate[] }, query: QueryOp
   if (query.limit) {
     resp.result = resp.result.slice(0, query.limit)
   }
-  // if (query.includeDocs) {
-  //   resp.result = await Promise.all(
-  //     resp.result.map(async row => {
-  //       const doc = await this.database.get(row.id)
-  //       return { ...row, doc }
-  //     })
-  //   )
-  // }
+  if (query.includeDocs) {
+    resp.result = await Promise.all(
+      resp.result.map(async row => {
+        const { doc } = await crdt.get(row.id)
+        return { ...row, doc: { _id: row.id, ...doc } }
+      })
+    )
+  }
   return {
     rows: resp.result.map(row => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
@@ -149,7 +150,7 @@ export async function applyQuery(resp: { result: IndexUpdate[] }, query: QueryOp
   }
 }
 
-export function encodeRange(range: [IndexKey, IndexKey]): [IndexKey, IndexKey] {
+export function encodeRange(range: [DocFragment, DocFragment]): [IndexKey, IndexKey] {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
   return range.map(key => charwise.encode(key) as IndexKey) as [IndexKey, IndexKey]
 }
