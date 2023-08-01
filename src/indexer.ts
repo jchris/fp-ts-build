@@ -1,26 +1,26 @@
 import { ClockHead, DocUpdate, MapFn, IndexUpdate, IndexerResult, QueryOpts, DocFragment } from './types'
 import { TransactionBlockstore as Blockstore } from './transaction'
-import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery, encodeRange, encodeKey } from './indexer-helpers'
+import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery, encodeRange, encodeKey, makeName } from './indexer-helpers'
 import { CRDT } from './crdt'
 
 export class Indexer {
   blocks: Blockstore
   crdt: CRDT
-  name: string
+  name: string | null = null
   mapFn: MapFn | null = null
   mapFnString: string = ''
   byKey = new IndexTree()
   byId = new IndexTree()
   indexHead: ClockHead = []
+  includeDocsDefault: boolean = false
 
   constructor(blocks: Blockstore, crdt: CRDT, name: string, mapFn: MapFn) {
     this.blocks = blocks
     this.crdt = crdt
-    this.name = name
-    this.applyMapFn(mapFn)
+    this.applyMapFn(mapFn, name)
   }
 
-  applyMapFn(mapFn: string | MapFn, _name?: string) {
+  applyMapFn(mapFn: string | MapFn, name?: string) {
     if (typeof mapFn === 'string') {
       this.mapFnString = mapFn
       const regex = /^[a-zA-Z0-9 ]+$/
@@ -28,20 +28,21 @@ export class Indexer {
         this.mapFn = (doc) => {
           if (doc[mapFn]) return doc[mapFn] as DocFragment
         }
-        // this.includeDocsDefault = true
+        this.includeDocsDefault = true
       }
     } else {
       this.mapFn = mapFn
       this.mapFnString = mapFn.toString()
     }
-    // const matches = /=>\s*(.*)/.exec(this.mapFnString)
-    // this.includeDocsDefault = this.includeDocsDefault || (matches && matches.length > 0)
-    // this.name = name || this.makeName()
+    const matches = /=>\s*(.*)/.exec(this.mapFnString)
+    this.includeDocsDefault = this.includeDocsDefault || !!(matches && matches.length > 0)
+    this.name = name || makeName(this.mapFnString)
   }
 
   async query(opts: QueryOpts = {}) {
     await this._updateIndex()
     if (!this.byKey.root) return { result: [] }
+    if (this.includeDocsDefault && opts.includeDocs === undefined) opts.includeDocs = true
     if (opts.range) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       const { result, ...all } = await this.byKey.root.range(...encodeRange(opts.range))

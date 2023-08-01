@@ -15,7 +15,7 @@ import { bf, simpleCompare } from 'prolly-trees/utils'
 // @ts-ignore
 import { nocache as cache } from 'prolly-trees/cache'
 
-import { AnyLink, DocUpdate, MapFn, DocFragment, StaticProllyOptions, BlockFetcher, ProllyNode, IndexKey, IndexUpdate, QueryOpts } from './types'
+import { AnyLink, DocUpdate, MapFn, DocFragment, StaticProllyOptions, BlockFetcher, ProllyNode, IndexKey, IndexUpdate, QueryOpts, IndexRow } from './types'
 import { Transaction } from './transaction'
 import { CRDT } from './crdt'
 
@@ -136,8 +136,9 @@ export async function applyQuery(crdt: CRDT, resp: { result: IndexRow[] }, query
   if (query.includeDocs) {
     resp.result = await Promise.all(
       resp.result.map(async row => {
-        const { doc } = await crdt.get(row.id)
-        return { ...row, doc: { _id: row.id, ...doc } }
+        const val = await crdt.get(row.id)
+        const doc = val ? { _id: row.id, ...val.doc } : null
+        return { ...row, doc }
       })
     )
   }
@@ -158,4 +159,18 @@ export function encodeRange(range: [DocFragment, DocFragment]): [IndexKey, Index
 export function encodeKey(key: string): string {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
   return charwise.encode(key) as string
+}
+
+export function makeName(mapFnString: string) {
+  const regex = /\(([^,()]+,\s*[^,()]+|\[[^\]]+\],\s*[^,()]+)\)/g
+  let matches: RegExpExecArray | null | string[] = Array.from(mapFnString.matchAll(regex), match => match[1].trim())
+  if (matches.length === 0) {
+    matches = /=>\s*(.*)/.exec(mapFnString)
+  }
+  if (matches === null) {
+    return mapFnString
+  } else {
+    // it's a consise arrow function, match everythign after the arrow
+    return matches[1]
+  }
 }

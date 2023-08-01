@@ -38,7 +38,9 @@ export type IndexUpdate = {
 }
 
 export type IndexRow = {
+  id: string
   key: IndexKey
+  doc?: Doc | null
   value?: DocFragment
   del?: boolean
 }
@@ -78,10 +80,10 @@ export type ChangesResponse = {
 
 // ProllyNode type based on the ProllyNode from 'prolly-trees/base'
 export interface ProllyNode extends BaseNode {
-  getAllEntries(): PromiseLike<{ [x: string]: any; result: IndexUpdate[] }>
+  getAllEntries(): PromiseLike<{ [x: string]: any; result: IndexRow[] }>
   getMany(removeIds: string[]): Promise<{ [x: string]: any; result: IndexKey[] }>
-  range(a: IndexKey, b: IndexKey): Promise<{ result: IndexUpdate[] }>
-  get(key: string): Promise<{ result: IndexUpdate[] }>
+  range(a: IndexKey, b: IndexKey): Promise<{ result: IndexRow[] }>
+  get(key: string): Promise<{ result: IndexRow[] }>
   bulk(bulk: IndexUpdate[]): PromiseLike<{ root: ProllyNode | null; blocks: Block[] }>
   address: Promise<Link>
   distance: number
