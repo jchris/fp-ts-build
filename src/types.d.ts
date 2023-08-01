@@ -52,6 +52,7 @@ export type QueryOpts = {
   limit?: number
   includeDocs?: boolean
   range?: [IndexKey, IndexKey]
+  key?: string
 }
 
 export type AnyLink = Link<unknown, number, number, 1 | 0>
@@ -73,7 +74,7 @@ export interface ProllyNode extends BaseNode {
   getAllEntries(): PromiseLike<{ [x: string]: any; result: IndexUpdate[] }>
   getMany(removeIds: string[]): Promise<{ [x: string]: any; result: IndexKey[] }>
   range(a: IndexKey, b: IndexKey): Promise<{ result: IndexUpdate[] }>
-  get(key: string): unknown
+  get(key: string): Promise<{ result: IndexUpdate[] }>
   bulk(bulk: IndexUpdate[]): PromiseLike<{ root: ProllyNode | null; blocks: Block[] }>
   address: Promise<Link>
   distance: number

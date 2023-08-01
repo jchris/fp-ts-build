@@ -123,8 +123,8 @@ export async function bulkIndex(tblocks: Transaction, inIndex: IndexTree, indexE
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function applyQuery(resp: { result: IndexUpdate[] }, query: QueryOpts) {
+  // console.log('pre-result', resp.result)
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-  resp.result = resp.result.map(({ key: [k, id], value }) => ({ key: k, id, row: value }))
 
   if (query.descending) {
     resp.result = resp.result.reverse()
@@ -152,4 +152,9 @@ export async function applyQuery(resp: { result: IndexUpdate[] }, query: QueryOp
 export function encodeRange(range: [IndexKey, IndexKey]): [IndexKey, IndexKey] {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
   return range.map(key => charwise.encode(key) as IndexKey) as [IndexKey, IndexKey]
+}
+
+export function encodeKey(key: string): string {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+  return charwise.encode(key) as string
 }

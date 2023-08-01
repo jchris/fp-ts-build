@@ -58,9 +58,17 @@ describe('basic Indexer', function () {
     const { rows } = await indexer.query({ descending: true })
     equals(rows[0].key, 'creative')
   })
+  it('should range query all', async function () {
+    const { rows } = await indexer.query({ range: ['a', 'z'] })
+    equals(rows[0].key, 'amazing')
+    equals(rows.length, 3)
+  })
   it('should range query', async function () {
     const { rows } = await indexer.query({ range: ['b', 'd'] })
-    // console.log(rows)
-    equals(rows[0].key, 'creative')
+    equals(rows[0].key, 'bazillas')
+  })
+  it('should key query', async function () {
+    const { rows } = await indexer.query({ key: 'bazillas' })
+    equals(rows.length, 1)
   })
 })
