@@ -1,5 +1,5 @@
 import { MemoryBlockstore } from '@alanshaw/pail/block'
-import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead } from './types'
+import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead, IndexTree, IndexerResult } from './types'
 import { Loader } from './loader'
 import { CID } from 'multiformats'
 
@@ -62,8 +62,20 @@ export class TransactionBlockstore implements BlockFetcher {
     return done
   }
 
+  async indexTransaction(fn: (t: Transaction) => Promise<IndexerResult>) {
+    const t = new Transaction(this)
+    this.transactions.add(t)
+    const done: IndexerResult = await fn(t)
+    if (done) { return { ...done, car: await this.indexCommit(t, done) } }
+    return done
+  }
+
   async commit(t: Transaction, done: BulkResult): Promise<AnyLink | undefined> {
     return await this.loader?.commit(t, done)
+  }
+
+  async indexCommit(t: Transaction, done: IndexerResult): Promise<AnyLink | undefined> {
+    return await this.loader?.indexCommit(t, done)
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await

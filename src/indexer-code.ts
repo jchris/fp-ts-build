@@ -16,8 +16,7 @@ import {
 } from './types'
 
 // External Imports
-import { BlockView, Link } from 'm
-ultiformats'
+import { BlockView, Link } from 'multiformats'
 import { create } from 'multiformats/block'
 
 import { sha256 as hasher } from 'multiformats/hashes/sha2'

@@ -19,7 +19,7 @@ describe('basic Indexer', function () {
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
-    indexer = new Indexer(db._crdt, 'hello', (doc) => {
+    indexer = new Indexer(db._crdt._blocks, db._crdt, 'hello', (doc) => {
       didMap = true
       return doc.title
     })

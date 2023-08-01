@@ -1,22 +1,19 @@
-import { AnyLink, ClockHead, ProllyNode } from './types'
-
-import { updateIndex } from './indexer-helpers'
+import { ClockHead, DocUpdate, MapFn, IndexTree, IndexUpdate, IndexerResult } from './types'
+import { TransactionBlockstore as Blockstore, Transaction } from './transaction'
+import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts } from './indexer-helpers'
 import { CRDT } from './crdt'
 
-class Index {
-  cid: AnyLink | null = null
-  root: ProllyNode | null = null
-}
-
 export class Indexer {
+  blocks: Blockstore
   crdt: CRDT
   name: string
-  mapFn: Function
-  byKey = new Index()
-  byId = new Index()
+  mapFn: MapFn
+  byKey = new IndexTree()
+  byId = new IndexTree()
   indexHead: ClockHead = []
 
-  constructor(crdt: CRDT, name: string, mapFn: Function) {
+  constructor(blocks: Blockstore, crdt: CRDT, name: string, mapFn: MapFn) {
+    this.blocks = blocks
     this.crdt = crdt
     this.name = name
     this.mapFn = mapFn
@@ -30,6 +27,27 @@ export class Indexer {
     const { result, head } = await this.crdt.changes(this.indexHead)
     if (result.length === 0) {
       this.indexHead = head
+      return
     }
+    let staleKeyIndexEntries: IndexUpdate[] = []
+    let removeIdIndexEntries: IndexUpdate[] = []
+    if (this.byId.root) {
+      const removeIds = result.map(({ key }) => key)
+      const { result: oldChangeEntries } = await this.byId.root.getMany(removeIds) as { result: Array<[string, string] | string> }
+      staleKeyIndexEntries = oldChangeEntries.map(key => ({ key, del: true }))
+      removeIdIndexEntries = oldChangeEntries.map((key) => ({ key: key[1], del: true }))
+    }
+    const indexEntries = indexEntriesForChanges(result, this.mapFn)
+    const byIdIndexEntries: DocUpdate[] = indexEntries.map(({ key }) => ({ key: key[1], value: key }))
+    return await this.blocks.indexTransaction(async (tblocks): Promise<IndexerResult> => {
+      this.byId = await bulkIndex(
+        tblocks,
+        this.byId,
+        removeIdIndexEntries.concat(byIdIndexEntries),
+        byIdOpts
+      )
+      this.byKey = await bulkIndex(tblocks, this.byKey, staleKeyIndexEntries.concat(indexEntries), byKeyOpts)
+      return { byId: this.byId.cid, byKey: this.byKey.cid }
+    })
   }
 }
