@@ -80,7 +80,7 @@ export class Indexer {
       staleKeyIndexEntries = oldChangeEntries.map(key => ({ key, del: true }))
       removeIdIndexEntries = oldChangeEntries.map((key) => ({ key: key[1], del: true }))
     }
-    const indexEntries = indexEntriesForChanges(result, this.mapFn)
+    const indexEntries = indexEntriesForChanges(result, this.mapFn) // use a getter to translate from string
     const byIdIndexEntries: DocUpdate[] = indexEntries.map(({ key }) => ({ key: key[1], value: key }))
     return await this.blocks.indexTransaction(async (tblocks): Promise<IndexerResult> => {
       this.byId = await bulkIndex(
