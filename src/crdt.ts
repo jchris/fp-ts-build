@@ -1,5 +1,5 @@
 import { TransactionBlockstore as Blockstore } from './transaction'
-import { DocUpdate, BulkResult, ClockHead } from './types'
+import { DocUpdate, BulkResult, ClockHead, DbCarHeader, IdxCarHeader } from './types'
 import { clockChangesSince, applyBulkUpdateToCrdt, getValueFromCrdt, doCompact } from './crdt-helpers'
 
 export class CRDT {
@@ -13,8 +13,9 @@ export class CRDT {
     this.name = name || null
     this._blocks = blocks || new Blockstore(name)
     this._head = []
-    this.ready = this._blocks.ready.then(({ head }: { head: ClockHead }) => {
-      this._head = head // todo multi head support here
+    this.ready = this._blocks.ready.then(({ crdt, indexes }: { crdt: DbCarHeader, indexes: Map<string, IdxCarHeader> }) => {
+      this._head = crdt.head // todo multi head support here
+      if (indexes.size > 0) { console.log('todo apply indexes', indexes) }
     })
   }
 
