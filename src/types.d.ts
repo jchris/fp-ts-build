@@ -61,6 +61,19 @@ export type IndexerResult = BulkResult & {
   name: string
 }
 
+export type DbCarHeader = {
+  head: ClockHead
+  cars: AnyLink[]
+  compact: AnyLink[]
+}
+
+export type IdxCarHeader = DbCarHeader & {
+  byId: AnyLink
+  byKey: AnyLink
+  map: string
+  name: string
+}
+
 export type QueryOpts = {
   descending?: boolean
   limit?: number
@@ -124,10 +137,10 @@ export type MapFn = (doc: Doc, map: CallbackFn) => DocFragment | void
 
 export interface HeaderStoreInterface {
   name: string
-  makeHeader(car: AnyLink, indexes: IndexCars): ByteView<DbHeader>
-  parseHeader(headerData: Uint8Array): DbHeader
-  load(branch?: string): Promise<DbHeader | null>
+  makeHeader(car: AnyLink, indexes: IndexCars): ByteView<DbMeta>
+  parseHeader(headerData: Uint8Array): DbMeta
+  load(branch?: string): Promise<DbMeta | null>
   save(carCid: AnyLink, indexes: IndexCars, branch?: string): Promise<void>
 }
 
-export type DbHeader = { car: AnyLink, indexes: IndexCars}
+export type DbMeta = { car: AnyLink, indexes: IndexCars}

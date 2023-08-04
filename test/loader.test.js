@@ -217,7 +217,11 @@ describe('basic Loader with index commits', function () {
     cid = CID.parse('bafybeia4luuns6dgymy5kau5rm7r4qzrrzg6cglpzpogussprpy42cmcn4')
 
     indexerResult = {
-      byId: { cid }
+      byId: { cid },
+      byKey: { cid },
+      head: [cid],
+      name: 'test-idx',
+      map: '(doc) => doc.hello'
     }
   })
   it('should start with an empty car log', function () {
@@ -225,12 +229,20 @@ describe('basic Loader with index commits', function () {
   })
   it('should commit the index metadata', async function () {
     const carCid = await loader.commit(t, indexerResult)
-    equals(loader.carLog.length, 1)
+
+    assert(loader.indexCarLogs.has('test-idx'))
+
+    const carLog = loader.indexCarLogs.get('test-idx')
+
+    equals(carLog.length, 1)
     const reader = await loader.loadCar(carCid)
     assert(reader)
     const parsed = await parseCarFile(reader)
     assert(parsed.cars)
     equals(parsed.cars.length, 0)
     assert(parsed.head)
+    assert(parsed.head.length, 1)
+    equals(parsed.map, '(doc) => doc.hello')
+    equals(parsed.name, 'test-idx')
   })
 })

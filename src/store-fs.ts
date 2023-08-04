@@ -2,7 +2,7 @@ import { join, dirname } from 'node:path'
 import { homedir } from 'node:os'
 import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises'
 
-import { AnyBlock, AnyLink, IndexCars, DbHeader } from './types'
+import { AnyBlock, AnyLink, IndexCars, DbMeta } from './types'
 import { HeaderStore, CarStore } from './store'
 
 export const FORMAT = '0.9'
@@ -12,7 +12,7 @@ export const defaultConfig = {
 }
 
 export class HeaderStoreFS extends HeaderStore {
-  async load(branch: string = 'main'): Promise<DbHeader|null> {
+  async load(branch: string = 'main'): Promise<DbMeta|null> {
     const filepath = join(defaultConfig.dataDir, this.name, branch + '.json')
     const bytes = await readFile(filepath).catch((e: Error & { code: string}) => {
       if (e.code === 'ENOENT') return null

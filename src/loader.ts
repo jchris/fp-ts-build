@@ -2,7 +2,7 @@ import { CarReader } from '@ipld/car'
 
 import { CarStoreFS as CarStore, HeaderStoreFS as HeaderStore } from './store-fs'
 // import { CarStoreIDB as CarStore, HeaderStoreLS as HeaderStore } from './store-browser'
-import { makeCarFile, parseCarFile } from './loader-helpers'
+import { makeCarFile, parseCarFile, isIndexerResult } from './loader-helpers'
 import { Transaction } from './transaction'
 import {
   AnyBlock, AnyLink, BulkResult, ClockHead, IndexerResult
@@ -26,17 +26,16 @@ export class Loader {
     // todo config with multiple branches
     this.ready = this.headerStore.load('main').then(async header => {
       if (!header) return { head: [], cars: [] }
-      console.log('header', header)
       const car = await this.carStore.load(header.car)
       const carHead = await this.ingestCarHead(header.car, car)
-      // this.hydrateIndexes(header.indexes)
+      console.log('header.indexes', header.indexes)
+      // const indexHeads = await this.ingestIndexCars(header.indexes)
       return carHead
     })
   }
 
   async commit(t: Transaction, done: BulkResult | IndexerResult, compact: boolean = false): Promise<AnyLink> {
     const commitCarLog = this.carLogForResult(done)
-
     const car = await makeCarFile(t, done, commitCarLog, compact)
     await this.carStore.save(car)
     if (compact) {
@@ -70,6 +69,7 @@ export class Loader {
 
   async getMoreReaders(cids: AnyLink[]) {
     for (const cid of cids) {
+      // todo if loadCar stores promises we can parallelize this
       await this.loadCar(cid)
     }
   }
@@ -88,8 +88,4 @@ export class Loader {
     }
     return this.carLog
   }
-}
-
-function isIndexerResult(result: BulkResult | IndexerResult): result is IndexerResult {
-  return !!(result as IndexerResult).name
 }

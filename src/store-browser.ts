@@ -1,6 +1,6 @@
 import { openDB, IDBPDatabase } from 'idb'
 
-import { AnyBlock, AnyLink, DbHeader, IndexCars } from './types'
+import { AnyBlock, AnyLink, DbMeta, IndexCars } from './types'
 import { CarStore, HeaderStore } from './store'
 
 export const FORMAT = '0.9'
@@ -68,7 +68,7 @@ export class HeaderStoreLS extends HeaderStore {
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async load(branch: string = 'main'): Promise<DbHeader | null> {
+  async load(branch: string = 'main'): Promise<DbMeta | null> {
     try {
       const bytes = localStorage.getItem(this.headerKey(branch))
       return bytes ? this.parseHeader(this.encoder.encode(bytes)) : null

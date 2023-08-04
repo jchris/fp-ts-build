@@ -7,25 +7,30 @@ import * as codec from '@ipld/dag-cbor'
 import { CarReader } from '@ipld/car'
 
 import { Transaction } from './transaction'
-import { AnyBlock, BulkResult, ClockHead, AnyLink, IndexerResult } from './types'
+import { AnyBlock, BulkResult, AnyLink, IndexerResult, DbCarHeader, IdxCarHeader } from './types'
 
 export async function makeCarFile(
   t: Transaction,
-  { head }: BulkResult | IndexerResult,
+  result: BulkResult | IndexerResult,
   cars: AnyLink[],
   compact: boolean = false
 ): Promise<BlockView<unknown, number, number, 1>> {
+  const head = result.head
   if (!head) throw new Error('no head')
 
-  let value
+  let fp
   if (compact) {
-    value = { fp: { head, cars: [], compact: cars } }
+    fp = { head, cars: [], compact: cars }
   } else {
-    value = { fp: { head, cars, compact: [] } }
+    fp = { head, cars, compact: [] }
+  }
+
+  if (isIndexerResult(result)) {
+    fp = { ...fp, name: result.name, map: result.map, byId: result.byId.cid, byKey: result.byKey.cid }
   }
 
   const fpCarHeaderBlock = (await encode({
-    value,
+    value: { fp },
     hasher,
     codec
   })) as AnyBlock
@@ -49,15 +54,27 @@ export async function makeCarFile(
   return await encode({ value: writer.bytes, hasher, codec: raw })
 }
 
-export async function parseCarFile(
-  reader: CarReader
-): Promise<{ head: ClockHead; cars: AnyLink[]; compact: AnyLink[] }> {
+export async function parseCarFile(reader: CarReader): Promise<DbCarHeader | IdxCarHeader> {
   const roots = await reader.getRoots()
   const header = await reader.get(roots[0])
   if (!header) throw new Error('missing header block')
   const got = await decode({ bytes: header.bytes, hasher, codec })
-  const {
-    fp: { head, cars, compact }
-  } = got.value as { fp: { head: ClockHead; cars: AnyLink[]; compact: AnyLink[] } }
-  return { head, cars, compact }
+
+  const { fp } = got.value as { fp: BulkResult | IndexerResult }
+
+  if (isIndexHeader(fp)) {
+    const { head, cars, compact, name, map, byId, byKey } = fp
+    return { head, cars, compact, name, map, byId, byKey }
+  } else {
+    const { head, cars, compact } = fp as DbCarHeader
+    return { head, cars, compact }
+  }
+}
+
+export function isIndexerResult(result: BulkResult | IndexerResult): result is IndexerResult {
+  return !!(result as IndexerResult).name
+}
+
+export function isIndexHeader(result: BulkResult | IndexerResult): result is IdxCarHeader {
+  return !!(result as IdxCarHeader).name
 }
