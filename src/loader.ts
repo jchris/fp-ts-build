@@ -16,7 +16,7 @@ export class Loader {
   carStore: CarStore
   carLog: AnyLink[] = []
   carsReaders: Map<string, CarReader> = new Map()
-  ready: Promise<{ head: ClockHead }> // todo this will be a map of headers by branch name
+  ready: Promise<{ head: ClockHead, cars: AnyLink[] }> // todo this will be a map of headers by branch name
   currentHead: ClockHead | null = null
 
   constructor(name: string) {
@@ -25,9 +25,12 @@ export class Loader {
     this.carStore = new CarStore(name)
     // todo config with multiple branches
     this.ready = this.headerStore.load('main').then(async header => {
-      if (!header) return { head: [] }
+      if (!header) return { head: [], cars: [] }
+      console.log('header', header)
       const car = await this.carStore.load(header.car)
-      return await this.ingestCarHead(header.car, car)
+      const carHead = await this.ingestCarHead(header.car, car)
+      // this.hydrateIndexes(header.indexes)
+      return carHead
     })
   }
 
