@@ -5,7 +5,7 @@ import { CarStoreFS as CarStore, HeaderStoreFS as HeaderStore } from './store-fs
 import { makeCarFile, parseCarFile } from './loader-helpers'
 import { Transaction } from './transaction'
 import {
-  AnyBlock, AnyLink, BulkResult, ClockHead
+  AnyBlock, AnyLink, BulkResult, ClockHead, IndexerResult
   // , IndexTree
 } from './types'
 import { CID } from 'multiformats'
@@ -42,7 +42,7 @@ export class Loader {
       this.carLog.push(car.cid)
     }
     this.currentHead = done.head
-    await this.headerStore.save(car.cid)
+    await this.headerStore.save(car.cid, {})
     return car.cid
   }
 
@@ -59,7 +59,7 @@ export class Loader {
     } else {
       this.carLog.push(car.cid)
     }
-    await this.headerStore.save(car.cid)
+    await this.headerStore.save(car.cid, {})
     return car.cid
   }
 

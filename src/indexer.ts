@@ -67,6 +67,7 @@ export class Indexer {
   }
 
   async _updateIndex() {
+    if (!this.mapFn) throw new Error('No map function defined')
     const { result, head } = await this.crdt.changes(this.indexHead)
     if (result.length === 0) {
       this.indexHead = head

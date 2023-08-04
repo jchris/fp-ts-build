@@ -77,23 +77,36 @@ describe('HeaderStoreFS', function () {
   })
   it('should save a header', async function () {
     const cid = CID.parse('bafybeia4luuns6dgymy5kau5rm7r4qzrrzg6cglpzpogussprpy42cmcn4')
-    await store.save(cid)
+    const indexes = {
+      potato: cid,
+      tomato: cid
+    }
+    await store.save(cid, indexes)
     const path = join(defaultConfig.dataDir, store.name, 'main.json')
     const file = await readFile(path)
     const header = JSON.parse(file.toString())
     assert(header)
     assert(header.car)
-    equals(header.car, cid.toString())
+    equals(header.car['/'], cid.toString())
+    assert(header.indexes)
+    assert(header.indexes.potato)
+    assert(header.indexes.tomato)
+    equals(header.indexes.potato['/'], cid.toString())
+    equals(header.indexes.tomato['/'], cid.toString())
   })
 })
 
 describe('HeaderStoreFS with a saved header', function () {
   /** @type {HeaderStoreFS} */
-  let store
+  let store, cid
   beforeEach(async function () {
     store = new HeaderStoreFS('test-saved-header')
-    const cid = CID.parse('bafybeia4luuns6dgymy5kau5rm7r4qzrrzg6cglpzpogussprpy42cmcn4')
-    await store.save(cid)
+    cid = CID.parse('bafybeia4luuns6dgymy5kau5rm7r4qzrrzg6cglpzpogussprpy42cmcn4')
+    const indexes = {
+      potato: cid,
+      tomato: cid
+    }
+    await store.save(cid, indexes)
   })
   it('should have a header', async function () {
     const path = join(defaultConfig.dataDir, store.name, 'main.json')
@@ -102,10 +115,25 @@ describe('HeaderStoreFS with a saved header', function () {
     const header = JSON.parse(data.toString())
     assert(header)
     assert(header.car)
+    equals(header.car['/'], cid.toString())
+
+    assert(header.indexes)
+    assert(header.indexes.potato)
+    assert(header.indexes.tomato)
+    equals(header.indexes.potato['/'], cid.toString())
+    equals(header.indexes.tomato['/'], cid.toString())
   })
   it('should load a header', async function () {
     const loaded = await store.load()
     assert(loaded)
+    console.log(loaded)
     assert(loaded.car)
+    equals(loaded.car.toString(), cid.toString())
+
+    assert(loaded.indexes)
+    assert(loaded.indexes.potato)
+    assert(loaded.indexes.tomato)
+    equals(loaded.indexes.potato.toString(), cid.toString())
+    equals(loaded.indexes.tomato.toString(), cid.toString())
   })
 })

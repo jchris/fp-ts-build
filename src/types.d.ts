@@ -1,6 +1,8 @@
 import { Link } from 'multiformats'
 import { EventLink } from '@alanshaw/pail/clock'
 import { EventData } from '@alanshaw/pail/crdt'
+import { StoredHeader } from './store'
+import { AnyLink } from './types'
 
 export type ClockHead = EventLink<EventData>[]
 
@@ -26,6 +28,10 @@ export type DocUpdate = {
 export type DocValue = {
   doc?: DocBody
   del?: boolean
+}
+
+type IndexCars = {
+  [key: string]: AnyLink
 }
 
 export type IndexKey = [string, string] | string
@@ -114,3 +120,13 @@ export type DocFragment = string | number | boolean | null | DocFragment[] | { [
 type CallbackFn = (k: string, v: DocFragment) => void
 
 export type MapFn = (doc: Doc, map: CallbackFn) => DocFragment | void
+
+export interface HeaderStoreInterface {
+  name: string
+  makeHeader(car: AnyLink, indexes: IndexCars): ByteView<DbHeader>
+  parseHeader(headerData: Uint8Array): DbHeader
+  load(branch?: string): Promise<DbHeader | null>
+  save(carCid: AnyLink, indexes: IndexCars, branch?: string): Promise<void>
+}
+
+export type DbHeader = { car: AnyLink, indexes: IndexCars}

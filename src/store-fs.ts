@@ -2,33 +2,29 @@ import { join, dirname } from 'node:path'
 import { homedir } from 'node:os'
 import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises'
 
-import { AnyBlock, AnyLink } from './types'
-import { HeaderStore, CarStore, StoredHeader } from './store'
+import { AnyBlock, AnyLink, IndexCars, DbHeader } from './types'
+import { HeaderStore, CarStore } from './store'
 
 export const FORMAT = '0.9'
-
-const encoder = new TextEncoder()
 
 export const defaultConfig = {
   dataDir: join(homedir(), '.fireproof', 'v' + FORMAT)
 }
 
 export class HeaderStoreFS extends HeaderStore {
-  async load(branch?: string): Promise<StoredHeader|null> {
-    branch = branch || 'main'
+  async load(branch: string = 'main'): Promise<DbHeader|null> {
     const filepath = join(defaultConfig.dataDir, this.name, branch + '.json')
     const bytes = await readFile(filepath).catch((e: Error & { code: string}) => {
       if (e.code === 'ENOENT') return null
       throw e
     })
-    return bytes ? this.parseHeader(bytes.toString()) : null
+    return bytes ? this.parseHeader(bytes) : null
   }
 
-  async save(carCid: AnyLink, branch?: string) {
-    branch = branch || 'main'
+  async save(carCid: AnyLink, indexes: IndexCars, branch: string = 'main'): Promise<void> {
     const filepath = join(defaultConfig.dataDir, this.name, branch + '.json')
-    const bytes = this.makeHeader(carCid)
-    await writePathFile(filepath, encoder.encode(bytes))
+    const bytes = this.makeHeader(carCid, indexes) as Uint8Array
+    await writePathFile(filepath, bytes)
   }
 }
 
