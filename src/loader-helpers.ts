@@ -7,11 +7,11 @@ import * as codec from '@ipld/dag-cbor'
 import { CarReader } from '@ipld/car'
 
 import { Transaction } from './transaction'
-import { AnyBlock, BulkResult, ClockHead, AnyLink } from './types'
+import { AnyBlock, BulkResult, ClockHead, AnyLink, IndexerResult } from './types'
 
 export async function makeCarFile(
   t: Transaction,
-  { head }: BulkResult,
+  { head }: BulkResult | IndexerResult,
   cars: AnyLink[],
   compact: boolean = false
 ): Promise<BlockView<unknown, number, number, 1>> {

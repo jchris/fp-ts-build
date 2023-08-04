@@ -5,11 +5,6 @@ import { AnyLink } from './types'
 
 export type ClockHead = EventLink<EventData>[]
 
-export type BulkResult = {
-  head: ClockHead
-  car?: AnyLink
-}
-
 type DocBody = {
   [key: string]: any
 }
@@ -54,9 +49,16 @@ type IdxTree = {
   root: ProllyNode | null
 }
 
-export type IndexerResult = {
+export type BulkResult = {
+  head: ClockHead
+  car?: AnyLink
+}
+
+export type IndexerResult = BulkResult & {
   byId: IdxTree
   byKey: IdxTree
+  map: string
+  name: string
 }
 
 export type QueryOpts = {

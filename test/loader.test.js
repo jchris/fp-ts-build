@@ -7,6 +7,7 @@
 import * as codec from '@ipld/dag-cbor'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import { encode } from 'multiformats/block'
+import { CID } from 'multiformats/cid'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, matches, equals, resetDirectory, notEquals } from './helpers.js'
@@ -197,6 +198,39 @@ describe('Loader with many committed transactions', function () {
     const parsed = await parseCarFile(reader)
     assert(parsed.cars)
     equals(parsed.cars.length, 5)
+    assert(parsed.head)
+  })
+})
+
+describe('basic Loader with index commits', function () {
+  let loader, block, t, indexerResult, cid
+  beforeEach(async function () {
+    await resetDirectory(defaultConfig.dataDir, 'test-loader-index')
+    t = new Transaction({})
+    loader = new Loader('test-loader-index')
+    block = (await encode({
+      value: { hello: 'world' },
+      hasher,
+      codec
+    }))
+    await t.put(block.cid, block.bytes)
+    cid = CID.parse('bafybeia4luuns6dgymy5kau5rm7r4qzrrzg6cglpzpogussprpy42cmcn4')
+
+    indexerResult = {
+      byId: { cid }
+    }
+  })
+  it('should start with an empty car log', function () {
+    equals(loader.carLog.length, 0)
+  })
+  it('should commit the index metadata', async function () {
+    const carCid = await loader.commit(t, indexerResult)
+    equals(loader.carLog.length, 1)
+    const reader = await loader.loadCar(carCid)
+    assert(reader)
+    const parsed = await parseCarFile(reader)
+    assert(parsed.cars)
+    equals(parsed.cars.length, 0)
     assert(parsed.head)
   })
 })

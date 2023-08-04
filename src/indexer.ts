@@ -83,7 +83,7 @@ export class Indexer {
     }
     const indexEntries = indexEntriesForChanges(result, this.mapFn) // use a getter to translate from string
     const byIdIndexEntries: DocUpdate[] = indexEntries.map(({ key }) => ({ key: key[1], value: key }))
-    return await this.blocks.indexTransaction(async (tblocks): Promise<IndexerResult> => {
+    return await this.blocks.transaction(async (tblocks): Promise<IndexerResult> => {
       this.byId = await bulkIndex(
         tblocks,
         this.byId,
@@ -92,7 +92,8 @@ export class Indexer {
       )
       this.byKey = await bulkIndex(tblocks, this.byKey, staleKeyIndexEntries.concat(indexEntries), byKeyOpts)
       this.indexHead = head
-      return { byId: this.byId, byKey: this.byKey }
+      if (!this.name) throw new Error('No name defined')
+      return { byId: this.byId, byKey: this.byKey, head, map: this.mapFnString, name: this.name }
     })
   }
 }

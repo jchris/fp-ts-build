@@ -54,7 +54,7 @@ export class TransactionBlockstore implements BlockFetcher {
     return await this.loader.getBlock(cid as CID)
   }
 
-  async transaction(fn: (t: Transaction) => Promise<BulkResult>) {
+  async transaction(fn: (t: Transaction) => Promise<BulkResult|IndexerResult>) {
     const t = new Transaction(this)
     this.transactions.add(t)
     const done: BulkResult = await fn(t)
@@ -62,20 +62,8 @@ export class TransactionBlockstore implements BlockFetcher {
     return done
   }
 
-  async indexTransaction(fn: (t: Transaction) => Promise<IndexerResult>) {
-    const t = new Transaction(this)
-    this.transactions.add(t)
-    const done: IndexerResult = await fn(t)
-    if (done) { return { ...done, car: await this.indexCommit(t, done) } }
-    return done
-  }
-
-  async commit(t: Transaction, done: BulkResult): Promise<AnyLink | undefined> {
+  async commit(t: Transaction, done: BulkResult | IndexerResult): Promise<AnyLink | undefined> {
     return await this.loader?.commit(t, done)
-  }
-
-  async indexCommit(t: Transaction, done: IndexerResult): Promise<AnyLink | undefined> {
-    return await this.loader?.indexCommit(t, done)
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
