@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Indexer } from '../dist/indexer.esm.js'
 import { Fireproof } from '../dist/fireproof.esm.js'
+import { TransactionBlockstore } from '../dist/transaction.esm.js'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, matches, equals, resetDirectory, notEquals, equalsJSON } from './helpers.js'
@@ -178,6 +179,47 @@ describe('basic Indexer upon cold start', function () {
   it('should not rerun the map function', async function () {
     didMap = false
     const indexer2 = new Indexer(db._crdt._blocks, db._crdt, 'hello', mapFn)
+    await indexer2.query()
+    assert(!didMap)
+  })
+})
+
+describe('basic Indexer with distinct blockstore', function () {
+  let db, indexer, result, didMap, mapFn, blockstore
+  beforeEach(async function () {
+    await resetDirectory(defaultConfig.dataDir, 'test-indexer-cold')
+
+    db = Fireproof.storage('test-indexer-cold')
+    await db.put({ title: 'amazing' })
+    await db.put({ title: 'creative' })
+    await db.put({ title: 'bazillas' })
+    didMap = false
+    mapFn = (doc) => {
+      didMap = true
+      return doc.title
+    }
+    blockstore = new TransactionBlockstore()
+
+    indexer = new Indexer(blockstore, db._crdt, 'hello', mapFn)
+    result = await indexer.query()
+  })
+  it('should call map on first query', function () {
+    assert(didMap)
+  })
+  it('should get results on first query', function () {
+    assert(result)
+    assert(result.rows)
+    equals(result.rows.length, 3)
+  })
+  it('should work on cold load', async function () {
+    const indexer2 = new Indexer(blockstore, db._crdt, 'hello', mapFn)
+    const result2 = await indexer2.query()
+    assert(result2)
+    equals(result2.rows.length, 3)
+  })
+  it('should not rerun the map function', async function () {
+    didMap = false
+    const indexer2 = new Indexer(blockstore, db._crdt, 'hello', mapFn)
     await indexer2.query()
     assert(!didMap)
   })

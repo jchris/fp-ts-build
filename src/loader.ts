@@ -18,6 +18,7 @@ export class Loader {
   carsReaders: Map<string, CarReader> = new Map()
   ready: Promise<{ head: ClockHead }> // todo this will be a map of headers by branch name
   currentHead: ClockHead | null = null
+
   constructor(name: string) {
     this.name = name
     this.headerStore = new HeaderStore(name)
