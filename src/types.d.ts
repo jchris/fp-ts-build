@@ -1,7 +1,6 @@
 import { Link } from 'multiformats'
 import { EventLink } from '@alanshaw/pail/clock'
 import { EventData } from '@alanshaw/pail/crdt'
-import { StoredHeader } from './store'
 import { AnyLink } from './types'
 
 export type ClockHead = EventLink<EventData>[]
