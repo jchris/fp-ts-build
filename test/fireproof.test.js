@@ -83,11 +83,31 @@ describe('Reopening a database', function () {
     equalsJSON(db2._crdt._head, db._crdt._head)
   })
 
+  it('should have a car in the car log', async function () {
+    await db._crdt.ready
+    assert(db._crdt.blocks.loader)
+    assert(db._crdt.blocks.loader.carLog)
+    equals(db._crdt.blocks.loader.carLog.length, 1)
+  })
+
+  it('should have carlog after reopen', async function () {
+    const db2 = Fireproof.storage('test-reopen')
+    await db2._crdt.ready
+    assert(db2._crdt.blocks.loader)
+    assert(db2._crdt.blocks.loader.carLog)
+    equals(db2._crdt.blocks.loader.carLog.length, 1)
+  })
+
   it('passing slow, should have the same data on reopen after reopen and update', async function () {
     for (let i = 0; i < 100; i++) {
+      console.log('iteration', i)
       const db = Fireproof.storage('test-reopen')
+      assert(db._crdt.ready)
+      await db._crdt.ready
+      equals(db._crdt.blocks.loader.carLog.length, i)
       const ok = await db.put({ _id: `test${i}`, fire: 'proof'.repeat(50 * 1024) })
       assert(ok)
+      equals(db._crdt.blocks.loader.carLog.length, i + 1)
       const doc = await db.get(`test${i}`)
       equals(doc.fire, 'proof'.repeat(50 * 1024))
     }
