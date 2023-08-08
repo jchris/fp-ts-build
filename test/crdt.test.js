@@ -5,6 +5,7 @@
 /* eslint-disable mocha/max-top-level-suites */
 import { assert, equals, notEquals } from './helpers.js'
 import { CRDT } from '../dist/crdt.esm.js'
+import { Indexer } from '../dist/indexer.esm.js'
 
 describe('Fresh crdt', function () {
   /** @type {CRDT} */
@@ -169,7 +170,7 @@ describe('Compact a CRDT with writes', function () {
   })
   it('should start with blocks', async function () {
     const blz = []
-    for await (const blk of crdt._blocks.entries()) {
+    for await (const blk of crdt.blocks.entries()) {
       blz.push(blk)
     }
     equals(blz.length, 25)
@@ -182,7 +183,7 @@ describe('Compact a CRDT with writes', function () {
   it('should have fewer blocks after compact', async function () {
     await crdt.compact()
     const blz = []
-    for await (const blk of crdt._blocks.entries()) {
+    for await (const blk of crdt.blocks.entries()) {
       blz.push(blk)
     }
     equals(blz.length, 4)
@@ -196,5 +197,36 @@ describe('Compact a CRDT with writes', function () {
   it('should have changes after compact', async function () {
     const chs = await crdt.changes([])
     equals(chs.result[0].key, 'ace')
+  })
+})
+
+describe('CRDT with an index', function () {
+  let crdt, idx
+  beforeEach(async function () {
+    crdt = new CRDT()
+    await crdt.bulk([{ key: 'ace', value: { points: 11 } }, { key: 'king', value: { points: 10 } }])
+    idx = new Indexer(crdt.blocks, crdt, 'points', 'points')
+  })
+  it('should query the data', async function () {
+    const got = await idx.query({ range: [9, 12] })
+    equals(got.rows.length, 2)
+    equals(got.rows[0].id, 'king')
+  })
+  it('should register the index', async function () {
+    const rIdx = crdt.indexer('points')
+    assert(rIdx)
+    equals(rIdx.name, 'points')
+    const got = await rIdx.query({ range: [9, 12] })
+    equals(got.rows.length, 2)
+    equals(got.rows[0].id, 'king')
+  })
+  it('creating a new index should not unregister existing index', async function () {
+    const idx2 = new Indexer(crdt.blocks, crdt, 'points', 'points')
+    const got = await idx2.query({ range: [9, 12] })
+    equals(got.rows.length, 2)
+    equals(got.rows[0].id, 'king')
+    const rIdx2 = crdt.indexer('points')
+    assert(rIdx2 === idx, 'is the first object')
+    assert(rIdx2 !== idx2, 'is not the second object')
   })
 })

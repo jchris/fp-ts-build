@@ -20,7 +20,7 @@ describe('basic Indexer', function () {
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
-    indexer = new Indexer(db._crdt._blocks, db._crdt, 'hello', (doc) => {
+    indexer = new Indexer(db._crdt.blocks, db._crdt, 'hello', (doc) => {
       didMap = true
       return doc.title
     })
@@ -89,7 +89,7 @@ describe('Indexer query with compound key', function () {
     await db.put({ title: 'creative', score: 2 })
     await db.put({ title: 'creative', score: 20 })
     await db.put({ title: 'bazillas', score: 3 })
-    indexer = new Indexer(db._crdt._blocks, db._crdt, 'hello', (doc) => {
+    indexer = new Indexer(db._crdt.blocks, db._crdt, 'hello', (doc) => {
       return [doc.title, doc.score]
     })
   })
@@ -110,7 +110,7 @@ describe('basic Indexer with map fun', function () {
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
-    indexer = new Indexer(db._crdt._blocks, db._crdt, 'hello', (doc, map) => {
+    indexer = new Indexer(db._crdt.blocks, db._crdt, 'hello', (doc, map) => {
       map(doc.title)
     })
   })
@@ -131,7 +131,7 @@ describe('basic Indexer with string fun', function () {
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
-    indexer = new Indexer(db._crdt._blocks, db._crdt, 'hello', 'title')
+    indexer = new Indexer(db._crdt.blocks, db._crdt, 'hello', 'title')
   })
   it('should get results', async function () {
     const result = await indexer.query()
@@ -159,7 +159,7 @@ describe('basic Indexer upon cold start', function () {
       didMap = true
       return doc.title
     }
-    indexer = new Indexer(db._crdt._blocks, db._crdt, 'hello', mapFn)
+    indexer = new Indexer(db._crdt.blocks, db._crdt, 'hello', mapFn)
     result = await indexer.query()
   })
   it('should call map on first query', function () {
@@ -171,16 +171,24 @@ describe('basic Indexer upon cold start', function () {
     equals(result.rows.length, 3)
   })
   it('should work on cold load', async function () {
-    const indexer2 = new Indexer(db._crdt._blocks, db._crdt, 'hello', mapFn)
+    const indexer2 = new Indexer(db._crdt.blocks, db._crdt, 'hello', mapFn)
     const result2 = await indexer2.query()
     assert(result2)
     equals(result2.rows.length, 3)
   })
   it('should not rerun the map function', async function () {
     didMap = false
-    const indexer2 = new Indexer(db._crdt._blocks, db._crdt, 'hello', mapFn)
+    const indexer2 = new Indexer(db._crdt.blocks, db._crdt, 'hello', mapFn)
     await indexer2.query()
     assert(!didMap)
+  })
+  it('should not allow map function definiton to change', function () {
+    assert.throws(() => {
+      // eslint-disable-next-line no-new
+      new Indexer(db._crdt.blocks, db._crdt, 'hello', (doc) => {
+        return doc.title
+      })
+    })
   })
 })
 

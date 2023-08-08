@@ -25,7 +25,6 @@ export class Loader {
       if (!header) return { crdt: { head: [], cars: [], compact: [] }, indexes: new Map() }
       const carHead = await this.ingestCarHead(header.car)
       const indexHeads = await this.ingestIndexCars(header.indexes)
-      // carHead.head is used to set crdt head
       return { crdt: carHead, indexes: indexHeads }
     })
   }

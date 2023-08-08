@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable mocha/max-top-level-suites */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -28,6 +30,16 @@ describe('basic database', function () {
     assert(ok)
     const got = await db.get(ok.id)
     equals(got.foo, 'bam')
+  })
+  it('can define an index', async function () {
+    const ok = await db.put({ _id: 'test', foo: 'bar' })
+    assert(ok)
+    const idx = db.index('test-index', (doc) => doc.foo)
+    const result = await idx.query()
+    assert(result)
+    assert(result.rows)
+    equals(result.rows.length, 1)
+    equals(result.rows[0].key, 'bar')
   })
 })
 
@@ -70,4 +82,33 @@ describe('Reopening a database', function () {
       equals(doc.fire, 'proof'.repeat(50 * 1024))
     }
   }).timeout(20000)
+})
+
+describe('Reopening a database with indexes', function () {
+  /** @type {Database} */
+  let db
+  beforeEach(async function () {
+    // erase the existing test data
+    await resetDirectory(defaultConfig.dataDir, 'test-reopen-idx')
+
+    db = Fireproof.storage('test-reopen-idx')
+    const ok = await db.put({ _id: 'test', foo: 'bar' })
+    equals(ok.id, 'test')
+
+    // const idx = db.index('foo')
+  })
+
+  it('should persist data', async function () {
+    const doc = await db.get('test')
+    equals(doc.foo, 'bar')
+  })
+
+  it('should have the same data on reopen', async function () {
+    const db2 = Fireproof.storage('test-reopen-idx')
+    const doc = await db2.get('test')
+    equals(doc.foo, 'bar')
+    assert(db2._crdt._head)
+    equals(db2._crdt._head.length, 1)
+    equalsJSON(db2._crdt._head, db._crdt._head)
+  })
 })

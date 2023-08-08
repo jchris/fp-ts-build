@@ -1,27 +1,30 @@
 import { TransactionBlockstore as Blockstore } from './transaction'
 import { DocUpdate, BulkResult, ClockHead, DbCarHeader, IdxCarHeader } from './types'
 import { clockChangesSince, applyBulkUpdateToCrdt, getValueFromCrdt, doCompact } from './crdt-helpers'
+import { Indexer } from './indexer'
 
 export class CRDT {
   name: string | null
   ready: Promise<void>
+  blocks: Blockstore
 
-  private _blocks: Blockstore
   private _head: ClockHead
+  private _indexers: Map<string, Indexer> = new Map()
 
   constructor(name?: string, blocks?: Blockstore) {
     this.name = name || null
-    this._blocks = blocks || new Blockstore(name)
+    this.blocks = blocks || new Blockstore(name)
     this._head = []
-    this.ready = this._blocks.ready.then(({ crdt, indexes }: { crdt: DbCarHeader, indexes: Map<string, IdxCarHeader> }) => {
+    this.ready = this.blocks.ready.then(({ crdt, indexes }: { crdt: DbCarHeader, indexes: Map<string, IdxCarHeader> }) => {
       this._head = crdt.head // todo multi head support here
-      if (indexes.size > 0) { console.log('todo apply indexes', indexes) }
+      // if (crdt.head.length > 0) { throw new Error('todo apply crdt head') }
+      if (indexes.size > 0) { throw new Error('todo apply indexes' + indexes.size) }
     })
   }
 
   async bulk(updates: DocUpdate[], options?: object): Promise<BulkResult> {
     await this.ready
-    const tResult: BulkResult = await this._blocks.transaction(async tblocks => {
+    const tResult: BulkResult = await this.blocks.transaction(async tblocks => {
       const { head } = await applyBulkUpdateToCrdt(tblocks, this._head, updates, options)
       this._head = head // we want multi head support here if allowing calls to bulk in parallel
       return { head }
@@ -34,16 +37,31 @@ export class CRDT {
 
   async get(key: string) {
     await this.ready
-    const result = await getValueFromCrdt(this._blocks, this._head, key)
+    const result = await getValueFromCrdt(this.blocks, this._head, key)
     if (result.del) return null
     return result
   }
 
   async changes(since: ClockHead) {
-    return await clockChangesSince(this._blocks, this._head, since)
+    return await clockChangesSince(this.blocks, this._head, since)
   }
 
   async compact() {
-    return await doCompact(this._blocks, this._head)
+    return await doCompact(this.blocks, this._head)
+  }
+
+  indexer(name: string) {
+    return this._indexers.get(name)
+  }
+
+  registerIndexer(indexer: Indexer) {
+    if (!indexer.name) throw new Error('Indexer must have a name')
+    if (this._indexers.has(indexer.name)) {
+      const existing = this._indexers.get(indexer.name)
+      if (existing?.mapFnString !== indexer.mapFnString) throw new Error(`Indexer ${indexer.name} already registered with different map function`)
+      // the new indexer might have a car file, etc, so we need to merge them
+    } else {
+      this._indexers.set(indexer.name, indexer)
+    }
   }
 }

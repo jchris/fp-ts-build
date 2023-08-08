@@ -1,13 +1,15 @@
 // @ts-ignore
 import cargoQueue from 'async/cargoQueue'
 import { CRDT } from './crdt'
-import { Doc, BulkResult, DocUpdate, DbResponse, ClockHead, ChangesResponse } from './types'
+import { Doc, BulkResult, DocUpdate, DbResponse, ClockHead, ChangesResponse, MapFn } from './types'
+import { Indexer } from './indexer'
 
 export class Database {
   name: string
   config: object
   _crdt: CRDT
   _writeQueue: any
+
   constructor(name: string, config = {}) {
     this.name = name
     this.config = config
@@ -59,5 +61,13 @@ export class Database {
       value: { _id: key, ...value } as Doc
     }))
     return { rows, clock: head }
+  }
+
+  index(name: string, mapFn?: MapFn) {
+    const idx = this._crdt.indexer(name)
+    if (idx) return idx
+    const idx2 = new Indexer(this._crdt.blocks, this._crdt, name, mapFn || name)
+    this._crdt.registerIndexer(idx2)
+    return idx2
   }
 }
