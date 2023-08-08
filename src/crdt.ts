@@ -43,6 +43,7 @@ export class CRDT {
   }
 
   async changes(since: ClockHead) {
+    await this.ready
     return await clockChangesSince(this.blocks, this._head, since)
   }
 

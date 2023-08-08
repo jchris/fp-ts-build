@@ -42,7 +42,7 @@ export class Indexer {
 
   async query(opts: QueryOpts = {}) {
     await this._updateIndex()
-    if (!this.byKey.root) return { result: [] }
+    if (!this.byKey.root) return await applyQuery(this.crdt, { result: [] }, opts)
     if (this.includeDocsDefault && opts.includeDocs === undefined) opts.includeDocs = true
     if (opts.range) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call

@@ -232,3 +232,38 @@ describe('basic Indexer with distinct blockstore', function () {
     assert(!didMap)
   })
 })
+
+describe('basic Indexer with no data', function () {
+  let db, indexer, didMap
+  beforeEach(async function () {
+    await resetDirectory(defaultConfig.dataDir, 'test-indexer')
+
+    db = Fireproof.storage('test-indexer')
+    indexer = new Indexer(db._crdt.blocks, db._crdt, 'hello', (doc) => {
+      didMap = true
+      return doc.title
+    })
+  })
+  it('should have properties', function () {
+    equals(indexer.crdt, db._crdt)
+    equals(indexer.name, 'hello')
+    assert(indexer.mapFn)
+  })
+  it('should not call the map function on first query', async function () {
+    didMap = false
+    await indexer.query()
+    assert(!didMap)
+  })
+  it('should not call the map function on second query', async function () {
+    await indexer.query()
+    didMap = false
+    await indexer.query()
+    assert(!didMap)
+  })
+  it('should get results', async function () {
+    const result = await indexer.query()
+    assert(result)
+    assert(result.rows)
+    equals(result.rows.length, 0)
+  })
+})
