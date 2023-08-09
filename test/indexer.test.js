@@ -192,9 +192,7 @@ describe('basic Indexer upon cold start', function () {
   it('should not allow map function definiton to change', function () {
     assert.throws(() => {
       const crdt2 = new CRDT('test-indexer-cold')
-      crdt2.indexer('hello', (doc) => {
-        return doc.title
-      })
+      crdt2.indexer('hello', (doc) => doc.title)
     })
   })
 })

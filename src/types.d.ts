@@ -71,6 +71,10 @@ export type IdxMeta = {
   head: ClockHead
 }
 
+export type IdxMetaCar = IdxMeta & {
+  car: AnyLink
+}
+
 export type IdxCarHeader = CarHeader & {
   indexes: Map<string, IdxMeta>
 }

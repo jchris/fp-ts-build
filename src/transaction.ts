@@ -1,5 +1,5 @@
 import { MemoryBlockstore } from '@alanshaw/pail/block'
-import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead, IndexerResult, DbCarHeader, IdxCarHeader, IdxMeta } from './types'
+import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead, IndexerResult, DbCarHeader, IdxCarHeader, IdxMeta, IdxMetaCar } from './types'
 import { Loader } from './loader'
 import { CID } from 'multiformats'
 import { isIndexerMeta, isIndexerResult } from './loader-helpers'
@@ -24,13 +24,12 @@ export class Transaction extends MemoryBlockstore {
   }
 }
 
-export class TransactionBlockstore<T> implements BlockFetcher {
+export class FireproofBlockstore implements BlockFetcher {
+  ready: Promise<IdxCarHeader|DbCarHeader>
   name: string | null = null
-  ready: Promise<T> // todo this will be a map of headers by branch name
 
   private transactions: Set<Transaction> = new Set()
   private loader: Loader | null = null
-  private indexMeta: Map<string, IdxMeta> = new Map()
 
   constructor(name?: string, loader?: Loader) {
     if (name) {
@@ -56,19 +55,6 @@ export class TransactionBlockstore<T> implements BlockFetcher {
     return await this.loader.getBlock(cid as CID)
   }
 
-  async transaction(fn: (t: Transaction) => Promise<BulkResult|IndexerResult>) {
-    const t = new Transaction(this)
-    this.transactions.add(t)
-    const done: BulkResult|IdxMeta = await fn(t)
-
-    if (this.name && isIndexerMeta(done)) {
-      const doneX = done as IdxMeta
-      this.indexMeta.set(this.name, doneX)
-    }
-    if (done) { return { ...done, car: await this.commit(t, done) } }
-    return done
-  }
-
   async commit(t: Transaction, done: BulkResult | IndexerResult): Promise<AnyLink | undefined> {
     return await this.loader?.commit(t, done)
   }
@@ -81,6 +67,10 @@ export class TransactionBlockstore<T> implements BlockFetcher {
     return await this.loader?.commit(t, { head }, true)
   }
 
+  addTransaction(t: Transaction) {
+    this.transactions.add(t)
+  }
+
   async * entries(): AsyncIterableIterator<AnyBlock> {
     const seen: Set<string> = new Set()
     for (const t of this.transactions) {
@@ -90,5 +80,27 @@ export class TransactionBlockstore<T> implements BlockFetcher {
         yield blk
       }
     }
+  }
+}
+
+export class IndexBlockstore extends FireproofBlockstore {
+  declare ready: Promise<IdxCarHeader>
+
+  async transaction(fn: (t: Transaction) => Promise<IdxMetaCar>) {
+    const t = new Transaction(this)
+    this.addTransaction(t)
+    const done: IdxMeta = await fn(t)
+    return { ...done, car: await this.commit(t, done) }
+  }
+}
+
+export class TransactionBlockstore extends FireproofBlockstore {
+  declare ready: Promise<DbCarHeader> // todo this will be a map of headers by branch name
+
+  async transaction(fn: (t: Transaction) => Promise<BulkResult>) {
+    const t = new Transaction(this)
+    this.addTransaction(t)
+    const done: BulkResult = await fn(t)
+    return { ...done, car: await this.commit(t, done) }
   }
 }
