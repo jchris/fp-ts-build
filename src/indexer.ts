@@ -18,7 +18,6 @@ export class Indexer {
     this.blocks = blocks
     this.crdt = crdt
     this.applyMapFn(mapFn, name)
-    this.crdt.registerIndexer(this as Indexer)
   }
 
   applyMapFn(mapFn: MapFn, name?: string) {
@@ -47,6 +46,7 @@ export class Indexer {
     if (opts.range) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       const { result, ...all } = await this.byKey.root.range(...encodeRange(opts.range))
+      console.log('range', opts.range, result)
       return await applyQuery(this.crdt, { result, ...all }, opts)
     }
     if (opts.key) {
@@ -64,7 +64,11 @@ export class Indexer {
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const { result, ...all } = await this.byKey.root.getAllEntries() // funky return type
-    return await applyQuery(this.crdt, { result: result.map(({ key: [k, id], value }) => ({ key: k, id, row: value })), ...all }, opts)
+    return await applyQuery(this.crdt, {
+      result: result.map(({ key: [k, id], value }) =>
+        ({ key: k, id, value })),
+      ...all
+    }, opts)
   }
 
   async _updateIndex() {

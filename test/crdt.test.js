@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable mocha/max-top-level-suites */
-import { assert, equals, notEquals } from './helpers.js'
+import { assert, equals, equalsJSON, notEquals } from './helpers.js'
 import { CRDT } from '../dist/crdt.esm.js'
 import { Indexer } from '../dist/indexer.esm.js'
 
@@ -205,7 +205,7 @@ describe('CRDT with an index', function () {
   beforeEach(async function () {
     crdt = new CRDT()
     await crdt.bulk([{ key: 'ace', value: { points: 11 } }, { key: 'king', value: { points: 10 } }])
-    idx = new Indexer(crdt.blocks, crdt, 'points', 'points')
+    idx = crdt.indexer('points')
   })
   it('should query the data', async function () {
     const got = await idx.query({ range: [9, 12] })
@@ -221,12 +221,15 @@ describe('CRDT with an index', function () {
     equals(got.rows[0].id, 'king')
   })
   it('creating a new index should not unregister existing index', async function () {
-    const idx2 = new Indexer(crdt.blocks, crdt, 'points', 'points')
+    const idx2 = crdt.indexer('points', (doc) => doc._id)
+    equals(idx2.mapFn, idx.mapFn)
     const got = await idx2.query({ range: [9, 12] })
+    console.log('got', got)
     equals(got.rows.length, 2)
     equals(got.rows[0].id, 'king')
+    equalsJSON(got.rows[0].key, 10)
     const rIdx2 = crdt.indexer('points')
     assert(rIdx2 === idx, 'is the first object')
-    assert(rIdx2 !== idx2, 'is not the second object')
+    equals(rIdx2.mapFn, idx.mapFn)
   })
 })
