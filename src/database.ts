@@ -65,10 +65,6 @@ export class Database {
   }
 
   index(name: string, mapFn?: MapFn) {
-    const idx = this._crdt.indexer(name)
-    if (idx) return idx
-    const idx2 = new Indexer(this._indexBlocks, this._crdt, name, mapFn || name)
-    this._crdt.registerIndexer(idx2)
-    return idx2
+    return this._crdt.indexer(name, mapFn)
   }
 }

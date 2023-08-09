@@ -1,5 +1,5 @@
 import { TransactionBlockstore } from './transaction'
-import { DocUpdate, BulkResult, ClockHead, DbCarHeader, IdxCarHeader } from './types'
+import { DocUpdate, BulkResult, ClockHead, DbCarHeader, IdxCarHeader, MapFn } from './types'
 import { clockChangesSince, applyBulkUpdateToCrdt, getValueFromCrdt, doCompact } from './crdt-helpers'
 import { Indexer } from './indexer'
 
@@ -53,8 +53,12 @@ export class CRDT {
     return await doCompact(this.blocks, this._head)
   }
 
-  indexer(name: string) {
-    return this._indexers.get(name)
+  indexer(name: string, mapFn?: MapFn) {
+    const idx = this._indexers.get(name)
+    if (idx) return idx
+    const idx2 = new Indexer(this.indexBlocks, this, name, mapFn || name)
+    this.registerIndexer(idx2)
+    return idx2
   }
 
   registerIndexer(indexer: Indexer) {
@@ -63,6 +67,7 @@ export class CRDT {
       const existing = this._indexers.get(indexer.name)
       if (existing?.mapFnString !== indexer.mapFnString) throw new Error(`Indexer ${indexer.name} already registered with different map function`)
       // the new indexer might have a car file, etc, so we need to merge them
+      // throw new Error('todo merge indexers')
     } else {
       this._indexers.set(indexer.name, indexer)
     }

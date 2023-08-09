@@ -159,7 +159,7 @@ describe('basic Indexer upon cold start', function () {
       didMap = true
       return doc.title
     }
-    indexer = new Indexer(db._indexBlocks, db._crdt, 'hello', mapFn)
+    indexer = new Indexer(db._crdt.indexBlocks, db._crdt, 'hello', mapFn)
     result = await indexer.query()
   })
   it('should call map on first query', function () {
@@ -171,21 +171,21 @@ describe('basic Indexer upon cold start', function () {
     equals(result.rows.length, 3)
   })
   it('should work on cold load', async function () {
-    const indexer2 = new Indexer(db._indexBlocks, db._crdt, 'hello', mapFn)
+    const indexer2 = new Indexer(db._crdt.indexBlocks, db._crdt, 'hello', mapFn)
     const result2 = await indexer2.query()
     assert(result2)
     equals(result2.rows.length, 3)
   })
   it('should not rerun the map function', async function () {
     didMap = false
-    const indexer2 = new Indexer(db._indexBlocks, db._crdt, 'hello', mapFn)
+    const indexer2 = new Indexer(db._crdt.indexBlocks, db._crdt, 'hello', mapFn)
     await indexer2.query()
     assert(!didMap)
   })
   it('should not allow map function definiton to change', function () {
     assert.throws(() => {
       // eslint-disable-next-line no-new
-      new Indexer(db._indexBlocks, db._crdt, 'hello', (doc) => {
+      new Indexer(db._crdt.indexBlocks, db._crdt, 'hello', (doc) => {
         return doc.title
       })
     })

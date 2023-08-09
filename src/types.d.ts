@@ -133,7 +133,9 @@ export type DocFragment = string | number | boolean | null | DocFragment[] | { [
 
 type CallbackFn = (k: string, v: DocFragment) => void
 
-export type MapFn = (doc: Doc, map: CallbackFn) => DocFragment | void
+type MapFnFn = (doc: Doc, map: CallbackFn) => DocFragment | void
+
+export type MapFn = string | MapFnFn
 
 export interface HeaderStoreInterface {
   name: string

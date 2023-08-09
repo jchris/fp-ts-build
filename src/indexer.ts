@@ -14,14 +14,14 @@ export class Indexer {
   indexHead: ClockHead = []
   includeDocsDefault: boolean = false
 
-  constructor(blocks: Blockstore, crdt: CRDT, name: string, mapFn: string | MapFn) {
+  constructor(blocks: Blockstore, crdt: CRDT, name: string, mapFn: MapFn) {
     this.blocks = blocks
     this.crdt = crdt
     this.applyMapFn(mapFn, name)
     this.crdt.registerIndexer(this as Indexer)
   }
 
-  applyMapFn(mapFn: string | MapFn, name?: string) {
+  applyMapFn(mapFn: MapFn, name?: string) {
     if (typeof mapFn === 'string') {
       this.mapFnString = mapFn
       const regex = /^[a-zA-Z0-9 ]+$/
