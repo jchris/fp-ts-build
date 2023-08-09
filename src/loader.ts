@@ -22,7 +22,7 @@ export class Loader {
     this.carStore = new CarStore(name)
     // todo config with multiple branches
     this.ready = this.headerStore.load('main').then(async header => {
-      console.log('headerStore.load', header)
+      // console.log('headerStore.load', header)
       if (!header) return { crdt: { head: [], cars: [], compact: [] }, indexes: new Map() }
       // this.carLog = [header.car]
       const carHead = await this.ingestCarHead(header.car)
@@ -32,11 +32,11 @@ export class Loader {
   }
 
   async commit(t: Transaction, done: BulkResult | IndexerResult, compact: boolean = false): Promise<AnyLink> {
-    console.log('commit blocks', [...t.entries()].map(b => b.cid.toString()))
+    // console.log('commit blocks', [...t.entries()].map(b => b.cid.toString()))
     const commitCarLog = this.carLogForResult(done)
-    console.log('commit car log', commitCarLog.length, commitCarLog.map(c => c.toString()))
+    // console.log('commit car log', commitCarLog.length, commitCarLog.map(c => c.toString()))
     const car = await makeCarFile(t, done, commitCarLog, compact)
-    console.log(`commit car ${car.cid.toString()}`)
+    // console.log(`commit car ${car.cid.toString()}`)
     await this.carStore.save(car)
     if (compact) {
       for (const cid of commitCarLog) {
@@ -46,7 +46,7 @@ export class Loader {
     } else {
       commitCarLog.push(car.cid)
     }
-    console.log('commit car log update', commitCarLog.length, commitCarLog.map(c => c.toString()))
+    // console.log('commit car log update', commitCarLog.length, commitCarLog.map(c => c.toString()))
     await this.headerStore.save(car.cid, {})
     return car.cid
   }
@@ -57,7 +57,7 @@ export class Loader {
     if (!car) throw new Error(`missing car file ${cid.toString()}`)
     const reader = await CarReader.fromBytes(car.bytes)
     this.carsReaders.set(cid.toString(), reader)
-    console.log('loadCar', cid)
+    // console.log('loadCar', cid)
     this.carLog.push(cid)
     return reader
   }
@@ -66,7 +66,8 @@ export class Loader {
     const car = await this.carStore.load(cid)
     const reader = await CarReader.fromBytes(car.bytes)
     this.carsReaders.set(cid.toString(), reader)
-    console.log('ingestCarHead', cid)
+    // console.log('ingestCarHead', cid)
+    // this.carLog.push(cid)
     this.carLog = [cid]
     const dbHeader = await parseCarFile(reader)
     await this.getMoreReaders(dbHeader.cars)
@@ -90,7 +91,7 @@ export class Loader {
   }
 
   async getMoreReaders(cids: AnyLink[]) {
-    console.log('getMoreReaders', cids.map(c => c.toString()))
+    // console.log('getMoreReaders', cids.map(c => c.toString()))
     for (const cid of cids) {
       // todo if loadCar stores promises we can parallelize this
       await this.loadCar(cid)
@@ -98,10 +99,10 @@ export class Loader {
   }
 
   async getBlock(cid: CID): Promise<AnyBlock | undefined> {
-    for (const [carcid, reader] of [...this.carsReaders].reverse()) { // reverse is faster
+    for (const [, reader] of [...this.carsReaders].reverse()) { // reverse is faster
       const block = await reader.get(cid)
       if (block) return block
-      console.log(`block ${cid.toString()} not found in carcid ${carcid.toString()}`)
+      // console.log(`block ${cid.toString()} not found in carcid ${carcid.toString()}`)
     }
   }
 
@@ -111,5 +112,6 @@ export class Loader {
       return this.indexCarLogs.get(result.name) as AnyLink[]
     }
     return this.carLog
+    // return [...this.carsReaders].reverse().map(([cid]) => CID.parse(cid))
   }
 }
