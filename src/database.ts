@@ -3,17 +3,21 @@ import cargoQueue from 'async/cargoQueue'
 import { CRDT } from './crdt'
 import { Doc, BulkResult, DocUpdate, DbResponse, ClockHead, ChangesResponse, MapFn } from './types'
 import { Indexer } from './indexer'
+import { TransactionBlockstore } from './transaction'
 
 export class Database {
   name: string
   config: object
   _crdt: CRDT
   _writeQueue: any
+  _indexBlocks: TransactionBlockstore
 
-  constructor(name: string, config = {}) {
+  constructor(name: string, config = { blocks: null }) {
     this.name = name
     this.config = config
     this._crdt = new CRDT(name)
+    this._indexBlocks = config.blocks || new TransactionBlockstore(name ? name + '-idx' : undefined) // todo works without name?
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     this._writeQueue = cargoQueue(async (updates: DocUpdate[]) => {
       return await this._crdt.bulk(updates)
@@ -66,7 +70,7 @@ export class Database {
   index(name: string, mapFn?: MapFn) {
     const idx = this._crdt.indexer(name)
     if (idx) return idx
-    const idx2 = new Indexer(this._crdt.blocks, this._crdt, name, mapFn || name)
+    const idx2 = new Indexer(this._indexBlocks, this._crdt, name, mapFn || name)
     this._crdt.registerIndexer(idx2)
     return idx2
   }

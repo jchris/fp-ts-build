@@ -1,4 +1,4 @@
-import { TransactionBlockstore as Blockstore } from './transaction'
+import { TransactionBlockstore } from './transaction'
 import { DocUpdate, BulkResult, ClockHead, DbCarHeader, IdxCarHeader } from './types'
 import { clockChangesSince, applyBulkUpdateToCrdt, getValueFromCrdt, doCompact } from './crdt-helpers'
 import { Indexer } from './indexer'
@@ -6,14 +6,14 @@ import { Indexer } from './indexer'
 export class CRDT {
   name: string | null
   ready: Promise<void>
-  blocks: Blockstore
+  blocks: TransactionBlockstore
 
   private _head: ClockHead
   private _indexers: Map<string, Indexer> = new Map()
 
-  constructor(name?: string, blocks?: Blockstore) {
+  constructor(name?: string, blocks?: TransactionBlockstore) {
     this.name = name || null
-    this.blocks = blocks || new Blockstore(name)
+    this.blocks = blocks || new TransactionBlockstore(name)
     this._head = []
     this.ready = this.blocks.ready.then(({ crdt, indexes }: { crdt: DbCarHeader, indexes: Map<string, IdxCarHeader> }) => {
       this._head = crdt.head // todo multi head support here
