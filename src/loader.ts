@@ -22,7 +22,9 @@ export class Loader {
     this.carStore = new CarStore(name)
     // todo config with multiple branches
     this.ready = this.headerStore.load('main').then(async header => {
+      console.log('headerStore.load', header)
       if (!header) return { crdt: { head: [], cars: [], compact: [] }, indexes: new Map() }
+      // this.carLog = [header.car]
       const carHead = await this.ingestCarHead(header.car)
       const indexHeads = await this.ingestIndexCars(header.indexes)
       return { crdt: carHead, indexes: indexHeads }
@@ -32,7 +34,7 @@ export class Loader {
   async commit(t: Transaction, done: BulkResult | IndexerResult, compact: boolean = false): Promise<AnyLink> {
     console.log('commit blocks', [...t.entries()].map(b => b.cid.toString()))
     const commitCarLog = this.carLogForResult(done)
-    console.log('commit car log', commitCarLog.map(c => c.toString()))
+    console.log('commit car log', commitCarLog.length, commitCarLog.map(c => c.toString()))
     const car = await makeCarFile(t, done, commitCarLog, compact)
     console.log(`commit car ${car.cid.toString()}`)
     await this.carStore.save(car)
@@ -44,7 +46,7 @@ export class Loader {
     } else {
       commitCarLog.push(car.cid)
     }
-    console.log('commit car log update', commitCarLog.map(c => c.toString()))
+    console.log('commit car log update', commitCarLog.length, commitCarLog.map(c => c.toString()))
     await this.headerStore.save(car.cid, {})
     return car.cid
   }
@@ -55,6 +57,8 @@ export class Loader {
     if (!car) throw new Error(`missing car file ${cid.toString()}`)
     const reader = await CarReader.fromBytes(car.bytes)
     this.carsReaders.set(cid.toString(), reader)
+    console.log('loadCar', cid)
+    this.carLog.push(cid)
     return reader
   }
 
@@ -62,6 +66,8 @@ export class Loader {
     const car = await this.carStore.load(cid)
     const reader = await CarReader.fromBytes(car.bytes)
     this.carsReaders.set(cid.toString(), reader)
+    console.log('ingestCarHead', cid)
+    this.carLog = [cid]
     const dbHeader = await parseCarFile(reader)
     await this.getMoreReaders(dbHeader.cars)
     return dbHeader

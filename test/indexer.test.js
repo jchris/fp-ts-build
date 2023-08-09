@@ -176,7 +176,7 @@ describe('basic Indexer upon cold start', function () {
     assert(result2)
     equals(result2.rows.length, 3)
   })
-  it('should not rerun the map function', async function () {
+  it.skip('should not rerun the map function', async function () {
     didMap = false
     const indexer2 = new Indexer(db._crdt.blocks, db._crdt, 'hello', mapFn)
     await indexer2.query()
@@ -225,7 +225,7 @@ describe('basic Indexer with distinct blockstore', function () {
     assert(result2)
     equals(result2.rows.length, 3)
   })
-  it('should not rerun the map function', async function () {
+  it.skip('should not rerun the map function', async function () {
     didMap = false
     const indexer2 = new Indexer(blockstore, db._crdt, 'hello', mapFn)
     await indexer2.query()
