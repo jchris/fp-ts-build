@@ -1,10 +1,10 @@
-import { ClockHead, DocUpdate, MapFn, IndexUpdate, IndexerResult, QueryOpts, DocFragment } from './types'
+import { ClockHead, DocUpdate, MapFn, IndexUpdate, QueryOpts, DocFragment, IdxMeta, IdxCarHeader } from './types'
 import { TransactionBlockstore as Blockstore } from './transaction'
 import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery, encodeRange, encodeKey, makeName } from './indexer-helpers'
 import { CRDT } from './crdt'
 
 export class Indexer {
-  blocks: Blockstore
+  blocks: Blockstore<IdxCarHeader>
   crdt: CRDT
   name: string | null = null
   mapFn: MapFn | null = null
@@ -14,7 +14,7 @@ export class Indexer {
   indexHead: ClockHead = []
   includeDocsDefault: boolean = false
 
-  constructor(blocks: Blockstore, crdt: CRDT, name: string, mapFn: MapFn) {
+  constructor(blocks: Blockstore<IdxCarHeader>, crdt: CRDT, name: string, mapFn: MapFn) {
     this.blocks = blocks
     this.crdt = crdt
     this.applyMapFn(mapFn, name)
@@ -88,7 +88,7 @@ export class Indexer {
     }
     const indexEntries = indexEntriesForChanges(result, this.mapFn) // use a getter to translate from string
     const byIdIndexEntries: DocUpdate[] = indexEntries.map(({ key }) => ({ key: key[1], value: key }))
-    return await this.blocks.transaction(async (tblocks): Promise<IndexerResult> => {
+    return await this.blocks.transaction(async (tblocks): Promise<IdxMeta> => {
       this.byId = await bulkIndex(
         tblocks,
         this.byId,
@@ -98,7 +98,7 @@ export class Indexer {
       this.byKey = await bulkIndex(tblocks, this.byKey, staleKeyIndexEntries.concat(indexEntries), byKeyOpts)
       this.indexHead = head
       if (!this.name) throw new Error('No name defined')
-      return { byId: this.byId, byKey: this.byKey, head, map: this.mapFnString, name: this.name }
+      return { byId: this.byId.cid, byKey: this.byKey.cid, head, map: this.mapFnString, name: this.name } as IdxMeta
     })
   }
 }

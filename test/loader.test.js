@@ -111,8 +111,7 @@ describe('Loader with a committed transaction', function () {
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-loader')
     loader = new Loader(dbname)
-    blockstore = new Blockstore(dbname, loader)
-    crdt = new CRDT(dbname, blockstore)
+    crdt = new CRDT(dbname)
     done = await crdt.bulk([{ key: 'foo', value: { foo: 'bar' } }])
   })
   it('should have a name', function () {
@@ -141,8 +140,7 @@ describe('Loader with two committed transactions', function () {
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-loader')
     loader = new Loader(dbname)
-    blockstore = new Blockstore(dbname, loader)
-    crdt = new CRDT(dbname, blockstore)
+    crdt = new CRDT(dbname)
     done1 = await crdt.bulk([{ key: 'apple', value: { foo: 'bar' } }])
     done2 = await crdt.bulk([{ key: 'orange', value: { foo: 'bar' } }])
   })
@@ -177,8 +175,9 @@ describe('Loader with many committed transactions', function () {
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-loader')
     loader = new Loader(dbname)
-    blockstore = new Blockstore(dbname, loader)
-    crdt = new CRDT(dbname, blockstore)
+    crdt = new CRDT(dbname)
+    blockstore = crdt.blocks
+    loader = blockstore.loader
     for (let i = 0; i < count; i++) {
       const did = await crdt.bulk([{ key: `apple${i}`, value: { foo: 'bar' } }])
       dones.push(did)

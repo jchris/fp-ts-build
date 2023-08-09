@@ -7,7 +7,7 @@ import * as codec from '@ipld/dag-cbor'
 import { CarReader } from '@ipld/car'
 
 import { Transaction } from './transaction'
-import { AnyBlock, BulkResult, AnyLink, IndexerResult, DbCarHeader, IdxCarHeader } from './types'
+import { AnyBlock, BulkResult, AnyLink, IndexerResult, DbCarHeader, IdxCarHeader, IdxMeta } from './types'
 
 export async function makeCarFile(
   t: Transaction,
@@ -16,7 +16,7 @@ export async function makeCarFile(
   compact: boolean = false
 ): Promise<BlockView<unknown, number, number, 1>> {
   const head = result.head
-  if (!head) throw new Error('no head')
+  if (!head) throw new Error('no head -- ok for idx')
 
   let fp
   if (compact) {
@@ -26,7 +26,9 @@ export async function makeCarFile(
   }
 
   if (isIndexerResult(result)) {
-    fp = { ...fp, name: result.name, map: result.map, byId: result.byId.cid, byKey: result.byKey.cid }
+    fp = { ...fp, indexes: result.indexes } as IdxCarHeader
+  } else {
+    fp = { ...fp } as DbCarHeader
   }
 
   const fpCarHeaderBlock = (await encode({
@@ -63,8 +65,8 @@ export async function parseCarFile(reader: CarReader): Promise<DbCarHeader | Idx
   const { fp } = got.value as { fp: BulkResult | IndexerResult }
 
   if (isIndexHeader(fp)) {
-    const { head, cars, compact, name, map, byId, byKey } = fp
-    return { head, cars, compact, name, map, byId, byKey } as IdxCarHeader
+    const { cars, compact, indexes } = fp
+    return { cars, compact, indexes } as IdxCarHeader
   } else {
     const { head, cars, compact } = fp as DbCarHeader
     return { head, cars, compact }
@@ -72,9 +74,13 @@ export async function parseCarFile(reader: CarReader): Promise<DbCarHeader | Idx
 }
 
 export function isIndexerResult(result: BulkResult | IndexerResult): result is IndexerResult {
-  return !!(result as IndexerResult).name
+  return !!(result as IndexerResult).indexes
 }
 
-export function isIndexHeader(result: BulkResult | IndexerResult): result is IdxCarHeader {
-  return !!(result as IdxCarHeader).name
+export function isIndexHeader(result: DbCarHeader | IdxCarHeader): result is IdxCarHeader {
+  return !!(result as IdxCarHeader).indexes
+}
+
+export function isIndexerMeta(result: BulkResult | IdxMeta): result is IdxMeta {
+  return !!(result as IdxMeta).name
 }

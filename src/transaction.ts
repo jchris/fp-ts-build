@@ -1,7 +1,8 @@
 import { MemoryBlockstore } from '@alanshaw/pail/block'
-import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead, IndexerResult, DbCarHeader, IdxCarHeader } from './types'
+import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead, IndexerResult, DbCarHeader, IdxCarHeader, IdxMeta } from './types'
 import { Loader } from './loader'
 import { CID } from 'multiformats'
+import { isIndexerMeta, isIndexerResult } from './loader-helpers'
 
 /** forked from
  * https://github.com/alanshaw/pail/blob/main/src/block.js
@@ -23,12 +24,13 @@ export class Transaction extends MemoryBlockstore {
   }
 }
 
-export class TransactionBlockstore implements BlockFetcher {
+export class TransactionBlockstore<T> implements BlockFetcher {
   name: string | null = null
-  ready: Promise<{ crdt: DbCarHeader, indexes: Map<string, IdxCarHeader> }> // todo this will be a map of headers by branch name
+  ready: Promise<T> // todo this will be a map of headers by branch name
 
   private transactions: Set<Transaction> = new Set()
   private loader: Loader | null = null
+  private indexMeta: Map<string, IdxMeta> = new Map()
 
   constructor(name?: string, loader?: Loader) {
     if (name) {
@@ -36,7 +38,7 @@ export class TransactionBlockstore implements BlockFetcher {
       this.loader = loader || new Loader(name)
       this.ready = this.loader.ready
     } else {
-      this.ready = Promise.resolve({ crdt: { head: [], cars: [], compact: [] }, indexes: new Map() })
+      this.ready = Promise.resolve({ head: [], cars: [], compact: [] })
     }
   }
 
@@ -57,7 +59,12 @@ export class TransactionBlockstore implements BlockFetcher {
   async transaction(fn: (t: Transaction) => Promise<BulkResult|IndexerResult>) {
     const t = new Transaction(this)
     this.transactions.add(t)
-    const done: BulkResult = await fn(t)
+    const done: BulkResult|IdxMeta = await fn(t)
+
+    if (this.name && isIndexerMeta(done)) {
+      const doneX = done as IdxMeta
+      this.indexMeta.set(this.name, doneX)
+    }
     if (done) { return { ...done, car: await this.commit(t, done) } }
     return done
   }

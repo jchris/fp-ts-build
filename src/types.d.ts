@@ -54,24 +54,29 @@ export type BulkResult = {
   car?: AnyLink
 }
 
-export type IndexerResult = BulkResult & {
-  byId: IdxTree
-  byKey: IdxTree
-  map: string
-  name: string
-}
-
-export type DbCarHeader = {
-  head: ClockHead
+type CarHeader = {
   cars: AnyLink[]
   compact: AnyLink[]
 }
 
-export type IdxCarHeader = DbCarHeader & {
+export type DbCarHeader = CarHeader & {
+  head: ClockHead
+}
+
+export type IdxMeta = {
   byId: AnyLink
   byKey: AnyLink
   map: string
   name: string
+  head: ClockHead
+}
+
+export type IdxCarHeader = CarHeader & {
+  indexes: Map<string, IdxMeta>
+}
+
+export type IndexerResult = BulkResult & {
+  indexes: Map<string, IdxMeta>
 }
 
 export type QueryOpts = {

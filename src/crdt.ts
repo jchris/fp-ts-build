@@ -5,23 +5,26 @@ import { Indexer } from './indexer'
 
 export class CRDT {
   name: string | null
-  ready: Promise<void>
-  blocks: TransactionBlockstore
-  indexBlocks: TransactionBlockstore
+  ready: Promise<[void, void]>
+  blocks: TransactionBlockstore<DbCarHeader>
+  indexBlocks: TransactionBlockstore<IdxCarHeader>
 
   private _head: ClockHead
   private _indexers: Map<string, Indexer> = new Map()
 
-  constructor(name?: string, blocks?: TransactionBlockstore) {
+  constructor(name?: string, blocks?: TransactionBlockstore<DbCarHeader>) {
     this.name = name || null
-    this.blocks = blocks || new TransactionBlockstore(name)
+    this.blocks = blocks || new TransactionBlockstore<DbCarHeader>(name)
     this.indexBlocks = new TransactionBlockstore(name ? name + '-idx' : undefined)
     this._head = []
-    this.ready = this.blocks.ready.then(({ crdt, indexes }: { crdt: DbCarHeader, indexes: Map<string, IdxCarHeader> }) => {
-      this._head = crdt.head // todo multi head support here
-      // if (crdt.head.length > 0) { throw new Error('todo apply crdt head') }
-      if (indexes.size > 0) { throw new Error('todo apply indexes' + indexes.size) }
-    })
+    this.ready = Promise.all([
+      this.blocks.ready.then((header: DbCarHeader) => {
+        this._head = header.head // todo multi head support here
+      }),
+      this.indexBlocks.ready.then((header: IdxCarHeader) => {
+        console.log('index header', header)
+      })
+    ])
   }
 
   async bulk(updates: DocUpdate[], options?: object): Promise<BulkResult> {
@@ -34,7 +37,6 @@ export class CRDT {
     return tResult
   }
 
-  // async root(): Promise<any> {
   // async getAll(rootCache: any = null): Promise<{root: any, cids: CIDCounter, clockCIDs: CIDCounter, result: T[]}> {
 
   async get(key: string) {
@@ -50,18 +52,20 @@ export class CRDT {
   }
 
   async compact() {
+    await this.ready
     return await doCompact(this.blocks, this._head)
   }
 
   indexer(name: string, mapFn?: MapFn) {
-    const idx = this._indexers.get(name)
+    // await this.ready
+    const idx = this._indexers.get(name) // maybe this should error if the mapfn is different
     if (idx) return idx
     const idx2 = new Indexer(this.indexBlocks, this, name, mapFn || name)
-    this.registerIndexer(idx2)
-    return idx2
+    this._registerIndexer(idx2)
+    return this._indexers.get(name)
   }
 
-  registerIndexer(indexer: Indexer) {
+  _registerIndexer(indexer: Indexer) {
     if (!indexer.name) throw new Error('Indexer must have a name')
     if (this._indexers.has(indexer.name)) {
       const existing = this._indexers.get(indexer.name)
