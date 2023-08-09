@@ -64,7 +64,7 @@ export async function parseCarFile(reader: CarReader): Promise<DbCarHeader | Idx
 
   if (isIndexHeader(fp)) {
     const { head, cars, compact, name, map, byId, byKey } = fp
-    return { head, cars, compact, name, map, byId, byKey }
+    return { head, cars, compact, name, map, byId, byKey } as IdxCarHeader
   } else {
     const { head, cars, compact } = fp as DbCarHeader
     return { head, cars, compact }

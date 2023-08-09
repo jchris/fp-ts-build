@@ -7,6 +7,7 @@ export class CRDT {
   name: string | null
   ready: Promise<void>
   blocks: TransactionBlockstore
+  indexBlocks: TransactionBlockstore
 
   private _head: ClockHead
   private _indexers: Map<string, Indexer> = new Map()
@@ -14,6 +15,7 @@ export class CRDT {
   constructor(name?: string, blocks?: TransactionBlockstore) {
     this.name = name || null
     this.blocks = blocks || new TransactionBlockstore(name)
+    this.indexBlocks = new TransactionBlockstore(name ? name + '-idx' : undefined)
     this._head = []
     this.ready = this.blocks.ready.then(({ crdt, indexes }: { crdt: DbCarHeader, indexes: Map<string, IdxCarHeader> }) => {
       this._head = crdt.head // todo multi head support here

@@ -76,26 +76,22 @@ export class Loader {
 
   async ingestIndexCars(indexCars: IndexCars): Promise<Map<string, IdxCarHeader>> {
     const idxDefs = new Map()
-    for (const [name, cid] of Object.entries(indexCars)) {
+    await Promise.all(Object.entries(indexCars).map(async ([name, cid]) => {
       const car = await this.carStore.load(cid)
       const reader = await CarReader.fromBytes(car.bytes)
       this.carsReaders.set(cid.toString(), reader)
       const idxHeader = await parseCarFile(reader)
       await this.getMoreReaders(idxHeader.cars)
-      // we have a map of index names to IdxCarHeaders
-      // maybe we return those and let the CRDT make them wet?
-      // this makes sense because the index should be registered to the crdt anyway
       idxDefs.set(name, idxHeader)
-    }
+    }))
+    // return map of index names to IdxCarHeaders and let the CRDT make them wet
+    // this makes sense because the index should be registered to the crdt anyway
     return idxDefs
   }
 
   async getMoreReaders(cids: AnyLink[]) {
     // console.log('getMoreReaders', cids.map(c => c.toString()))
-    for (const cid of cids) {
-      // todo if loadCar stores promises we can parallelize this
-      await this.loadCar(cid)
-    }
+    await Promise.all(cids.map(cid => this.loadCar(cid)))
   }
 
   async getBlock(cid: CID): Promise<AnyBlock | undefined> {
