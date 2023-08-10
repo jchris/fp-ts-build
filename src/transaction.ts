@@ -1,6 +1,6 @@
 import { MemoryBlockstore } from '@alanshaw/pail/block'
-import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead } from './types'
-import { Loader } from './loader'
+import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead, DbCarHeader, IdxCarHeader, IdxMeta, IdxMetaCar, BulkResultCar } from './types'
+import { DbLoader, IdxLoader } from './loader'
 import { CID } from 'multiformats'
 
 /** forked from
@@ -23,21 +23,26 @@ export class Transaction extends MemoryBlockstore {
   }
 }
 
-export class TransactionBlockstore implements BlockFetcher {
+export class FireproofBlockstore implements BlockFetcher {
+  ready: Promise<IdxCarHeader|DbCarHeader>
   name: string | null = null
-  ready: Promise<{ head: ClockHead }> // todo this will be a map of headers by branch name
+
+  loader: DbLoader | IdxLoader | null = null
 
   private transactions: Set<Transaction> = new Set()
-  private loader: Loader | null = null
 
-  constructor(name?: string, loader?: Loader) {
+  constructor(name?: string) {
     if (name) {
       this.name = name
-      this.loader = loader || new Loader(name)
+      this.loader = this.this_Loader(name) as unknown as DbLoader | IdxLoader
       this.ready = this.loader.ready
     } else {
-      this.ready = Promise.resolve({ head: [] })
+      this.ready = Promise.resolve({ head: [], cars: [], compact: [] })
     }
+  }
+
+  this_Loader(_name: string) {
+    throw new Error('not implemented')
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
@@ -54,16 +59,9 @@ export class TransactionBlockstore implements BlockFetcher {
     return await this.loader.getBlock(cid as CID)
   }
 
-  async transaction(fn: (t: Transaction) => Promise<BulkResult>) {
-    const t = new Transaction(this)
-    this.transactions.add(t)
-    const done: BulkResult = await fn(t)
-    if (done) { return { ...done, car: await this.commit(t, done) } }
-    return done
-  }
-
-  async commit(t: Transaction, done: BulkResult): Promise<AnyLink | undefined> {
-    return await this.loader?.commit(t, done)
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async commit(_t: Transaction, _done: IdxMeta|BulkResult, _indexes?: Map<string, IdxMeta>): Promise<AnyLink | undefined> {
+    throw new Error('not implemented')
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
@@ -72,6 +70,10 @@ export class TransactionBlockstore implements BlockFetcher {
     this.transactions.add(t)
     // todo replace cars
     return await this.loader?.commit(t, { head }, true)
+  }
+
+  addTransaction(t: Transaction) {
+    this.transactions.add(t)
   }
 
   async * entries(): AsyncIterableIterator<AnyBlock> {
@@ -83,5 +85,51 @@ export class TransactionBlockstore implements BlockFetcher {
         yield blk
       }
     }
+  }
+}
+
+export class IndexBlockstore extends FireproofBlockstore {
+  declare ready: Promise<IdxCarHeader>
+
+  this_Loader(name: string) {
+    return new IdxLoader(name)
+  }
+
+  async commit(t: Transaction, done: IdxMeta, indexes: Map<string, IdxMeta>): Promise<AnyLink | undefined> {
+    // IndexerResult
+    indexes.set(done.name, done)
+    return await this.loader?.commit(t, { indexes })
+  }
+
+  async transaction(fn: (t: Transaction) => Promise<IdxMeta>, indexes: Map<string, IdxMeta>): Promise<IdxMetaCar> {
+    const t = new Transaction(this)
+    this.addTransaction(t)
+    const done: IdxMeta = await fn(t)
+    indexes.set(done.name, done)
+    const car = await this.commit(t, done, indexes) as AnyLink
+    if (car) return { ...done, car }
+    return done
+  }
+}
+
+export class TransactionBlockstore extends FireproofBlockstore {
+  declare ready: Promise<DbCarHeader> // todo this will be a map of headers by branch name
+
+  this_Loader(name: string) {
+    return new DbLoader(name)
+  }
+
+  async commit(t: Transaction, done: BulkResult, _indexes?: Map<string, any>): Promise<AnyLink | undefined> {
+    return await this.loader?.commit(t, done)
+  }
+
+  // declare async transaction(fn: (t: Transaction) => Promise<BulkResult>): Promise<BulkResult>
+  async transaction(fn: (t: Transaction) => Promise<BulkResult>): Promise<BulkResultCar> {
+    const t = new Transaction(this)
+    this.addTransaction(t)
+    const done: BulkResult = await fn(t)
+    const car = await this.commit(t, done) as AnyLink
+    if (car) return { ...done, car }
+    return done
   }
 }

@@ -4,7 +4,7 @@ import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import * as codec from '@ipld/dag-cbor'
 import { put, get, entries, EventData } from '@alanshaw/pail/crdt'
 import { EventFetcher } from '@alanshaw/pail/clock'
-import { TransactionBlockstore as Blockstore, Transaction } from './transaction'
+import { TransactionBlockstore, Transaction } from './transaction'
 import { DocUpdate, ClockHead, BlockFetcher, AnyLink, DocValue, BulkResult } from './types'
 
 export function makeGetBlock(blocks: BlockFetcher) {
@@ -45,13 +45,13 @@ async function makeLinkForDoc(blocks: Transaction, update: DocUpdate): Promise<A
   return block.cid
 }
 
-export async function getValueFromCrdt(blocks: Blockstore, head: ClockHead, key: string): Promise<DocValue> {
+export async function getValueFromCrdt(blocks: TransactionBlockstore, head: ClockHead, key: string): Promise<DocValue> {
   const link = await get(blocks, head, key)
   if (!link) throw new Error(`Missing key ${key}`)
   return await getValueFromLink(blocks, link)
 }
 
-export async function getValueFromLink(blocks: Blockstore, link: AnyLink): Promise<DocValue> {
+export async function getValueFromLink(blocks: TransactionBlockstore, link: AnyLink): Promise<DocValue> {
   const block = await blocks.get(link)
   if (!block) throw new Error(`Missing block ${link.toString()}`)
   const { value } = (await decode({ bytes: block.bytes, hasher, codec })) as { value: DocValue }
@@ -59,27 +59,27 @@ export async function getValueFromLink(blocks: Blockstore, link: AnyLink): Promi
 }
 
 export async function clockChangesSince(
-  blocks: Blockstore,
+  blocks: TransactionBlockstore,
   head: ClockHead,
   since: ClockHead
-): Promise<{ result: DocUpdate[] }> {
+): Promise<{ result: DocUpdate[], head: ClockHead }> {
   const eventsFetcher = new EventFetcher<EventData>(blocks)
   const keys: Set<string> = new Set()
   const updates = await gatherUpdates(blocks, eventsFetcher, head, since, [], keys)
-  return { result: updates.reverse() }
+  return { result: updates.reverse(), head }
 }
 
 async function gatherUpdates(
-  blocks: Blockstore,
+  blocks: TransactionBlockstore,
   eventsFetcher: EventFetcher<EventData>,
   head: ClockHead,
   since: ClockHead,
   updates: DocUpdate[] = [],
   keys: Set<string>
 ): Promise<DocUpdate[]> {
+  const sHead = head.map(l => l.toString())
   for (const link of since) {
-    if (head.includes(link)) {
-      throw new Error('found since in head, this is good, remove this error ' + updates.length)
+    if (sHead.includes(link.toString())) {
       return updates
     }
   }
@@ -97,7 +97,7 @@ async function gatherUpdates(
   return updates
 }
 
-export async function doCompact(blocks: Blockstore, head: ClockHead) {
+export async function doCompact(blocks: TransactionBlockstore, head: ClockHead) {
   const blockLog = new LoggingFetcher(blocks)
   const newBlocks = new Transaction(blocks)
 

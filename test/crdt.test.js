@@ -3,8 +3,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable mocha/max-top-level-suites */
-import { assert, equals, notEquals } from './helpers.js'
+import { assert, equals, equalsJSON, notEquals } from './helpers.js'
 import { CRDT } from '../dist/crdt.esm.js'
+import { Indexer } from '../dist/indexer.esm.js'
 
 describe('Fresh crdt', function () {
   /** @type {CRDT} */
@@ -104,6 +105,17 @@ describe('CRDT with a multi-write', function () {
     equals(result[0].value.points, 11)
     equals(result[1].key, 'king')
   })
+  it('should offer changes since', async function () {
+    /** @type {BulkResult} */
+    const secondPut = await crdt.bulk([{ key: 'queen', value: { points: 10 } }, { key: 'jack', value: { points: 10 } }])
+    assert(secondPut.head)
+    const { result: r2, head: h2 } = await crdt.changes([])
+    equals(r2.length, 4)
+    const { result: r3 } = await crdt.changes(firstPut.head)
+    equals(r3.length, 2)
+    const { result: r4 } = await crdt.changes(h2)
+    equals(r4.length, 0)
+  })
 })
 
 describe('CRDT with two multi-writes', function () {
@@ -158,7 +170,7 @@ describe('Compact a CRDT with writes', function () {
   })
   it('should start with blocks', async function () {
     const blz = []
-    for await (const blk of crdt._blocks.entries()) {
+    for await (const blk of crdt.blocks.entries()) {
       blz.push(blk)
     }
     equals(blz.length, 25)
@@ -171,7 +183,7 @@ describe('Compact a CRDT with writes', function () {
   it('should have fewer blocks after compact', async function () {
     await crdt.compact()
     const blz = []
-    for await (const blk of crdt._blocks.entries()) {
+    for await (const blk of crdt.blocks.entries()) {
       blz.push(blk)
     }
     equals(blz.length, 4)
@@ -185,5 +197,31 @@ describe('Compact a CRDT with writes', function () {
   it('should have changes after compact', async function () {
     const chs = await crdt.changes([])
     equals(chs.result[0].key, 'ace')
+  })
+})
+
+describe('CRDT with an index', function () {
+  let crdt, idx
+  beforeEach(async function () {
+    crdt = new CRDT()
+    await crdt.bulk([{ key: 'ace', value: { points: 11 } }, { key: 'king', value: { points: 10 } }])
+    idx = await crdt.indexer('points')
+  })
+  it('should query the data', async function () {
+    const got = await idx.query({ range: [9, 12] })
+    equals(got.rows.length, 2)
+    equals(got.rows[0].id, 'king')
+  })
+  it('should register the index', async function () {
+    const rIdx = await crdt.indexer('points')
+    assert(rIdx)
+    equals(rIdx.name, 'points')
+    const got = await rIdx.query({ range: [9, 12] })
+    equals(got.rows.length, 2)
+    equals(got.rows[0].id, 'king')
+  })
+  it('creating a different index with same name should not work', async function () {
+    const e = await crdt.indexer('points', (doc) => doc._id).catch((err) => err)
+    equals(e.message, 'Indexer already registered with different map function')
   })
 })

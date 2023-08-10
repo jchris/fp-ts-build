@@ -1,5 +1,11 @@
 # Fireproof
 
+This is the core TypeScript library. 
+
+## Implementation 
+
+Fireproof integrates [Pail](https://github.com/alanshaw/pail) with [Prolly Trees](https://github.com/mikeal/prolly-trees) and vector indexes with a database API.
+
 ## Build and Lint Process
 
 The project uses `esbuild` and `esbuild-plugin-tsc` for compiling TypeScript to JavaScript, the results of which are bundled into different module formats for different environments. The `build.js` script in the `scripts` directory orchestrates this process. You can trigger the build process by running `npm run build` in your terminal.

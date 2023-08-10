@@ -1,17 +1,19 @@
 // @ts-ignore
 import cargoQueue from 'async/cargoQueue'
 import { CRDT } from './crdt'
-import { Doc, BulkResult, DocUpdate, DbResponse, ClockHead } from './types'
+import { Doc, BulkResult, DocUpdate, DbResponse, ClockHead, ChangesResponse, MapFn } from './types'
 
 export class Database {
   name: string
   config: object
   _crdt: CRDT
   _writeQueue: any
-  constructor(name: string, config = {}) {
+
+  constructor(name: string, config = { blocks: null }) {
     this.name = name
     this.config = config
     this._crdt = new CRDT(name)
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     this._writeQueue = cargoQueue(async (updates: DocUpdate[]) => {
       return await this._crdt.bulk(updates)
@@ -52,12 +54,16 @@ export class Database {
     })
   }
 
-  async changes(since: ClockHead): Promise<{ rows: { key: string; value: Doc }[] }> {
-    const { result } = await this._crdt.changes(since)
+  async changes(since: ClockHead): Promise<ChangesResponse> {
+    const { result, head } = await this._crdt.changes(since)
     const rows = result.map(({ key, value }) => ({
       key,
       value: { _id: key, ...value } as Doc
     }))
-    return { rows }
+    return { rows, clock: head }
+  }
+
+  async index(name: string, mapFn?: MapFn) {
+    return await this._crdt.indexer(name, mapFn)
   }
 }

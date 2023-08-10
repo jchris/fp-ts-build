@@ -71,8 +71,11 @@
   "dependencies": {
     "@alanshaw/pail": "^0.3.3",
     "@ipld/dag-cbor": "^9.0.3",
+    "@ipld/dag-json": "^10.1.2",
     "async": "^3.2.4",
+    "charwise": "^3.0.1",
     "idb": "^7.1.1",
-    "multiformats": "^12.0.1"
+    "multiformats": "^12.0.1",
+    "prolly-trees": "^1.0.4"
   }
 }
