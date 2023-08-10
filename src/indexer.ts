@@ -55,7 +55,6 @@ export class Indexer {
       return await applyQuery(this.crdt, await this.byKey.root.get(encodedKey), opts)
     }
     if (opts.prefix) {
-      // ensure prefix is an array
       if (!Array.isArray(opts.prefix)) opts.prefix = [opts.prefix]
       const start = [...opts.prefix, NaN]
       const end = [...opts.prefix, Infinity]

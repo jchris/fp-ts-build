@@ -1,7 +1,6 @@
 import { Block } from 'multiformats'
 import {
   create
-  // , encode, decode
 } from 'multiformats/block'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import * as codec from '@ipld/dag-cbor'
