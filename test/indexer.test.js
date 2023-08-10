@@ -216,7 +216,7 @@ describe('basic Indexer upon cold start', function () {
   })
   it('should not allow map function definiton to change', async function () {
     const crdt2 = new CRDT('test-indexer-cold')
-    await crdt2.ready
+    // await crdt2.ready
     assert.throws(() => {
       crdt2.indexer('hello', (doc) => doc.title)
     })

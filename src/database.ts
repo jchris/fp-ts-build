@@ -2,7 +2,6 @@
 import cargoQueue from 'async/cargoQueue'
 import { CRDT } from './crdt'
 import { Doc, BulkResult, DocUpdate, DbResponse, ClockHead, ChangesResponse, MapFn } from './types'
-import { Indexer } from './indexer'
 
 export class Database {
   name: string

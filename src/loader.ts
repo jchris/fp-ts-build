@@ -7,12 +7,12 @@ import { Transaction } from './transaction'
 import { AnyBlock, AnyLink, BulkResult, DbCarHeader, IdxCarHeader, IndexerResult } from './types'
 import { BlockView, CID } from 'multiformats'
 
-export class Loader {
+class Loader {
   name: string
   headerStore: HeaderStore
   carStore: CarStore
   carLog: AnyLink[] = []
-  carsReaders: Map<string, CarReader> = new Map()
+  carReaders: Map<string, CarReader> = new Map()
   ready: Promise<DbCarHeader | IdxCarHeader>
 
   constructor(name: string) {
@@ -25,10 +25,6 @@ export class Loader {
       return await this.ingestCarHead(header?.car)
     })
   }
-
-  // async inner_commit(t: Transaction, done: IndexerResult|BulkResult, compact: boolean = false): Promise<AnyLink> {
-
-  // }
 
   async commit(t: Transaction, done: IndexerResult|BulkResult, compact: boolean = false): Promise<AnyLink> {
     const car = await this.this_makeCarFile(t, done, this.carLog, compact)
@@ -46,12 +42,11 @@ export class Loader {
   }
 
   async loadCar(cid: AnyLink): Promise<CarReader> {
-    if (this.carsReaders.has(cid.toString())) return this.carsReaders.get(cid.toString()) as CarReader
+    if (this.carReaders.has(cid.toString())) return this.carReaders.get(cid.toString()) as CarReader
     const car = await this.carStore.load(cid)
     if (!car) throw new Error(`missing car file ${cid.toString()}`)
     const reader = await CarReader.fromBytes(car.bytes)
-    this.carsReaders.set(cid.toString(), reader)
-    // console.log('loadCar', cid)
+    this.carReaders.set(cid.toString(), reader)
     this.carLog.push(cid)
     return reader
   }
@@ -60,7 +55,7 @@ export class Loader {
     if (!cid) return this.this_defaultCarHeader()
     const car = await this.carStore.load(cid)
     const reader = await CarReader.fromBytes(car.bytes)
-    this.carsReaders.set(cid.toString(), reader)
+    this.carReaders.set(cid.toString(), reader)
     this.carLog = [cid] // this.carLog.push(cid)
     const carHeader = await this.this_parseCarFile(reader)
     await this.getMoreReaders(carHeader.cars)
@@ -68,15 +63,13 @@ export class Loader {
   }
 
   async getMoreReaders(cids: AnyLink[]) {
-    // console.log('getMoreReaders', cids.map(c => c.toString()))
     await Promise.all(cids.map(cid => this.loadCar(cid)))
   }
 
   async getBlock(cid: CID): Promise<AnyBlock | undefined> {
-    for (const [, reader] of [...this.carsReaders]) { // .reverse()) { // reverse is faster
+    for (const [, reader] of [...this.carReaders]) { // .reverse()) { // reverse is faster
       const block = await reader.get(cid)
       if (block) return block
-      // console.log(`block ${cid.toString()} not found in carcid ${carcid.toString()}`)
     }
   }
 

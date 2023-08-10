@@ -18,14 +18,12 @@ export class CRDT {
     this.blocks = blocks || new TransactionBlockstore(name)
     this.indexBlocks = new IndexBlockstore(name ? name + '.idx' : undefined)
     this._head = []
-    this.ready = Promise.all([ // load the meta here, use it to load the car headers
+    this.ready = Promise.all([
       this.blocks.ready.then((header: DbCarHeader) => {
         this._head = header.head // todo multi head support here
       }),
       this.indexBlocks.ready.then((header: IdxCarHeader) => {
-        console.log('index header', header.indexes)
         if (header.indexes === undefined) return
-        // this is where the indexers get wet
         for (const [name, idx] of Object.entries(header.indexes)) {
           const idxM = idx as IdxMeta
           const ix = this.indexer(name, idxM.map) // todo eval
@@ -33,7 +31,6 @@ export class CRDT {
           ix.byKey.cid = idxM.byKey
           ix.indexHead = idxM.head
         }
-        // this.indexer()
       })
     ])
   }
@@ -42,7 +39,7 @@ export class CRDT {
     await this.ready
     const tResult = await this.blocks.transaction(async (tblocks): Promise<BulkResult> => {
       const { head } = await applyBulkUpdateToCrdt(tblocks, this._head, updates, options)
-      this._head = head // we want multi head support here if allowing calls to bulk in parallel
+      this._head = head // we need multi head support here if allowing calls to bulk in parallel
       return { head }
     })
     return tResult
@@ -71,9 +68,9 @@ export class CRDT {
     // await this.ready
     const idx = this.indexers.get(name) // maybe this should error if the mapfn is different
     if (idx) {
-      if (!idx.mapFn && idx.mapFnString) {
-        if (mapFn && mapFn.toString() !== idx.mapFnString) throw new Error('Indexer already registered with different map function')
-        idx.mapFn = mapFn
+      if (!idx.mapFn && idx.mapFnString && mapFn) {
+        if (mapFn.toString() !== idx.mapFnString) throw new Error('Indexer already registered with different map function')
+        if (mapFn.constructor.name === 'Function') idx.mapFn = mapFn as MapFn
       }
       if (idx.mapFn && mapFn && idx.mapFn.toString() !== mapFn.toString()) throw new Error('Indexer already registered with different map function')
       return idx
@@ -95,7 +92,5 @@ export class CRDT {
     } else {
       this.indexers.set(indexer.name, indexer)
     }
-    // console.log('registered indexer', indexer.name, this.indexers)
-    // console.log('blockstore indexers', this.indexers)
   }
 }

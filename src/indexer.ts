@@ -47,7 +47,6 @@ export class Indexer {
     if (opts.range) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       const { result, ...all } = await this.byKey.root.range(...encodeRange(opts.range))
-      console.log('range', opts.range, result)
       return await applyQuery(this.crdt, { result, ...all }, opts)
     }
     if (opts.key) {
@@ -81,10 +80,8 @@ export class Indexer {
 
   async _updateIndex() {
     await this.crdt.ready
-    console.log('update index', this.indexHead[0], this.crdt._head[0])
     if (!this.mapFn) throw new Error('No map function defined')
     const { result, head } = await this.crdt.changes(this.indexHead)
-    console.log('result', result, head)
     if (result.length === 0) {
       this.indexHead = head
       return { byId: this.byId, byKey: this.byKey }
@@ -99,13 +96,16 @@ export class Indexer {
     }
     const indexEntries = indexEntriesForChanges(result, this.mapFn) // use a getter to translate from string
     const byIdIndexEntries: DocUpdate[] = indexEntries.map(({ key }) => ({ key: key[1], value: key }))
-    // const tResult: IdxMetaCar =
-
     const indexerMeta: Map<string, IdxMeta> = new Map()
     for (const [name, indexer] of this.crdt.indexers) {
-      indexerMeta.set(name, { byId: indexer.byId.cid, byKey: indexer.byKey.cid, head: indexer.indexHead, map: indexer.mapFnString, name: indexer.name } as IdxMeta)
+      indexerMeta.set(name, {
+        byId: indexer.byId.cid,
+        byKey: indexer.byKey.cid,
+        head: indexer.indexHead,
+        map: indexer.mapFnString,
+        name: indexer.name
+      } as IdxMeta)
     }
-
     return await this.blocks.transaction(async (tblocks): Promise<IdxMeta> => {
       this.byId = await bulkIndex(
         tblocks,

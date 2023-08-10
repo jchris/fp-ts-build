@@ -234,13 +234,9 @@ describe.skip('basic Loader with index commits', function () {
     equals(loader.carLog.length, 0)
   })
   it('should commit the index metadata', async function () {
-    console.log('loader.carsReaders', loader.carsReaders)
     const carCid = await loader.commit(t, indexerResult)
-    console.log('loader.carlog', loader.carLog)
-    // assert(loader.carsReaders.has('test-idx'))
 
     const carLog = loader.carLog
-    // loader.indexCarLogs.get('test-idx')
 
     equals(carLog.length, 1)
     const reader = await loader.loadCar(carCid)
@@ -250,7 +246,6 @@ describe.skip('basic Loader with index commits', function () {
     equals(parsed.cars.length, 0)
     assert(parsed.head)
     assert(parsed.head.length, 1)
-    console.log('parsed.head', parsed)
     assert(parsed.indexes)
     equals(parsed.map, '(doc) => doc.hello')
     equals(parsed.name, 'test-idx')
