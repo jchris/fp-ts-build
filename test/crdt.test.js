@@ -205,7 +205,7 @@ describe('CRDT with an index', function () {
   beforeEach(async function () {
     crdt = new CRDT()
     await crdt.bulk([{ key: 'ace', value: { points: 11 } }, { key: 'king', value: { points: 10 } }])
-    idx = crdt.indexer('points')
+    idx = await crdt.indexer('points')
   })
   it('should query the data', async function () {
     const got = await idx.query({ range: [9, 12] })
@@ -213,7 +213,7 @@ describe('CRDT with an index', function () {
     equals(got.rows[0].id, 'king')
   })
   it('should register the index', async function () {
-    const rIdx = crdt.indexer('points')
+    const rIdx = await crdt.indexer('points')
     assert(rIdx)
     equals(rIdx.name, 'points')
     const got = await rIdx.query({ range: [9, 12] })
@@ -221,8 +221,7 @@ describe('CRDT with an index', function () {
     equals(got.rows[0].id, 'king')
   })
   it('creating a different index with same name should not work', async function () {
-    assert.throws(() => {
-      crdt.indexer('points', (doc) => doc._id)
-    })
+    const e = await crdt.indexer('points', (doc) => doc._id).catch((err) => err)
+    equals(e.message, 'Indexer already registered with different map function')
   })
 })

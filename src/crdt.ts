@@ -22,11 +22,11 @@ export class CRDT {
       this.blocks.ready.then((header: DbCarHeader) => {
         this._head = header.head // todo multi head support here
       }),
-      this.indexBlocks.ready.then((header: IdxCarHeader) => {
+      this.indexBlocks.ready.then(async (header: IdxCarHeader) => {
         if (header.indexes === undefined) return
         for (const [name, idx] of Object.entries(header.indexes)) {
           const idxM = idx as IdxMeta
-          const ix = this.indexer(name, idxM.map) // todo eval
+          const ix = this.indexer_int(name, idxM.map) // todo eval
           ix.byId.cid = idxM.byId
           ix.byKey.cid = idxM.byKey
           ix.indexHead = idxM.head
@@ -64,8 +64,12 @@ export class CRDT {
     return await doCompact(this.blocks, this._head)
   }
 
-  indexer(name: string, mapFn?: MapFn | string): Indexer {
-    // await this.ready
+  async indexer(name: string, mapFn?: MapFn | string): Promise<Indexer> {
+    await this.ready
+    return this.indexer_int(name, mapFn)
+  }
+
+  indexer_int(name: string, mapFn?: MapFn | string): Indexer {
     const idx = this.indexers.get(name) // maybe this should error if the mapfn is different
     if (idx) {
       if (!idx.mapFn && idx.mapFnString && mapFn) {

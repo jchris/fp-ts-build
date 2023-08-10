@@ -63,7 +63,7 @@ export class Database {
     return { rows, clock: head }
   }
 
-  index(name: string, mapFn?: MapFn) {
-    return this._crdt.indexer(name, mapFn)
+  async index(name: string, mapFn?: MapFn) {
+    return await this._crdt.indexer(name, mapFn)
   }
 }

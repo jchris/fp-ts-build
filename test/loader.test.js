@@ -202,7 +202,7 @@ describe('Loader with many committed transactions', function () {
   })
 })
 
-describe.skip('basic Loader with index commits', function () {
+describe('basic Loader with index commits', function () {
   let loader, block, t, indexerResult, cid
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-loader-index')
@@ -215,19 +215,16 @@ describe.skip('basic Loader with index commits', function () {
     }))
     await t.put(block.cid, block.bytes)
     cid = CID.parse('bafybeia4luuns6dgymy5kau5rm7r4qzrrzg6cglpzpogussprpy42cmcn4')
-    // export type IdxMeta = {
-    //   byId: AnyLink
-    //   byKey: AnyLink
-    //   map: string
-    //   name: string
-    //   head: ClockHead
-    // }
     indexerResult = {
-      byId: cid,
-      byKey: cid,
-      head: [cid],
-      name: 'test-idx',
-      map: '(doc) => doc.hello'
+      indexes: {
+        hello: {
+          byId: cid,
+          byKey: cid,
+          head: [cid],
+          name: 'hello',
+          map: '(doc) => doc.hello'
+        }
+      }
     }
   })
   it('should start with an empty car log', function () {
@@ -244,10 +241,9 @@ describe.skip('basic Loader with index commits', function () {
     const parsed = await parseIdxCarFile(reader)
     assert(parsed.cars)
     equals(parsed.cars.length, 0)
-    assert(parsed.head)
-    assert(parsed.head.length, 1)
     assert(parsed.indexes)
-    equals(parsed.map, '(doc) => doc.hello')
-    equals(parsed.name, 'test-idx')
+    assert(parsed.indexes.hello)
+    equals(parsed.indexes.hello.map, '(doc) => doc.hello')
+    equals(parsed.indexes.hello.name, 'hello')
   })
 })

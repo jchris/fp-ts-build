@@ -162,7 +162,7 @@ describe('basic Indexer upon cold start', function () {
       didMap++
       return doc.title
     }
-    indexer = crdt.indexer('hello', mapFn)
+    indexer = await crdt.indexer('hello', mapFn)
     // new Indexer(db._crdt.indexBlocks, db._crdt, 'hello', mapFn)
     result = await indexer.query()
   })
@@ -176,7 +176,7 @@ describe('basic Indexer upon cold start', function () {
   })
   it('should work on cold load', async function () {
     const crdt2 = new CRDT('test-indexer-cold')
-    const indexer2 = crdt2.indexer('hello', mapFn)
+    const indexer2 = await crdt2.indexer('hello', mapFn)
     const result2 = await indexer2.query()
     assert(result2)
     equals(result2.rows.length, 3)
@@ -184,7 +184,7 @@ describe('basic Indexer upon cold start', function () {
   it('should not rerun the map function on seen chantes', async function () {
     didMap = 0
     const crdt2 = new CRDT('test-indexer-cold')
-    const indexer2 = crdt2.indexer('hello', mapFn)
+    const indexer2 = await crdt2.indexer('hello', mapFn)
     const { result, head } = await crdt2.changes([])
 
     equals(result.length, 3)
@@ -217,9 +217,8 @@ describe('basic Indexer upon cold start', function () {
   it('should not allow map function definiton to change', async function () {
     const crdt2 = new CRDT('test-indexer-cold')
     // await crdt2.ready
-    assert.throws(() => {
-      crdt2.indexer('hello', (doc) => doc.title)
-    })
+    const e = await crdt2.indexer('hello', (doc) => doc.title).catch((err) => err)
+    equals(e.message, 'Indexer already registered with different map function')
   })
 })
 
