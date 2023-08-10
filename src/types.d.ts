@@ -44,15 +44,20 @@ export type IndexRow = {
   del?: boolean
 }
 
-type IdxTree = {
-  cid: AnyLink | null
-  root: ProllyNode | null
+// type IdxTree = {
+//   cid: AnyLink | null
+//   root: ProllyNode | null
+// }
+
+export type CarCommit = {
+  car?: AnyLink
 }
 
 export type BulkResult = {
   head: ClockHead
-  car?: AnyLink
 }
+
+export type BulkResultCar = BulkResult & CarCommit
 
 type CarHeader = {
   cars: AnyLink[]
@@ -71,17 +76,15 @@ export type IdxMeta = {
   head: ClockHead
 }
 
-export type IdxMetaCar = IdxMeta & {
-  car: AnyLink
-}
-
-export type IdxCarHeader = CarHeader & {
+type IdxMetaMap = {
   indexes: Map<string, IdxMeta>
 }
 
-export type IndexerResult = BulkResult & {
-  indexes: Map<string, IdxMeta>
-}
+export type IdxMetaCar = IdxMeta & CarCommit
+
+export type IdxCarHeader = CarHeader & IdxMetaMap
+
+export type IndexerResult = CarCommit & IdxMetaMap
 
 export type QueryOpts = {
   descending?: boolean
@@ -142,9 +145,9 @@ export type DocFragment = string | number | boolean | null | DocFragment[] | { [
 
 type CallbackFn = (k: string, v: DocFragment) => void
 
-type MapFnFn = (doc: Doc, map: CallbackFn) => DocFragment | void
+export type MapFn = (doc: Doc, map: CallbackFn) => DocFragment | void
 
-export type MapFn = string | MapFnFn
+// export type MapFn = string | MapFnFn
 
 export interface HeaderStoreInterface {
   name: string

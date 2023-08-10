@@ -124,7 +124,7 @@ export async function bulkIndex(tblocks: Transaction, inIndex: IndexTree, indexE
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function applyQuery(crdt: CRDT, resp: { result: IndexRow[] }, query: QueryOpts) {
-  console.log('pre-result', resp.result)
+  // console.log('pre-result', resp.result)
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 
   if (query.descending) {

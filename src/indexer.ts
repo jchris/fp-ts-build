@@ -1,10 +1,10 @@
 import { ClockHead, DocUpdate, MapFn, IndexUpdate, QueryOpts, DocFragment, IdxMeta, IdxCarHeader, IndexerResult, IdxMetaCar } from './types'
-import { IndexBlockstore as Blockstore } from './transaction'
+import { IndexBlockstore } from './transaction'
 import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery, encodeRange, encodeKey, makeName } from './indexer-helpers'
 import { CRDT } from './crdt'
 
 export class Indexer {
-  blocks: Blockstore
+  blocks: IndexBlockstore
   crdt: CRDT
   name: string | null = null
   mapFn: MapFn | null = null
@@ -14,13 +14,13 @@ export class Indexer {
   indexHead: ClockHead = []
   includeDocsDefault: boolean = false
 
-  constructor(blocks: Blockstore, crdt: CRDT, name: string, mapFn: MapFn) {
+  constructor(blocks: IndexBlockstore, crdt: CRDT, name: string, mapFn: MapFn | string) {
     this.blocks = blocks
     this.crdt = crdt
     this.applyMapFn(mapFn, name)
   }
 
-  applyMapFn(mapFn: MapFn, name?: string) {
+  applyMapFn(mapFn: MapFn | string, name?: string) {
     if (typeof mapFn === 'string') {
       this.mapFnString = mapFn
       const regex = /^[a-zA-Z0-9 ]+$/
@@ -89,6 +89,12 @@ export class Indexer {
     const indexEntries = indexEntriesForChanges(result, this.mapFn) // use a getter to translate from string
     const byIdIndexEntries: DocUpdate[] = indexEntries.map(({ key }) => ({ key: key[1], value: key }))
     // const tResult: IdxMetaCar =
+
+    const indexerMeta: Map<string, IdxMeta> = new Map()
+    for (const [name, indexer] of this.crdt.indexers) {
+      indexerMeta.set(name, { byId: indexer.byId.cid, byKey: indexer.byKey.cid, head: indexer.indexHead, map: indexer.mapFnString, name: indexer.name } as IdxMeta)
+    }
+
     await this.blocks.transaction(async (tblocks): Promise<IdxMeta> => {
       this.byId = await bulkIndex(
         tblocks,
@@ -100,13 +106,13 @@ export class Indexer {
       this.indexHead = head
       if (!this.name) throw new Error('No name defined')
       return { byId: this.byId.cid, byKey: this.byKey.cid, head, map: this.mapFnString, name: this.name } as IdxMeta
-    })
+    }, indexerMeta)
+
     // add ref to other indexes
     // tResult.indexes
     // const indexerMap = this.crdt.indexers
+    // indexerMap.set(this.name as string, tResult)
 
-    // indexerMap.set(this.name, tResult)
-
-    // return { indexes }
+    // return { indexes: {} }
   }
 }

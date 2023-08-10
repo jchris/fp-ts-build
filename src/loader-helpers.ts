@@ -9,28 +9,23 @@ import { CarReader } from '@ipld/car'
 import { Transaction } from './transaction'
 import { AnyBlock, BulkResult, AnyLink, IndexerResult, DbCarHeader, IdxCarHeader, IdxMeta } from './types'
 
-export async function makeCarFile(
+// async function innerMakeCarFile(
+
+export async function makeDbCarFile(
   t: Transaction,
-  result: BulkResult | IndexerResult,
+  result: BulkResult,
   cars: AnyLink[],
   compact: boolean = false
 ): Promise<BlockView<unknown, number, number, 1>> {
   const head = result.head
-  if (!head) throw new Error('no head -- ok for idx')
+  if (!head) throw new Error('no head')
 
-  let fp
-  if (compact) {
-    fp = { head, cars: [], compact: cars }
-  } else {
-    fp = { head, cars, compact: [] }
-  }
+  const fp = compact ? { head, cars: [], compact: cars } : { head, cars, compact: [] } as DbCarHeader
 
-  if (isIndexerResult(result)) {
-    fp = { ...fp, indexes: result.indexes } as IdxCarHeader
-  } else {
-    fp = { ...fp } as DbCarHeader
-  }
+  return await innerMakeCarFile(fp, t)
+}
 
+async function innerMakeCarFile(fp: DbCarHeader|IdxCarHeader, t: Transaction) {
   const fpCarHeaderBlock = (await encode({
     value: { fp },
     hasher,
@@ -56,31 +51,42 @@ export async function makeCarFile(
   return await encode({ value: writer.bytes, hasher, codec: raw })
 }
 
-export async function parseCarFile(reader: CarReader): Promise<DbCarHeader | IdxCarHeader> {
+export async function makeIdxCarFile(
+  t: Transaction,
+  { indexes }: IndexerResult,
+  cars: AnyLink[],
+  compact: boolean = false
+): Promise<BlockView<unknown, number, number, 1>> {
+  const fp = compact ? { indexes, cars: [], compact: cars } : { indexes, cars, compact: [] } as IdxCarHeader
+
+  return await innerMakeCarFile(fp, t)
+}
+
+export async function parseDbCarFile(reader: CarReader): Promise<DbCarHeader> {
+  return await readerValue(reader) as DbCarHeader
+}
+
+export async function parseIdxCarFile(reader: CarReader): Promise<IdxCarHeader> {
+  return await readerValue(reader) as IdxCarHeader
+}
+
+async function readerValue(reader: CarReader): Promise<DbCarHeader | IdxCarHeader> {
   const roots = await reader.getRoots()
   const header = await reader.get(roots[0])
   if (!header) throw new Error('missing header block')
-  const got = await decode({ bytes: header.bytes, hasher, codec })
-
-  const { fp } = got.value as { fp: BulkResult | IndexerResult }
-
-  if (isIndexHeader(fp)) {
-    const { cars, compact, indexes } = fp
-    return { cars, compact, indexes } as IdxCarHeader
-  } else {
-    const { head, cars, compact } = fp as DbCarHeader
-    return { head, cars, compact }
-  }
+  const { value } = await decode({ bytes: header.bytes, hasher, codec })
+  const { fp } = value as { fp: DbCarHeader | IdxCarHeader }
+  return fp
 }
 
 export function isIndexerResult(result: BulkResult | IndexerResult): result is IndexerResult {
   return !!(result as IndexerResult).indexes
 }
 
-export function isIndexHeader(result: DbCarHeader | IdxCarHeader): result is IdxCarHeader {
-  return !!(result as IdxCarHeader).indexes
-}
+// export function isIndexHeader(result: DbCarHeader | IdxCarHeader): result is IdxCarHeader {
+//   return !!(result as IdxCarHeader).indexes
+// }
 
-export function isIndexerMeta(result: BulkResult | IdxMeta): result is IdxMeta {
-  return !!(result as IdxMeta).name
-}
+// export function isIndexerMeta(result: BulkResult | IdxMeta): result is IdxMeta {
+//   return !!(result as IdxMeta).name
+// }

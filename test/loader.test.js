@@ -12,11 +12,11 @@ import { CID } from 'multiformats/cid'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, matches, equals, resetDirectory, notEquals } from './helpers.js'
 
-import { parseCarFile } from '../dist/loader-helpers.esm.js'
+import { parseDbCarFile, parseIdxCarFile } from '../dist/loader-helpers.esm.js'
 
-import { Loader } from '../dist/loader.esm.js'
+import { IdxLoader, DbLoader } from '../dist/loader.esm.js'
 import { CRDT } from '../dist/crdt.esm.js'
-import { TransactionBlockstore as Blockstore, Transaction } from '../dist/transaction.esm.js'
+import { Transaction } from '../dist/transaction.esm.js'
 
 import { defaultConfig } from '../dist/store-fs.esm.js'
 
@@ -25,7 +25,7 @@ describe('basic Loader', function () {
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-loader-commit')
     t = new Transaction({})
-    loader = new Loader('test-loader-commit')
+    loader = new DbLoader('test-loader-commit')
     block = (await encode({
       value: { hello: 'world' },
       hasher,
@@ -41,7 +41,7 @@ describe('basic Loader', function () {
     equals(loader.carLog.length, 1)
     const reader = await loader.loadCar(carCid)
     assert(reader)
-    const parsed = await parseCarFile(reader)
+    const parsed = await parseDbCarFile(reader)
     assert(parsed.cars)
     equals(parsed.cars.length, 0)
     assert(parsed.head)
@@ -53,7 +53,7 @@ describe('basic Loader with two commits', function () {
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-loader-two-commit')
     t = new Transaction({})
-    loader = new Loader('test-loader-two-commit')
+    loader = new DbLoader('test-loader-two-commit')
     block = (await encode({
       value: { hello: 'world' },
       hasher,
@@ -77,7 +77,7 @@ describe('basic Loader with two commits', function () {
   it('should commit', async function () {
     const reader = await loader.loadCar(carCid)
     assert(reader)
-    const parsed = await parseCarFile(reader)
+    const parsed = await parseDbCarFile(reader)
     assert(parsed.cars)
     equals(parsed.compact.length, 0)
     equals(parsed.cars.length, 1)
@@ -89,7 +89,7 @@ describe('basic Loader with two commits', function () {
 
     const reader = await loader.loadCar(compactCid)
     assert(reader)
-    const parsed = await parseCarFile(reader)
+    const parsed = await parseDbCarFile(reader)
     assert(parsed.cars)
     equals(parsed.compact.length, 2)
     equals(parsed.cars.length, 0)
@@ -110,7 +110,7 @@ describe('Loader with a committed transaction', function () {
   const dbname = 'test-loader'
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-loader')
-    loader = new Loader(dbname)
+    loader = new DbLoader(dbname)
     crdt = new CRDT(dbname)
     done = await crdt.bulk([{ key: 'foo', value: { foo: 'bar' } }])
   })
@@ -126,7 +126,7 @@ describe('Loader with a committed transaction', function () {
   it('can load the car', async function () {
     const reader = await loader.loadCar(done.car)
     assert(reader)
-    const parsed = await parseCarFile(reader)
+    const parsed = await parseDbCarFile(reader)
     assert(parsed.cars)
     equals(parsed.cars.length, 0)
     assert(parsed.head)
@@ -135,11 +135,11 @@ describe('Loader with a committed transaction', function () {
 
 describe('Loader with two committed transactions', function () {
   /** @type {Loader} */
-  let loader, blockstore, crdt, done1, done2
+  let loader, crdt, done1, done2
   const dbname = 'test-loader'
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-loader')
-    loader = new Loader(dbname)
+    loader = new DbLoader(dbname)
     crdt = new CRDT(dbname)
     done1 = await crdt.bulk([{ key: 'apple', value: { foo: 'bar' } }])
     done2 = await crdt.bulk([{ key: 'orange', value: { foo: 'bar' } }])
@@ -151,7 +151,7 @@ describe('Loader with two committed transactions', function () {
     assert(done2.car)
     notEquals(done1.head, done2.head)
     notEquals(done1.car, done2.car)
-    equals(blockstore.transactions.size, 2)
+    // equals(blockstore.transactions.size, 2)
     equals(loader.carLog.length, 2)
     equals(loader.carLog.indexOf(done1.car), 0)
     equals(loader.carLog.indexOf(done2.car), 1)
@@ -159,7 +159,7 @@ describe('Loader with two committed transactions', function () {
   it('can load the car', async function () {
     const reader = await loader.loadCar(done2.car)
     assert(reader)
-    const parsed = await parseCarFile(reader)
+    const parsed = await parseDbCarFile(reader)
     assert(parsed.cars)
     equals(parsed.cars.length, 1)
     assert(parsed.head)
@@ -174,7 +174,7 @@ describe('Loader with many committed transactions', function () {
   const count = 10
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-loader')
-    loader = new Loader(dbname)
+    loader = new DbLoader(dbname)
     crdt = new CRDT(dbname)
     blockstore = crdt.blocks
     loader = blockstore.loader
@@ -194,7 +194,7 @@ describe('Loader with many committed transactions', function () {
   it('can load the car', async function () {
     const reader = await loader.loadCar(dones[5].car)
     assert(reader)
-    const parsed = await parseCarFile(reader)
+    const parsed = await parseDbCarFile(reader)
     assert(parsed.cars)
     equals(parsed.cars.length, 5)
     assert(parsed.head)
@@ -206,7 +206,7 @@ describe('basic Loader with index commits', function () {
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-loader-index')
     t = new Transaction({})
-    loader = new Loader('test-loader-index')
+    loader = new IdxLoader('test-loader-index')
     block = (await encode({
       value: { hello: 'world' },
       hasher,
@@ -214,10 +214,16 @@ describe('basic Loader with index commits', function () {
     }))
     await t.put(block.cid, block.bytes)
     cid = CID.parse('bafybeia4luuns6dgymy5kau5rm7r4qzrrzg6cglpzpogussprpy42cmcn4')
-
+    // export type IdxMeta = {
+    //   byId: AnyLink
+    //   byKey: AnyLink
+    //   map: string
+    //   name: string
+    //   head: ClockHead
+    // }
     indexerResult = {
-      byId: { cid },
-      byKey: { cid },
+      byId: cid,
+      byKey: cid,
       head: [cid],
       name: 'test-idx',
       map: '(doc) => doc.hello'
@@ -227,20 +233,24 @@ describe('basic Loader with index commits', function () {
     equals(loader.carLog.length, 0)
   })
   it('should commit the index metadata', async function () {
+    console.log('loader.carsReaders', loader.carsReaders)
     const carCid = await loader.commit(t, indexerResult)
+    console.log('loader.carlog', loader.carLog)
+    // assert(loader.carsReaders.has('test-idx'))
 
-    assert(loader.indexCarLogs.has('test-idx'))
-
-    const carLog = loader.indexCarLogs.get('test-idx')
+    const carLog = loader.carLog
+    // loader.indexCarLogs.get('test-idx')
 
     equals(carLog.length, 1)
     const reader = await loader.loadCar(carCid)
     assert(reader)
-    const parsed = await parseCarFile(reader)
+    const parsed = await parseIdxCarFile(reader)
     assert(parsed.cars)
     equals(parsed.cars.length, 0)
     assert(parsed.head)
     assert(parsed.head.length, 1)
+    console.log('parsed.head', parsed)
+    assert(parsed.indexes)
     equals(parsed.map, '(doc) => doc.hello')
     equals(parsed.name, 'test-idx')
   })
