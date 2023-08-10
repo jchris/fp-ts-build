@@ -122,6 +122,12 @@ export async function bulkIndex(tblocks: Transaction, inIndex: IndexTree, indexE
   }
 }
 
+export async function loadIndex(tblocks: BlockFetcher, cid: AnyLink, opts: StaticProllyOptions): Promise<ProllyNode> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+  const root = await DbIndex.load({ cid, get: makeProllyGetBlock(tblocks), ...opts }) as ProllyNode
+  return root
+}
+
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function applyQuery(crdt: CRDT, resp: { result: IndexRow[] }, query: QueryOpts) {
   // console.log('pre-result', resp.result)

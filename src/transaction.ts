@@ -1,5 +1,5 @@
 import { MemoryBlockstore } from '@alanshaw/pail/block'
-import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead, DbCarHeader, IdxCarHeader, IdxMeta, IdxMetaCar, BulkResultCar, IndexerResult } from './types'
+import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead, DbCarHeader, IdxCarHeader, IdxMeta, IdxMetaCar, BulkResultCar } from './types'
 import { DbLoader, IdxLoader } from './loader'
 import { CID } from 'multiformats'
 

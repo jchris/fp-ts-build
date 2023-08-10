@@ -149,6 +149,7 @@ describe('basic Indexer upon cold start', function () {
   let crdt, indexer, result, didMap, mapFn
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-indexer-cold')
+    await resetDirectory(defaultConfig.dataDir, 'test-indexer-cold.idx')
 
     // db = Fireproof.storage()
     crdt = new CRDT('test-indexer-cold')
@@ -156,9 +157,9 @@ describe('basic Indexer upon cold start', function () {
       { key: 'abc1', value: { title: 'amazing' } },
       { key: 'abc2', value: { title: 'creative' } },
       { key: 'abc3', value: { title: 'bazillas' } }])
-    didMap = false
+    didMap = 0
     mapFn = (doc) => {
-      didMap = true
+      didMap++
       return doc.title
     }
     indexer = crdt.indexer('hello', mapFn)
@@ -180,18 +181,43 @@ describe('basic Indexer upon cold start', function () {
     assert(result2)
     equals(result2.rows.length, 3)
   })
-  it('should not rerun the map function', async function () {
-    didMap = false
+  it('should not rerun the map function on seen chantes', async function () {
+    didMap = 0
     const crdt2 = new CRDT('test-indexer-cold')
     const indexer2 = crdt2.indexer('hello', mapFn)
+    const { result, head } = await crdt2.changes([])
+
+    equals(result.length, 3)
+    equals(head.length, 1)
+
+    const { result: ch2, head: h2 } = await crdt2.changes(head)
+
+    equals(ch2.length, 0)
+    equals(h2.length, 1)
+    equalsJSON(h2, head)
+    equalsJSON(indexer2.indexHead, head)
     const result2 = await indexer2.query()
     assert(result2)
     equals(result2.rows.length, 3)
     assert(!didMap)
+
+    await crdt2.bulk([
+      { key: 'abc4', value: { title: 'despicable' } }])
+
+    const { result: ch3, head: h3 } = await crdt2.changes(head)
+
+    equals(ch3.length, 1)
+    equals(h3.length, 1)
+
+    const result3 = await indexer2.query()
+    assert(result3)
+    equals(result3.rows.length, 4)
+    equals(didMap, 1)
   })
-  it('should not allow map function definiton to change', function () {
+  it('should not allow map function definiton to change', async function () {
+    const crdt2 = new CRDT('test-indexer-cold')
+    await crdt2.ready
     assert.throws(() => {
-      const crdt2 = new CRDT('test-indexer-cold')
       crdt2.indexer('hello', (doc) => doc.title)
     })
   })

@@ -77,8 +77,9 @@ async function gatherUpdates(
   updates: DocUpdate[] = [],
   keys: Set<string>
 ): Promise<DocUpdate[]> {
+  const sHead = head.map(l => l.toString())
   for (const link of since) {
-    if (head.includes(link)) {
+    if (sHead.includes(link.toString())) {
       return updates
     }
   }

@@ -135,6 +135,7 @@ describe('Reopening a database with indexes', function () {
   beforeEach(async function () {
     // erase the existing test data
     await resetDirectory(defaultConfig.dataDir, 'test-reopen-idx')
+    await resetDirectory(defaultConfig.dataDir, 'test-reopen-idx.idx')
 
     db = Fireproof.storage('test-reopen-idx')
     const ok = await db.put({ _id: 'test', foo: 'bar' })

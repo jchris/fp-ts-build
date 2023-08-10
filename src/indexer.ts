@@ -1,6 +1,6 @@
-import { ClockHead, DocUpdate, MapFn, IndexUpdate, QueryOpts, DocFragment, IdxMeta, IdxCarHeader, IndexerResult, IdxMetaCar } from './types'
+import { ClockHead, DocUpdate, MapFn, IndexUpdate, QueryOpts, DocFragment, IdxMeta } from './types'
 import { IndexBlockstore } from './transaction'
-import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery, encodeRange, encodeKey, makeName } from './indexer-helpers'
+import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery, encodeRange, encodeKey, makeName, loadIndex } from './indexer-helpers'
 import { CRDT } from './crdt'
 
 export class Indexer {
@@ -14,13 +14,13 @@ export class Indexer {
   indexHead: ClockHead = []
   includeDocsDefault: boolean = false
 
-  constructor(blocks: IndexBlockstore, crdt: CRDT, name: string, mapFn: MapFn | string) {
+  constructor(blocks: IndexBlockstore, crdt: CRDT, name: string | null, mapFn: MapFn | string) {
     this.blocks = blocks
     this.crdt = crdt
     this.applyMapFn(mapFn, name)
   }
 
-  applyMapFn(mapFn: MapFn | string, name?: string) {
+  applyMapFn(mapFn: MapFn | string, name: string | null) {
     if (typeof mapFn === 'string') {
       this.mapFnString = mapFn
       const regex = /^[a-zA-Z0-9 ]+$/
@@ -41,6 +41,7 @@ export class Indexer {
 
   async query(opts: QueryOpts = {}) {
     await this._updateIndex()
+    await this._hydrateIndex()
     if (!this.byKey.root) return await applyQuery(this.crdt, { result: [] }, opts)
     if (this.includeDocsDefault && opts.includeDocs === undefined) opts.includeDocs = true
     if (opts.range) {
@@ -71,9 +72,19 @@ export class Indexer {
     }, opts)
   }
 
+  async _hydrateIndex() {
+    if (this.byId.root && this.byKey.root) return
+    if (!this.byId.cid || !this.byKey.cid) return
+    this.byId.root = await loadIndex(this.blocks, this.byId.cid, byIdOpts)
+    this.byKey.root = await loadIndex(this.blocks, this.byKey.cid, byKeyOpts)
+  }
+
   async _updateIndex() {
+    await this.crdt.ready
+    console.log('update index', this.indexHead[0], this.crdt._head[0])
     if (!this.mapFn) throw new Error('No map function defined')
     const { result, head } = await this.crdt.changes(this.indexHead)
+    console.log('result', result, head)
     if (result.length === 0) {
       this.indexHead = head
       return { byId: this.byId, byKey: this.byKey }
@@ -95,7 +106,7 @@ export class Indexer {
       indexerMeta.set(name, { byId: indexer.byId.cid, byKey: indexer.byKey.cid, head: indexer.indexHead, map: indexer.mapFnString, name: indexer.name } as IdxMeta)
     }
 
-    await this.blocks.transaction(async (tblocks): Promise<IdxMeta> => {
+    return await this.blocks.transaction(async (tblocks): Promise<IdxMeta> => {
       this.byId = await bulkIndex(
         tblocks,
         this.byId,
@@ -107,12 +118,5 @@ export class Indexer {
       if (!this.name) throw new Error('No name defined')
       return { byId: this.byId.cid, byKey: this.byKey.cid, head, map: this.mapFnString, name: this.name } as IdxMeta
     }, indexerMeta)
-
-    // add ref to other indexes
-    // tResult.indexes
-    // const indexerMap = this.crdt.indexers
-    // indexerMap.set(this.name as string, tResult)
-
-    // return { indexes: {} }
   }
 }
