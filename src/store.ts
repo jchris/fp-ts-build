@@ -10,7 +10,7 @@ export abstract class HeaderStore implements HeaderStoreInterface {
 
   makeHeader(car: AnyLink, indexes: IndexCars): ByteView<DbMeta> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    console.log('make header', { car, indexes })
+    // console.log('make header', { car, indexes })
     return encode({ car, indexes } as DbMeta)
   }
 

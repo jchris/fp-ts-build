@@ -7,9 +7,7 @@ import * as codec from '@ipld/dag-cbor'
 import { CarReader } from '@ipld/car'
 
 import { Transaction } from './transaction'
-import { AnyBlock, BulkResult, AnyLink, IndexerResult, DbCarHeader, IdxCarHeader, IdxMeta } from './types'
-
-// async function innerMakeCarFile(
+import { AnyBlock, BulkResult, AnyLink, IndexerResult, DbCarHeader, IdxCarHeader } from './types'
 
 export async function makeDbCarFile(
   t: Transaction,
@@ -79,9 +77,9 @@ async function readerValue(reader: CarReader): Promise<DbCarHeader | IdxCarHeade
   return fp
 }
 
-export function isIndexerResult(result: BulkResult | IndexerResult): result is IndexerResult {
-  return !!(result as IndexerResult).indexes
-}
+// export function isIndexerResult(result: BulkResult | IndexerResult): result is IndexerResult {
+//   return !!(result as IndexerResult).indexes
+// }
 
 // export function isIndexHeader(result: DbCarHeader | IdxCarHeader): result is IdxCarHeader {
 //   return !!(result as IdxCarHeader).indexes

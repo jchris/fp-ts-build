@@ -105,6 +105,7 @@ export class IndexBlockstore extends FireproofBlockstore {
     const t = new Transaction(this)
     this.addTransaction(t)
     const done: IdxMeta = await fn(t)
+    indexes.set(done.name, done)
     const car = await this.commit(t, done, indexes) as AnyLink
     if (car) return { ...done, car }
     return done

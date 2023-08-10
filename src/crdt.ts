@@ -18,12 +18,19 @@ export class CRDT {
     this.blocks = blocks || new TransactionBlockstore(name)
     this.indexBlocks = new IndexBlockstore(name ? name + '-idx' : undefined)
     this._head = []
-    this.ready = Promise.all([
+    this.ready = Promise.all([ // load the meta here, use it to load the car headers
       this.blocks.ready.then((header: DbCarHeader) => {
         this._head = header.head // todo multi head support here
       }),
       this.indexBlocks.ready.then((header: IdxCarHeader) => {
-        // console.log('index header', header)
+        console.log('index header', header.indexes)
+        // this is where the indexers get wet
+        for (const [name, idx] of header.indexes.entries()) {
+          // this.indexers.set(name, new Indexer(this.indexBlocks, idx))
+          // const ix = this.indexer(name, idx.map) // todo eval
+          // ix?.byId
+        }
+        // this.indexer()
       })
     ])
   }
@@ -57,13 +64,15 @@ export class CRDT {
     return await doCompact(this.blocks, this._head)
   }
 
-  indexer(name: string, mapFn?: MapFn) {
+  indexer(name: string, mapFn?: MapFn): Indexer {
     // await this.ready
     const idx = this.indexers.get(name) // maybe this should error if the mapfn is different
     if (idx) return idx
     const idx2 = new Indexer(this.indexBlocks, this, name, mapFn || name)
     this._registerIndexer(idx2)
-    return this.indexers.get(name)
+    const indx = this.indexers.get(name)
+    if (!indx) throw new Error('indexer not registered')
+    return indx
   }
 
   _registerIndexer(indexer: Indexer) {

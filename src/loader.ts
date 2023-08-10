@@ -12,7 +12,6 @@ export class Loader {
   headerStore: HeaderStore
   carStore: CarStore
   carLog: AnyLink[] = []
-  indexCarLogs: Map<string, AnyLink[]> = new Map()
   carsReaders: Map<string, CarReader> = new Map()
   ready: Promise<DbCarHeader | IdxCarHeader>
 

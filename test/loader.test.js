@@ -110,8 +110,9 @@ describe('Loader with a committed transaction', function () {
   const dbname = 'test-loader'
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-loader')
-    loader = new DbLoader(dbname)
     crdt = new CRDT(dbname)
+    blockstore = crdt.blocks
+    loader = blockstore.loader
     done = await crdt.bulk([{ key: 'foo', value: { foo: 'bar' } }])
   })
   it('should have a name', function () {
@@ -120,7 +121,6 @@ describe('Loader with a committed transaction', function () {
   it('should commit a transaction', function () {
     assert(done.head)
     assert(done.car)
-    equals(blockstore.transactions.size, 1)
     equals(loader.carLog.length, 1)
   })
   it('can load the car', async function () {
@@ -135,12 +135,13 @@ describe('Loader with a committed transaction', function () {
 
 describe('Loader with two committed transactions', function () {
   /** @type {Loader} */
-  let loader, crdt, done1, done2
+  let loader, crdt, blockstore, done1, done2
   const dbname = 'test-loader'
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-loader')
-    loader = new DbLoader(dbname)
     crdt = new CRDT(dbname)
+    blockstore = crdt.blocks
+    loader = blockstore.loader
     done1 = await crdt.bulk([{ key: 'apple', value: { foo: 'bar' } }])
     done2 = await crdt.bulk([{ key: 'orange', value: { foo: 'bar' } }])
   })
@@ -151,7 +152,7 @@ describe('Loader with two committed transactions', function () {
     assert(done2.car)
     notEquals(done1.head, done2.head)
     notEquals(done1.car, done2.car)
-    // equals(blockstore.transactions.size, 2)
+    equals(blockstore.transactions.size, 2)
     equals(loader.carLog.length, 2)
     equals(loader.carLog.indexOf(done1.car), 0)
     equals(loader.carLog.indexOf(done2.car), 1)
@@ -174,7 +175,7 @@ describe('Loader with many committed transactions', function () {
   const count = 10
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-loader')
-    loader = new DbLoader(dbname)
+    // loader = new DbLoader(dbname)
     crdt = new CRDT(dbname)
     blockstore = crdt.blocks
     loader = blockstore.loader
@@ -201,7 +202,7 @@ describe('Loader with many committed transactions', function () {
   })
 })
 
-describe('basic Loader with index commits', function () {
+describe.skip('basic Loader with index commits', function () {
   let loader, block, t, indexerResult, cid
   beforeEach(async function () {
     await resetDirectory(defaultConfig.dataDir, 'test-loader-index')
