@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import esbuildPluginTsc from 'esbuild-plugin-tsc'
+import alias from 'esbuild-plugin-alias'
 import fs from 'fs'
 import path from 'path'
 import { polyfillNode } from 'esbuild-plugin-polyfill-node'
@@ -59,6 +60,10 @@ export function createBuildSettings(options) {
         entryPoints: [entryPoint],
         plugins: [
           polyfillNode({}),
+          alias({
+            // Define your alias here
+            'src/store-fs.ts': 'src/store-browser.ts'
+          }),
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           ...commonSettings.plugins
         ]
