@@ -4,17 +4,25 @@ import { EventData } from '@alanshaw/pail/crdt'
 
 export type ClockHead = EventLink<EventData>[]
 
+export type DocFragment = string | number | boolean | null | DocFragment[] | { [key: string]: DocFragment }
+
 type DocBody = {
-  [key: string]: any
+  [key: string]: DocFragment
+}
+
+type DocMeta = {
+  proof?: DocFragment
+  clock?: ClockHead
 }
 
 export type Doc = DocBody & {
   _id?: string
+  _meta?: DocBody
 }
 
 export type DocUpdate = {
   key: string
-  value?: DocBody
+  value?: { [key: string]: any}
   del?: boolean
 }
 
@@ -135,20 +143,10 @@ export type ProllyOptions = StaticProllyOptions & {
   get: (cid: any) => Promise<any>
 }
 
-export type DocFragment = string | number | boolean | null | DocFragment[] | { [key: string]: DocFragment }
-
 type CallbackFn = (k: string, v: DocFragment) => void
 
 export type MapFn = (doc: Doc, map: CallbackFn) => DocFragment | void
 
 export type ListenerFn = (docs: Doc[]) => Promise<void> | void
 
-export interface HeaderStoreInterface {
-  name: string
-  makeHeader(car: AnyLink, indexes: IndexCars): ByteView<DbMeta>
-  parseHeader(headerData: Uint8Array): DbMeta
-  load(branch?: string): Promise<DbMeta | null>
-  save(carCid: AnyLink, indexes: IndexCars, branch?: string): Promise<void>
-}
-
-export type DbMeta = { car: AnyLink, indexes: IndexCars}
+export type DbMeta = { car: AnyLink, indexes: IndexCars }

@@ -1,7 +1,8 @@
 import { encode, decode, ByteView } from '@ipld/dag-json'
-import { AnyLink, DbMeta, HeaderStoreInterface, IndexCars } from './types'
+import { AnyLink, DbMeta, IndexCars } from './types'
 
-export abstract class HeaderStore implements HeaderStoreInterface {
+export abstract class HeaderStore {
+  tag: string = 'header-base'
   name: string
   constructor(name: string) {
     this.name = name
@@ -22,7 +23,8 @@ export abstract class HeaderStore implements HeaderStoreInterface {
   abstract save(carCid: AnyLink, indexes: IndexCars, branch?: string): Promise<void>
 }
 
-export class CarStore {
+export abstract class CarStore {
+  tag: string = 'car-base'
   name: string
   constructor(name: string) {
     this.name = name
