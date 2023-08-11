@@ -1,6 +1,6 @@
 import { ClockHead, DocUpdate, MapFn, IndexUpdate, QueryOpts, DocFragment, IdxMeta } from './types'
 import { IndexBlockstore } from './transaction'
-import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery, encodeRange, encodeKey, makeName, loadIndex } from './indexer-helpers'
+import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery, encodeRange, encodeKey, loadIndex } from './indexer-helpers'
 import { CRDT } from './crdt'
 
 function makeMapFnFromName(name: string): MapFn {
@@ -19,58 +19,62 @@ export class Indexer {
   byId = new IndexTree()
   indexHead: ClockHead | undefined = undefined
   includeDocsDefault: boolean = false
+  initError: Error | null = null
 
   constructor(blocks: IndexBlockstore, crdt: CRDT, name: string, mapFn?: MapFn, meta?: IdxMeta) {
     this.blocks = blocks
     this.crdt = crdt
     this.applyMapFn(name, mapFn, meta)
-    if (!this.mapFnString) throw new Error('missing mapFnString')
+    if (!(this.mapFnString || this.initError)) throw new Error('missing mapFnString')
   }
 
   applyMapFn(name: string, mapFn?: MapFn, meta?: IdxMeta) {
     if (mapFn && meta) throw new Error('cannot provide both mapFn and meta')
     if (this.name && this.name !== name) throw new Error('cannot change name')
     this.name = name
-    if (meta) {
-      // hydrating from header
-      if (this.indexHead &&
-        this.indexHead.map(c => c.toString()).join() !== meta.head.map(c => c.toString()).join()) {
-        throw new Error('cannot apply meta to existing index')
-      }
-      this.byId.cid = meta.byId
-      this.byKey.cid = meta.byKey
-      this.indexHead = meta.head
-      if (this.mapFnString) {
-        // we already initialized from application code
-        if (this.mapFnString !== meta.map) throw new Error('cannot apply different mapFn meta')
-      } else {
-        // we are first
-        this.mapFnString = meta.map
-      }
-    } else {
-      if (this.mapFn) {
-        // we already initialized from application code
-        if (mapFn) {
-          if (this.mapFn.toString() !== mapFn.toString()) throw new Error('cannot apply different mapFn app2')
+    try {
+      if (meta) {
+        // hydrating from header
+        if (this.indexHead &&
+          this.indexHead.map(c => c.toString()).join() !== meta.head.map(c => c.toString()).join()) {
+          throw new Error('cannot apply meta to existing index')
         }
-      } else {
-        // application code is creating an index
-        if (!mapFn) {
-          mapFn = makeMapFnFromName(name)
-        }
+        this.byId.cid = meta.byId
+        this.byKey.cid = meta.byKey
+        this.indexHead = meta.head
         if (this.mapFnString) {
-          // we already loaded from a header
-          if (this.mapFnString !== mapFn.toString()) throw new Error('cannot apply different mapFn app')
+          // we already initialized from application code
+          if (this.mapFnString !== meta.map) throw new Error('cannot apply different mapFn meta')
         } else {
           // we are first
-          this.mapFnString = mapFn.toString()
+          this.mapFnString = meta.map
         }
-        this.mapFn = mapFn
+      } else {
+        if (this.mapFn) {
+          // we already initialized from application code
+          if (mapFn) {
+            if (this.mapFn.toString() !== mapFn.toString()) throw new Error('cannot apply different mapFn app2')
+          }
+        } else {
+          // application code is creating an index
+          if (!mapFn) {
+            mapFn = makeMapFnFromName(name)
+          }
+          if (this.mapFnString) {
+            // we already loaded from a header
+            if (this.mapFnString !== mapFn.toString()) throw new Error('cannot apply different mapFn app')
+          } else {
+            // we are first
+            this.mapFnString = mapFn.toString()
+          }
+          this.mapFn = mapFn
+        }
       }
+      const matches = /=>\s*(.*)/.test(this.mapFnString)
+      this.includeDocsDefault = matches
+    } catch (e) {
+      this.initError = e as Error
     }
-    const matches = /=>\s*(.*)/.test(this.mapFnString)
-    this.includeDocsDefault = matches
-    this.name = name || makeName(this.mapFnString)
   }
 
   async query(opts: QueryOpts = {}) {
@@ -113,6 +117,7 @@ export class Indexer {
 
   async _updateIndex() {
     await this.crdt.ready
+    if (this.initError) throw this.initError
     if (!this.mapFn) throw new Error('No map function defined')
     const { result, head } = await this.crdt.changes(this.indexHead)
     if (result.length === 0) {

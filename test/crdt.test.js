@@ -3,9 +3,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable mocha/max-top-level-suites */
-import { assert, equals, equalsJSON, notEquals } from './helpers.js'
+import { assert, equals, equalsJSON, matches, notEquals } from './helpers.js'
 import { CRDT } from '../dist/crdt.esm.js'
-import { Indexer } from '../dist/indexer.esm.js'
+// import { Indexer } from '../dist/indexer.esm.js'
 
 describe('Fresh crdt', function () {
   /** @type {CRDT} */
@@ -222,6 +222,6 @@ describe('CRDT with an index', function () {
   })
   it('creating a different index with same name should not work', async function () {
     const e = await crdt.indexer('points', (doc) => doc._id).query().catch((err) => err)
-    equals(e.message, 'Indexer already registered with different map function')
+    matches(e.message, /cannot apply/)
   })
 })

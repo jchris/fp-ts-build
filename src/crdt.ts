@@ -22,7 +22,7 @@ export class CRDT {
       this.blocks.ready.then((header: DbCarHeader) => {
         this._head = header.head // todo multi head support here
       }),
-      this.indexBlocks.ready.then(async (header: IdxCarHeader) => {
+      this.indexBlocks.ready.then((header: IdxCarHeader) => {
         if (header.indexes === undefined) return
         for (const [name, idx] of Object.entries(header.indexes)) {
           this.indexer(name, undefined, idx as IdxMeta)

@@ -156,17 +156,3 @@ export function encodeKey(key: string): string {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
   return charwise.encode(key) as string
 }
-
-export function makeName(mapFnString: string) {
-  const regex = /\(([^,()]+,\s*[^,()]+|\[[^\]]+\],\s*[^,()]+)\)/g
-  let matches: RegExpExecArray | null | string[] = Array.from(mapFnString.matchAll(regex), match => match[1].trim())
-  if (matches.length === 0) {
-    matches = /=>\s*(.*)/.exec(mapFnString)
-  }
-  if (matches === null) {
-    return mapFnString
-  } else {
-    // it's a consise arrow function, match everythign after the arrow
-    return matches[1]
-  }
-}

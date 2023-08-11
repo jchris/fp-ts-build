@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -214,12 +215,10 @@ describe('basic Indexer upon cold start', function () {
     equals(result3.rows.length, 4)
     equals(didMap, 1)
   })
-  it('shouldnt allow map function definiton to change', function () {
+  it('shouldnt allow map function definiton to change', async function () {
     const crdt2 = new CRDT('test-indexer-cold')
-    const e = crdt2.indexer('hello', (doc) => doc.title).query().catch((e) => e)
-
-    // const e = crdt2.indexer('hello', (doc) => doc.title)
-    equals(e.message, 'Indexer already registered with different map function')
+    const e = await crdt2.indexer('hello', (doc) => doc.title).query().catch((e) => e)
+    matches(e.message, /cannot apply/)
   })
 })
 
