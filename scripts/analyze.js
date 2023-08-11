@@ -1,5 +1,5 @@
 import * as esbuild from 'esbuild'
-import fs from 'node:fs'
+import fs from 'fs'
 import { createBuildSettings } from './settings.js'
 
 const mode = process.env.npm_config_mode

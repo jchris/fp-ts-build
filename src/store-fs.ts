@@ -1,6 +1,6 @@
-import { join, dirname } from 'node:path'
-import { homedir } from 'node:os'
-import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises'
+import { join, dirname } from 'path'
+import { homedir } from 'os'
+import { mkdir, readFile, writeFile, unlink } from 'fs/promises'
 
 import { AnyBlock, AnyLink, IndexCars, DbMeta } from './types'
 import { HeaderStore as HeaderStoreBase, CarStore as CarStoreBase } from './store'

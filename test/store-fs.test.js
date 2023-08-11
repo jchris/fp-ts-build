@@ -4,8 +4,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable mocha/max-top-level-suites */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import { join } from 'node:path'
-import { readFile } from 'node:fs/promises'
+import { join } from 'path'
+import { promises } from 'fs'
 
 import { CID } from 'multiformats'
 
@@ -13,6 +13,8 @@ import { CID } from 'multiformats'
 import { assert, matches, equals } from './helpers.js'
 
 import { CarStore, defaultConfig, HeaderStore } from '../dist/store-fs.esm.js'
+
+const { readFile } = promises
 
 const decoder = new TextDecoder('utf-8')
 
