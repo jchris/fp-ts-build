@@ -142,3 +142,33 @@ describe('basic Database parallel writes', function () {
     }
   })
 })
+
+describe('basic Database with subscription', function () {
+  /** @type {Database} */
+  let db, didRun, unsubscribe
+  beforeEach(function () {
+    db = new Database()
+    didRun = 0
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    unsubscribe = db.subscribe((docs) => {
+      assert(docs[0]._id)
+      didRun++
+    })
+  })
+  it('should run on put', async function () {
+    /** @type {Doc} */
+    const doc = { _id: 'hello', message: 'world' }
+    const ok = await db.put(doc)
+    equals(ok.id, 'hello')
+    equals(didRun, 1)
+  })
+  it('should unsubscribe', async function () {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    unsubscribe()
+    /** @type {Doc} */
+    const doc = { _id: 'hello', message: 'again' }
+    const ok = await db.put(doc)
+    equals(ok.id, 'hello')
+    equals(didRun, 0)
+  })
+})

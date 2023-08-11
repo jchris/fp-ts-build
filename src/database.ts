@@ -1,11 +1,12 @@
 // @ts-ignore
 import cargoQueue from 'async/cargoQueue'
 import { CRDT } from './crdt'
-import { Doc, BulkResult, DocUpdate, DbResponse, ClockHead, ChangesResponse, MapFn } from './types'
+import { Doc, BulkResult, DocUpdate, DbResponse, ClockHead, ChangesResponse, MapFn, ListenerFn } from './types'
 
 export class Database {
   name: string
   config: object
+  listeners: Set<ListenerFn> = new Set()
   _crdt: CRDT
   _writeQueue: any
 
@@ -16,7 +17,14 @@ export class Database {
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     this._writeQueue = cargoQueue(async (updates: DocUpdate[]) => {
-      return await this._crdt.bulk(updates)
+      const r = await this._crdt.bulk(updates)
+      if (this.listeners.size) {
+        const docs = updates.map(({ key, value }) => ({ _id: key, ...value }))
+        for (const listener of this.listeners) {
+          await listener(docs)
+        }
+      }
+      return r
     })
   }
 
@@ -65,5 +73,12 @@ export class Database {
 
   async index(name: string, mapFn?: MapFn) {
     return await this._crdt.indexer(name, mapFn)
+  }
+
+  subscribe(listener: ListenerFn): () => void {
+    this.listeners.add(listener)
+    return () => {
+      this.listeners.delete(listener)
+    }
   }
 }

@@ -147,7 +147,7 @@ type CallbackFn = (k: string, v: DocFragment) => void
 
 export type MapFn = (doc: Doc, map: CallbackFn) => DocFragment | void
 
-// export type MapFn = string | MapFnFn
+export type ListenerFn = (docs: Doc[]) => Promise<void> | void
 
 export interface HeaderStoreInterface {
   name: string
