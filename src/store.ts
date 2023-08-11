@@ -14,7 +14,7 @@ export abstract class HeaderStore implements HeaderStoreInterface {
     return encode({ car, indexes } as DbMeta)
   }
 
-  parseHeader(headerData: Uint8Array) {
+  parseHeader(headerData: Uint8Array): DbMeta {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     return decode(headerData)
   }
