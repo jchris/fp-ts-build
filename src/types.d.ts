@@ -1,7 +1,6 @@
 import { Link } from 'multiformats'
 import { EventLink } from '@alanshaw/pail/clock'
 import { EventData } from '@alanshaw/pail/crdt'
-import { AnyLink } from './types'
 
 export type ClockHead = EventLink<EventData>[]
 
@@ -10,7 +9,7 @@ type DocBody = {
 }
 
 export type Doc = DocBody & {
-  _id: string
+  _id?: string
 }
 
 export type DocUpdate = {
@@ -43,11 +42,6 @@ export type IndexRow = {
   value?: DocFragment
   del?: boolean
 }
-
-// type IdxTree = {
-//   cid: AnyLink | null
-//   root: ProllyNode | null
-// }
 
 export type CarCommit = {
   car?: AnyLink

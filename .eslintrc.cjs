@@ -6,6 +6,7 @@ module.exports = {
   plugins: [
     'mocha'
   ],
+  ignorePatterns: ['dist/'],
   parser: '@typescript-eslint/parser',
   extends: [
     'standard',

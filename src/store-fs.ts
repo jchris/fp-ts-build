@@ -12,6 +12,9 @@ export const defaultConfig = {
 }
 
 export class HeaderStore extends HeaderStoreBase {
+  tag: string = 'header-node-fs'
+  keyId: string = 'public'
+
   async load(branch: string = 'main'): Promise<DbMeta|null> {
     const filepath = join(defaultConfig.dataDir, this.name, branch + '.json')
     const bytes = await readFile(filepath).catch((e: Error & { code: string}) => {
@@ -29,6 +32,8 @@ export class HeaderStore extends HeaderStoreBase {
 }
 
 export class CarStore extends CarStoreBase {
+  tag: string = 'car-node-fs'
+
   async save(car: AnyBlock): Promise<void> {
     const filepath = join(defaultConfig.dataDir, this.name, car.cid.toString() + '.car')
     await writePathFile(filepath, car.bytes)

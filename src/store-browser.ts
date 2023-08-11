@@ -6,17 +6,16 @@ import { CarStore as CarStoreBase, HeaderStore as HeaderStoreBase } from './stor
 export const FORMAT = '0.9'
 
 export class CarStore extends CarStoreBase {
+  tag: string = 'car-browser-idb'
   keyId: string = 'public'
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   idb: IDBPDatabase<unknown> | null = null
   name: string = 'default'
-  async withDB(dbWorkFun: (arg0: any) => any) {
+
+  async _withDB(dbWorkFun: (arg0: any) => any) {
     if (!this.idb) {
       const dbName = `fp.${FORMAT}.${this.keyId}.${this.name}.valet`
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
       this.idb = await openDB(dbName, 1, {
         upgrade(db): void {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
           db.createObjectStore('cars')
         }
       })
@@ -28,10 +27,8 @@ export class CarStore extends CarStoreBase {
   async load(cid: AnyLink): Promise<AnyBlock> {
     console.log('loading', cid.toString())
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return await this.withDB(async (db: IDBPDatabase<unknown>) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    return await this._withDB(async (db: IDBPDatabase<unknown>) => {
       const tx = db.transaction(['cars'], 'readonly')
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       const bytes = (await tx.objectStore('cars').get(cid.toString())) as Uint8Array
       if (!bytes) throw new Error(`missing idb block ${cid.toString()}`)
       return { cid, bytes }
@@ -40,18 +37,16 @@ export class CarStore extends CarStoreBase {
 
   async save(car: AnyBlock): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return await this.withDB(async (db: IDBPDatabase<unknown>) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    return await this._withDB(async (db: IDBPDatabase<unknown>) => {
       const tx = db.transaction(['cars'], 'readwrite')
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       await tx.objectStore('cars').put(car.bytes, car.cid.toString())
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
       return await tx.done
     })
   }
 }
 
 export class HeaderStore extends HeaderStoreBase {
+  tag: string = 'header-browser-ls'
   keyId: string = 'public'
   name: string = 'default'
   decoder: TextDecoder
