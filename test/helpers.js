@@ -25,6 +25,11 @@ export function matches(actual, expected) {
 }
 
 export async function resetDirectory(dir, name) {
+  await doResetDirectory(dir, name)
+  await doResetDirectory(dir, name + '.idx')
+}
+
+export async function doResetDirectory(dir, name) {
   const path = join(dir, name)
   await mkdir(path, { recursive: true })
 

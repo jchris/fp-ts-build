@@ -1,6 +1,10 @@
 # Fireproof
 
-This is the core TypeScript library. 
+## Live database for the web
+
+Fireproof is beta software. You can browse the alpha proof of concept at https://github.com/fireproof-storage/fireproof
+
+This code will replace the alpha code soon, at that repository.
 
 ## Implementation 
 
