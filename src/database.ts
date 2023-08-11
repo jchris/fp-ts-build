@@ -71,8 +71,8 @@ export class Database {
     return { rows, clock: head }
   }
 
-  async index(name: string, mapFn?: MapFn) {
-    return await this._crdt.indexer(name, mapFn)
+  index(name: string, mapFn?: MapFn) {
+    return this._crdt.indexer(name, mapFn)
   }
 
   subscribe(listener: ListenerFn): () => void {

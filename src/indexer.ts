@@ -3,6 +3,12 @@ import { IndexBlockstore } from './transaction'
 import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery, encodeRange, encodeKey, makeName, loadIndex } from './indexer-helpers'
 import { CRDT } from './crdt'
 
+function makeMapFnFromName(name: string): MapFn {
+  return (doc) => {
+    if (doc[name]) return doc[name] as DocFragment
+  }
+}
+
 export class Indexer {
   blocks: IndexBlockstore
   crdt: CRDT
@@ -11,31 +17,59 @@ export class Indexer {
   mapFnString: string = ''
   byKey = new IndexTree()
   byId = new IndexTree()
-  indexHead: ClockHead = []
+  indexHead: ClockHead | undefined = undefined
   includeDocsDefault: boolean = false
 
-  constructor(blocks: IndexBlockstore, crdt: CRDT, name: string | null, mapFn: MapFn | string) {
+  constructor(blocks: IndexBlockstore, crdt: CRDT, name: string, mapFn?: MapFn, meta?: IdxMeta) {
     this.blocks = blocks
     this.crdt = crdt
-    this.applyMapFn(mapFn, name)
+    this.applyMapFn(name, mapFn, meta)
+    if (!this.mapFnString) throw new Error('missing mapFnString')
   }
 
-  applyMapFn(mapFn: MapFn | string, name: string | null) {
-    if (typeof mapFn === 'string') {
-      this.mapFnString = mapFn
-      const regex = /^[a-zA-Z0-9 ]+$/
-      if (regex.test(mapFn)) {
-        this.mapFn = (doc) => {
-          if (doc[mapFn]) return doc[mapFn] as DocFragment
-        }
-        this.includeDocsDefault = true
+  applyMapFn(name: string, mapFn?: MapFn, meta?: IdxMeta) {
+    if (mapFn && meta) throw new Error('cannot provide both mapFn and meta')
+    if (this.name && this.name !== name) throw new Error('cannot change name')
+    this.name = name
+    if (meta) {
+      // hydrating from header
+      if (this.indexHead &&
+        this.indexHead.map(c => c.toString()).join() !== meta.head.map(c => c.toString()).join()) {
+        throw new Error('cannot apply meta to existing index')
+      }
+      this.byId.cid = meta.byId
+      this.byKey.cid = meta.byKey
+      this.indexHead = meta.head
+      if (this.mapFnString) {
+        // we already initialized from application code
+        if (this.mapFnString !== meta.map) throw new Error('cannot apply different mapFn meta')
+      } else {
+        // we are first
+        this.mapFnString = meta.map
       }
     } else {
-      this.mapFn = mapFn
-      this.mapFnString = mapFn.toString()
+      if (this.mapFn) {
+        // we already initialized from application code
+        if (mapFn) {
+          if (this.mapFn.toString() !== mapFn.toString()) throw new Error('cannot apply different mapFn app2')
+        }
+      } else {
+        // application code is creating an index
+        if (!mapFn) {
+          mapFn = makeMapFnFromName(name)
+        }
+        if (this.mapFnString) {
+          // we already loaded from a header
+          if (this.mapFnString !== mapFn.toString()) throw new Error('cannot apply different mapFn app')
+        } else {
+          // we are first
+          this.mapFnString = mapFn.toString()
+        }
+        this.mapFn = mapFn
+      }
     }
-    const matches = /=>\s*(.*)/.exec(this.mapFnString)
-    this.includeDocsDefault = this.includeDocsDefault || !!(matches && matches.length > 0)
+    const matches = /=>\s*(.*)/.test(this.mapFnString)
+    this.includeDocsDefault = matches
     this.name = name || makeName(this.mapFnString)
   }
 

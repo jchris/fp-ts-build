@@ -221,7 +221,7 @@ describe('CRDT with an index', function () {
     equals(got.rows[0].id, 'king')
   })
   it('creating a different index with same name should not work', async function () {
-    const e = await crdt.indexer('points', (doc) => doc._id).catch((err) => err)
+    const e = await crdt.indexer('points', (doc) => doc._id).query().catch((err) => err)
     equals(e.message, 'Indexer already registered with different map function')
   })
 })

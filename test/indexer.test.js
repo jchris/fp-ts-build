@@ -131,7 +131,7 @@ describe('basic Indexer with string fun', function () {
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
-    indexer = new Indexer(db._crdt.blocks, db._crdt, 'hello', 'title')
+    indexer = new Indexer(db._crdt.blocks, db._crdt, 'title')
   })
   it('should get results', async function () {
     const result = await indexer.query()
@@ -214,10 +214,11 @@ describe('basic Indexer upon cold start', function () {
     equals(result3.rows.length, 4)
     equals(didMap, 1)
   })
-  it('should not allow map function definiton to change', async function () {
+  it('shouldnt allow map function definiton to change', function () {
     const crdt2 = new CRDT('test-indexer-cold')
-    // await crdt2.ready
-    const e = await crdt2.indexer('hello', (doc) => doc.title).catch((err) => err)
+    const e = crdt2.indexer('hello', (doc) => doc.title).query().catch((e) => e)
+
+    // const e = crdt2.indexer('hello', (doc) => doc.title)
     equals(e.message, 'Indexer already registered with different map function')
   })
 })

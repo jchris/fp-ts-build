@@ -34,7 +34,7 @@ describe('basic database', function () {
   it('can define an index', async function () {
     const ok = await db.put({ _id: 'test', foo: 'bar' })
     assert(ok)
-    const idx = await db.index('test-index', (doc) => doc.foo)
+    const idx = db.index('test-index', (doc) => doc.foo)
     const result = await idx.query()
     assert(result)
     assert(result.rows)
@@ -44,7 +44,7 @@ describe('basic database', function () {
   it('can define an index with a default function', async function () {
     const ok = await db.put({ _id: 'test', foo: 'bar' })
     assert(ok)
-    const idx = await db.index('foo')
+    const idx = db.index('foo')
     const result = await idx.query()
     assert(result)
     assert(result.rows)
@@ -147,13 +147,13 @@ describe('Reopening a database with indexes', function () {
       return doc.foo
     }
 
-    idx = await db.index('foo', mapFn)
+    idx = db.index('foo', mapFn)
   })
 
   it('should persist data', async function () {
     const doc = await db.get('test')
     equals(doc.foo, 'bar')
-    const idx2 = await db.index('foo')
+    const idx2 = db.index('foo')
     assert(idx2 === idx, 'same object')
     const result = await idx2.query()
     assert(result)
@@ -164,7 +164,7 @@ describe('Reopening a database with indexes', function () {
   })
 
   it('should reuse the index', async function () {
-    const idx2 = await db.index('foo', mapFn)
+    const idx2 = db.index('foo', mapFn)
     assert(idx2 === idx, 'same object')
     const result = await idx2.query()
     assert(result)

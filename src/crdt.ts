@@ -25,11 +25,7 @@ export class CRDT {
       this.indexBlocks.ready.then(async (header: IdxCarHeader) => {
         if (header.indexes === undefined) return
         for (const [name, idx] of Object.entries(header.indexes)) {
-          const idxM = idx as IdxMeta
-          const ix = this.indexer_int(name, idxM.map) // todo eval
-          ix.byId.cid = idxM.byId
-          ix.byKey.cid = idxM.byKey
-          ix.indexHead = idxM.head
+          this.indexer(name, undefined, idx as IdxMeta)
         }
       })
     ])
@@ -64,37 +60,21 @@ export class CRDT {
     return await doCompact(this.blocks, this._head)
   }
 
-  async indexer(name: string, mapFn?: MapFn | string): Promise<Indexer> {
-    await this.ready
-    return this.indexer_int(name, mapFn)
-  }
+  // async indexer(name: string, mapFn?: MapFn | string): Promise<Indexer> {
+  //   await this.ready
+  //   return this.indexer_int(name, mapFn)
+  // }
 
-  indexer_int(name: string, mapFn?: MapFn | string): Indexer {
-    const idx = this.indexers.get(name) // maybe this should error if the mapfn is different
-    if (idx) {
-      if (!idx.mapFn && idx.mapFnString && mapFn) {
-        if (mapFn.toString() !== idx.mapFnString) throw new Error('Indexer already registered with different map function')
-        if (mapFn.constructor.name === 'Function') idx.mapFn = mapFn as MapFn
-      }
-      if (idx.mapFn && mapFn && idx.mapFn.toString() !== mapFn.toString()) throw new Error('Indexer already registered with different map function')
-      return idx
-    }
-    const idx2 = new Indexer(this.indexBlocks, this, name, mapFn || name)
-    this._registerIndexer(idx2)
-    const indx = this.indexers.get(name)
-    if (!indx) throw new Error('indexer not registered')
-    return indx
-  }
-
-  _registerIndexer(indexer: Indexer) {
-    if (!indexer.name) throw new Error('Indexer must have a name')
-    if (this.indexers.has(indexer.name)) {
-      const existing = this.indexers.get(indexer.name)
-      if (existing?.mapFnString !== indexer.mapFnString) throw new Error(`Indexer ${indexer.name} already registered with different map function`)
-      // the new indexer might have a car file, etc, so we need to merge them
-      // throw new Error('todo merge indexers')
+  indexer(name: string, mapFn?: MapFn, meta?: IdxMeta): Indexer {
+    if (mapFn && meta) throw new Error('cannot provide both mapFn and meta')
+    if (mapFn && mapFn.constructor.name !== 'Function') throw new Error('mapFn must be a function')
+    if (this.indexers.has(name)) {
+      const idx = this.indexers.get(name)!
+      idx.applyMapFn(name, mapFn, meta)
     } else {
-      this.indexers.set(indexer.name, indexer)
+      const idx = new Indexer(this.indexBlocks, this, name, mapFn, meta)
+      this.indexers.set(name, idx)
     }
+    return this.indexers.get(name)!
   }
 }
