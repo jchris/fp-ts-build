@@ -1,5 +1,5 @@
 import { encode, decode, ByteView } from '@ipld/dag-json'
-import { AnyLink, DbMeta, IndexCars } from './types'
+import { AnyBlock, AnyLink, DbMeta, IndexCars } from './types'
 
 export abstract class HeaderStore {
   tag: string = 'header-base'
@@ -19,7 +19,7 @@ export abstract class HeaderStore {
     return decode(headerData)
   }
 
-  abstract load(branch?: string): Promise<DbMeta|null>
+  abstract load(branch?: string): Promise<DbMeta | null>
   abstract save(carCid: AnyLink, indexes: IndexCars, branch?: string): Promise<void>
 }
 
@@ -29,4 +29,8 @@ export abstract class CarStore {
   constructor(name: string) {
     this.name = name
   }
+
+  abstract load(cid: AnyLink): Promise<AnyBlock>
+  abstract save(car: AnyBlock): Promise<void>
+  abstract remove(cid: AnyLink): Promise<void>
 }

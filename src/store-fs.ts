@@ -45,7 +45,7 @@ export class CarStore extends CarStoreBase {
     return { cid, bytes: new Uint8Array(bytes) }
   }
 
-  async remove(cid: AnyLink) {
+  async remove(cid: AnyLink): Promise<void> {
     const filepath = join(defaultConfig.dataDir, this.name, cid.toString() + '.car')
     await unlink(filepath)
   }

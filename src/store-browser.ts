@@ -43,6 +43,15 @@ export class CarStore extends CarStoreBase {
       return await tx.done
     })
   }
+
+  async remove(cid: AnyLink): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return await this._withDB(async (db: IDBPDatabase<unknown>) => {
+      const tx = db.transaction(['cars'], 'readwrite')
+      await tx.objectStore('cars').delete(cid.toString())
+      return await tx.done
+    })
+  }
 }
 
 export class HeaderStore extends HeaderStoreBase {

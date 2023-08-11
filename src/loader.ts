@@ -1,32 +1,48 @@
 import { CarReader } from '@ipld/car'
-
-import { CarStore, HeaderStore } from './store-fs'
-// import { CarStore, HeaderStore } from './store-browser'
 import { makeDbCarFile, makeIdxCarFile, parseDbCarFile, parseIdxCarFile } from './loader-helpers'
 import { Transaction } from './transaction'
-import { AnyBlock, AnyLink, BulkResult, DbCarHeader, IdxCarHeader, IndexerResult } from './types'
+import { AnyBlock, AnyLink, BulkResult, DbCarHeader, DbMeta, IdxCarHeader, IndexerResult } from './types'
 import { BlockView, CID } from 'multiformats'
+import { CarStore, HeaderStore } from './store'
 
 class Loader {
   name: string
-  headerStore: HeaderStore
-  carStore: CarStore
+  headerStore: HeaderStore | undefined
+  carStore: CarStore | undefined
   carLog: AnyLink[] = []
   carReaders: Map<string, CarReader> = new Map()
   ready: Promise<DbCarHeader | IdxCarHeader>
 
   constructor(name: string) {
     this.name = name
-    this.headerStore = new HeaderStore(name)
-    this.carStore = new CarStore(name)
-    // todo config with multiple branches
-    this.ready = this.headerStore.load('main').then(async header => {
-      // console.log('headerStore.load', header)
-      return await this.ingestCarHead(header?.car)
+
+    const initializePromise = new Promise<void>((resolve, reject) => {
+      const isBrowser = typeof window !== 'undefined'
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const module = isBrowser ? require('./store-browser') : require('./store-fs')
+      if (module) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        this.headerStore = new module.HeaderStore(name) as HeaderStore
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        this.carStore = new module.CarStore(name) as CarStore
+        resolve()
+      } else {
+        reject(new Error('Failed to initialize stores.'))
+      }
+    })
+
+    this.ready = initializePromise.then(() => {
+      if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
+      return this.headerStore.load('main').then(async (header?: DbMeta|null) => { // Specify the type
+        // Existing logic here
+        return await this.ingestCarHead(header?.car)
+      })
     })
   }
 
   async commit(t: Transaction, done: IndexerResult|BulkResult, compact: boolean = false): Promise<AnyLink> {
+    await this.ready
+    if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
     const car = await this.this_makeCarFile(t, done, this.carLog, compact)
     await this.carStore.save(car)
     if (compact) {
@@ -41,7 +57,8 @@ class Loader {
     return car.cid
   }
 
-  async loadCar(cid: AnyLink): Promise<CarReader> {
+  protected async loadCar(cid: AnyLink): Promise<CarReader> {
+    if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
     if (this.carReaders.has(cid.toString())) return this.carReaders.get(cid.toString()) as CarReader
     const car = await this.carStore.load(cid)
     if (!car) throw new Error(`missing car file ${cid.toString()}`)
@@ -51,7 +68,8 @@ class Loader {
     return reader
   }
 
-  async ingestCarHead(cid?: AnyLink): Promise<DbCarHeader|IdxCarHeader> {
+  protected async ingestCarHead(cid?: AnyLink): Promise<DbCarHeader|IdxCarHeader> {
+    if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
     if (!cid) return this.this_defaultCarHeader()
     const car = await this.carStore.load(cid)
     const reader = await CarReader.fromBytes(car.bytes)
@@ -62,7 +80,7 @@ class Loader {
     return carHeader
   }
 
-  async getMoreReaders(cids: AnyLink[]) {
+  protected async getMoreReaders(cids: AnyLink[]) {
     await Promise.all(cids.map(cid => this.loadCar(cid)))
   }
 
@@ -74,12 +92,12 @@ class Loader {
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async this_parseCarFile(_reader: CarReader): Promise<DbCarHeader|IdxCarHeader> {
+  protected async this_parseCarFile(_reader: CarReader): Promise<DbCarHeader|IdxCarHeader> {
     throw new Error('this_parseCarFile not implemented')
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async this_makeCarFile(
+  protected async this_makeCarFile(
     _t: Transaction,
     _result: BulkResult | IndexerResult,
     _cars: AnyLink[],
@@ -88,7 +106,7 @@ class Loader {
     throw new Error('this_makeCarFile not implemented')
   }
 
-  this_defaultCarHeader(): DbCarHeader|IdxCarHeader {
+  protected this_defaultCarHeader(): DbCarHeader|IdxCarHeader {
     throw new Error('this_defaultCarHeader not implemented')
   }
 }
@@ -96,11 +114,11 @@ class Loader {
 export class DbLoader extends Loader {
   declare ready: Promise<DbCarHeader> // todo this will be a map of headers by branch name
 
-  async this_parseCarFile(reader: CarReader): Promise<DbCarHeader> {
+  protected async this_parseCarFile(reader: CarReader): Promise<DbCarHeader> {
     return await parseDbCarFile(reader)
   }
 
-  async this_makeCarFile(
+  protected async this_makeCarFile(
     t: Transaction,
     result: BulkResult,
     cars: AnyLink[],
@@ -109,7 +127,7 @@ export class DbLoader extends Loader {
     return await makeDbCarFile(t, result, cars, compact)
   }
 
-  this_defaultCarHeader(): DbCarHeader {
+  protected this_defaultCarHeader(): DbCarHeader {
     return { head: [], cars: [], compact: [] }
   }
 }
@@ -117,11 +135,11 @@ export class DbLoader extends Loader {
 export class IdxLoader extends Loader {
   declare ready: Promise<IdxCarHeader>
 
-  async this_parseCarFile(reader: CarReader): Promise<IdxCarHeader> {
+  protected async this_parseCarFile(reader: CarReader): Promise<IdxCarHeader> {
     return await parseIdxCarFile(reader)
   }
 
-  async this_makeCarFile(
+  protected async this_makeCarFile(
     t: Transaction,
     result: IndexerResult,
     cars: AnyLink[],
@@ -130,7 +148,7 @@ export class IdxLoader extends Loader {
     return await makeIdxCarFile(t, result, cars, compact)
   }
 
-  this_defaultCarHeader(): IdxCarHeader {
+  protected this_defaultCarHeader(): IdxCarHeader {
     return { cars: [], compact: [], indexes: new Map() }
   }
 }
