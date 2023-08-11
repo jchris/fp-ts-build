@@ -3,7 +3,7 @@ import { homedir } from 'node:os'
 import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises'
 
 import { AnyBlock, AnyLink, IndexCars, DbMeta } from './types'
-import { HeaderStore, CarStore } from './store'
+import { HeaderStore as HeaderStoreBase, CarStore as CarStoreBase } from './store'
 
 export const FORMAT = '0.9'
 
@@ -11,7 +11,7 @@ export const defaultConfig = {
   dataDir: join(homedir(), '.fireproof', 'v' + FORMAT)
 }
 
-export class HeaderStoreFS extends HeaderStore {
+export class HeaderStore extends HeaderStoreBase {
   async load(branch: string = 'main'): Promise<DbMeta|null> {
     const filepath = join(defaultConfig.dataDir, this.name, branch + '.json')
     const bytes = await readFile(filepath).catch((e: Error & { code: string}) => {
@@ -28,7 +28,7 @@ export class HeaderStoreFS extends HeaderStore {
   }
 }
 
-export class CarStoreFS extends CarStore {
+export class CarStore extends CarStoreBase {
   async save(car: AnyBlock): Promise<void> {
     const filepath = join(defaultConfig.dataDir, this.name, car.cid.toString() + '.car')
     await writePathFile(filepath, car.bytes)

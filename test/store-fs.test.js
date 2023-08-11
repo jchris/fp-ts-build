@@ -12,15 +12,15 @@ import { CID } from 'multiformats'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, matches, equals } from './helpers.js'
 
-import { CarStoreFS, defaultConfig, HeaderStoreFS } from '../dist/store-fs.esm.js'
+import { CarStore, defaultConfig, HeaderStore } from '../dist/store-fs.esm.js'
 
 const decoder = new TextDecoder('utf-8')
 
-describe('CarStoreFS', function () {
-  /** @type {CarStoreFS} */
+describe('CarStore', function () {
+  /** @type {CarStore} */
   let store
   beforeEach(function () {
-    store = new CarStoreFS('test')
+    store = new CarStore('test')
   })
   it('should have a name', function () {
     equals(store.name, 'test')
@@ -37,11 +37,11 @@ describe('CarStoreFS', function () {
   })
 })
 
-describe('CarStoreFS with a saved car', function () {
-  /** @type {CarStoreFS} */
+describe('CarStore with a saved car', function () {
+  /** @type {CarStore} */
   let store, car
   beforeEach(async function () {
-    store = new CarStoreFS('test2')
+    store = new CarStore('test2')
     car = {
       cid: 'cid',
       bytes: new Uint8Array([55, 56, 57, 80])
@@ -66,11 +66,11 @@ describe('CarStoreFS with a saved car', function () {
   })
 })
 
-describe('HeaderStoreFS', function () {
-  /** @type {HeaderStoreFS} */
+describe('HeaderStore', function () {
+  /** @type {HeaderStore} */
   let store
   beforeEach(function () {
-    store = new HeaderStoreFS('test')
+    store = new HeaderStore('test')
   })
   it('should have a name', function () {
     equals(store.name, 'test')
@@ -96,11 +96,11 @@ describe('HeaderStoreFS', function () {
   })
 })
 
-describe('HeaderStoreFS with a saved header', function () {
-  /** @type {HeaderStoreFS} */
+describe('HeaderStore with a saved header', function () {
+  /** @type {HeaderStore} */
   let store, cid
   beforeEach(async function () {
-    store = new HeaderStoreFS('test-saved-header')
+    store = new HeaderStore('test-saved-header')
     cid = CID.parse('bafybeia4luuns6dgymy5kau5rm7r4qzrrzg6cglpzpogussprpy42cmcn4')
     const indexes = {
       potato: cid,

@@ -1,4 +1,3 @@
-// import { parse } from 'multiformats/link'
 import { encode, decode, ByteView } from '@ipld/dag-json'
 import { AnyLink, DbMeta, HeaderStoreInterface, IndexCars } from './types'
 

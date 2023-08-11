@@ -9,7 +9,7 @@ import { assert, equals, notEquals, matches, equalsJSON, resetDirectory } from '
 
 import { Fireproof } from '../dist/fireproof.esm.js'
 import { Database } from '../dist/database.esm.js'
-import { CarStoreFS, defaultConfig, HeaderStoreFS } from '../dist/store-fs.esm.js'
+import { defaultConfig } from '../dist/store-fs.esm.js'
 
 describe('basic database', function () {
   /** @type {Database} */

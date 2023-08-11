@@ -113,7 +113,7 @@ export async function doCompact(blocks: TransactionBlockstore, head: ClockHead) 
     await newBlocks.put(cid, bl.bytes)
   }
 
-  await blocks.compact(newBlocks, head)
+  await blocks.commitCompaction(newBlocks, head)
 }
 
 class LoggingFetcher implements BlockFetcher {
