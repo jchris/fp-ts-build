@@ -109,7 +109,7 @@ describe('CRDT with a multi-write', function () {
     /** @type {BulkResult} */
     const secondPut = await crdt.bulk([{ key: 'queen', value: { points: 10 } }, { key: 'jack', value: { points: 10 } }])
     assert(secondPut.head)
-    const { result: r2, head: h2 } = await crdt.changes([])
+    const { result: r2, head: h2 } = await crdt.changes()
     equals(r2.length, 4)
     const { result: r3 } = await crdt.changes(firstPut.head)
     equals(r3.length, 2)
@@ -143,7 +143,7 @@ describe('CRDT with two multi-writes', function () {
     }
   })
   it('should offer changes', async function () {
-    const { result } = await crdt.changes([])
+    const { result } = await crdt.changes()
     equals(result.length, 4)
     equals(result[0].key, 'ace')
     equals(result[0].value.points, 11)
@@ -176,7 +176,7 @@ describe('Compact a CRDT with writes', function () {
     equals(blz.length, 25)
   })
   it('should start with changes', async function () {
-    const { result } = await crdt.changes([])
+    const { result } = await crdt.changes()
     equals(result.length, 2)
     equals(result[0].key, 'ace')
   })
@@ -195,7 +195,7 @@ describe('Compact a CRDT with writes', function () {
     equals(got.doc.points, 11)
   })
   it('should have changes after compact', async function () {
-    const chs = await crdt.changes([])
+    const chs = await crdt.changes()
     equals(chs.result[0].key, 'ace')
   })
 })
