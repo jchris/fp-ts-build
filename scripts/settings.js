@@ -43,7 +43,7 @@ export function createBuildSettings(options) {
     if (/fireproof/.test(entryPoint)) {
       const cjsConfig = {
         ...commonSettings,
-        outfile: `dist/${filename}.cjs.js`,
+        outfile: `dist/${filename}.cjs`,
         format: 'cjs',
         platform: 'node',
         entryPoints: [entryPoint]
@@ -76,7 +76,7 @@ export function createBuildSettings(options) {
 
       const browserCJSConfig = {
         ...browserIIFEConfig,
-        outfile: `dist/${filename}.browser.cjs.js`,
+        outfile: `dist/${filename}.browser.cjs`,
         format: 'cjs'
       }
       builds.push(browserCJSConfig)
