@@ -4,8 +4,6 @@ import { openDB, IDBPDatabase } from 'idb'
 import { AnyBlock, AnyLink, DbMeta } from './types'
 import { CarStore as CarStoreBase, HeaderStore as HeaderStoreBase } from './store'
 
-export const FORMAT = '0.9'
-
 export class CarStore extends CarStoreBase {
   tag: string = 'car-browser-idb'
   keyId: string = 'public'
@@ -13,7 +11,7 @@ export class CarStore extends CarStoreBase {
 
   async _withDB(dbWorkFun: (arg0: any) => any) {
     if (!this.idb) {
-      const dbName = `fp.${FORMAT}.${this.keyId}.${this.name}`
+      const dbName = `fp.${this.VERSION}.${this.keyId}.${this.name}`
       this.idb = await openDB(dbName, 1, {
         upgrade(db): void {
           db.createObjectStore('cars')
@@ -66,7 +64,7 @@ export class HeaderStore extends HeaderStoreBase {
   }
 
   headerKey(branch: string) {
-    return `fp.${FORMAT}.${this.keyId}.${this.name}.${branch}`
+    return `fp.${this.VERSION}.${this.keyId}.${this.name}.${branch}`
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await

@@ -7,14 +7,14 @@ import { EventFetcher } from '@alanshaw/pail/clock'
 import { TransactionBlockstore, Transaction } from './transaction'
 import { DocUpdate, ClockHead, BlockFetcher, AnyLink, DocValue, BulkResult } from './types'
 
-export function makeGetBlock(blocks: BlockFetcher) {
-  return async (address: Link) => {
-    const block = await blocks.get(address)
-    if (!block) throw new Error(`Missing block ${address.toString()}`)
-    const { cid, bytes } = block
-    return create({ cid, bytes, hasher, codec })
-  }
-}
+// export function makeGetBlock(blocks: BlockFetcher) {
+//   return async (address: Link) => {
+//     const block = await blocks.get(address)
+//     if (!block) throw new Error(`Missing block ${address.toString()}`)
+//     const { cid, bytes } = block
+//     return create({ cid, bytes, hasher, codec })
+//   }
+// }
 
 export async function applyBulkUpdateToCrdt(
   tblocks: Transaction,
@@ -51,7 +51,7 @@ export async function getValueFromCrdt(blocks: TransactionBlockstore, head: Cloc
   return await getValueFromLink(blocks, link)
 }
 
-export async function getValueFromLink(blocks: TransactionBlockstore, link: AnyLink): Promise<DocValue> {
+async function getValueFromLink(blocks: TransactionBlockstore, link: AnyLink): Promise<DocValue> {
   const block = await blocks.get(link)
   if (!block) throw new Error(`Missing block ${link.toString()}`)
   const { value } = (await decode({ bytes: block.bytes, hasher, codec })) as { value: DocValue }

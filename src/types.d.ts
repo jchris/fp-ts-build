@@ -51,7 +51,7 @@ export type IndexRow = {
   del?: boolean
 }
 
-export type CarCommit = {
+type CarCommit = {
   car?: AnyLink
 }
 
@@ -88,9 +88,9 @@ export type IdxCarHeader = CarHeader & IdxMetaMap
 
 export type IndexerResult = CarCommit & IdxMetaMap
 
-export type IndexerCarMap = {
-  [key: string]: AnyLink
-}
+// type IndexerCarMap = {
+//   [key: string]: AnyLink
+// }
 
 export type QueryOpts = {
   descending?: boolean
@@ -141,11 +141,11 @@ export interface StaticProllyOptions {
   compare: (a: any, b: any) => number
 }
 
-export type ProllyOptions = StaticProllyOptions & {
-  cid?: Link
-  list?: DocUpdate[]
-  get: (cid: any) => Promise<any>
-}
+// export type ProllyOptions = StaticProllyOptions & {
+//   cid?: Link
+//   list?: DocUpdate[]
+//   get: (cid: any) => Promise<any>
+// }
 
 type CallbackFn = (k: string, v: DocFragment) => void
 

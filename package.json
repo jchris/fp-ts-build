@@ -1,6 +1,6 @@
 {
   "name": "@fireproof/database",
-  "version": "0.10.32",
+  "version": "0.10.33",
   "description": "Immutable embedded distributed database for the web",
   "main": "dist/fireproof.cjs",
   "module": "dist/fireproof.esm.js",
@@ -35,6 +35,7 @@
     "test:browser": "polendina test/*.js --webpack-config webpack.config.cjs",
     "test": "npm run build && npm run test:node",
     "lint": "eslint 'src/**/*.{js,ts}'",
+    "lint:exports": "ts-unused-exports tsconfig.json",
     "lint:fix": "eslint --fix 'src/**/*.{js,ts}'"
   },
   "keywords": [
@@ -75,6 +76,7 @@
     "polendina": "^3.2.1",
     "process": "^0.11.10",
     "stream-browserify": "^3.0.0",
+    "ts-unused-exports": "^10.0.0",
     "tslib": "^2.6.0",
     "typescript": "^5.1.6",
     "util": "^0.12.5"

@@ -1,10 +1,15 @@
 import { format, parse, ToString } from '@ipld/dag-json'
 import { AnyBlock, AnyLink, DbMeta } from './types'
 
-export abstract class HeaderStore {
+abstract class VersionedStore {
+  VERSION: string = '0.9'
+}
+
+export abstract class HeaderStore extends VersionedStore {
   tag: string = 'header-base'
   name: string
   constructor(name: string) {
+    super()
     this.name = name
   }
 
@@ -22,10 +27,11 @@ export abstract class HeaderStore {
   abstract save(carCid: AnyLink, branch?: string): Promise<void>
 }
 
-export abstract class CarStore {
+export abstract class CarStore extends VersionedStore {
   tag: string = 'car-base'
   name: string
   constructor(name: string) {
+    super()
     this.name = name
   }
 
