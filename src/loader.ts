@@ -1,7 +1,7 @@
 import { CarReader } from '@ipld/car'
-import { makeDbCarFile, makeIdxCarFile, parseDbCarFile, parseIdxCarFile } from './loader-helpers'
+import { innerMakeCarFile, parseCarFile } from './loader-helpers'
 import { Transaction } from './transaction'
-import { AnyBlock, AnyLink, BulkResult, DbCarHeader, DbMeta, IdxCarHeader, IndexerResult } from './types'
+import { AnyBlock, AnyLink, BulkResult, DbCarHeader, IdxCarHeader, IndexerResult } from './types'
 import { BlockView, CID } from 'multiformats'
 import { CarStore, HeaderStore } from './store'
 
@@ -107,7 +107,7 @@ export class DbLoader extends Loader {
   declare ready: Promise<DbCarHeader> // todo this will be a map of headers by branch name
 
   protected async this_parseCarFile(reader: CarReader): Promise<DbCarHeader> {
-    return await parseDbCarFile(reader)
+    return await parseCarFile(reader) as DbCarHeader
   }
 
   protected async this_makeCarFile(
@@ -116,7 +116,11 @@ export class DbLoader extends Loader {
     cars: AnyLink[],
     compact: boolean = false
   ): Promise<BlockView<unknown, number, number, 1>> {
-    return await makeDbCarFile(t, result, cars, compact)
+    const head = result.head
+    if (!head) throw new Error('no head')
+    const fp = compact ? { head, cars: [], compact: cars } : { head, cars, compact: [] } as DbCarHeader
+    const blockView = await innerMakeCarFile(fp, t)
+    return blockView
   }
 
   protected this_defaultCarHeader(): DbCarHeader {
@@ -128,7 +132,7 @@ export class IdxLoader extends Loader {
   declare ready: Promise<IdxCarHeader>
 
   protected async this_parseCarFile(reader: CarReader): Promise<IdxCarHeader> {
-    return await parseIdxCarFile(reader)
+    return await parseCarFile(reader) as IdxCarHeader
   }
 
   protected async this_makeCarFile(
@@ -137,7 +141,10 @@ export class IdxLoader extends Loader {
     cars: AnyLink[],
     compact: boolean = false
   ): Promise<BlockView<unknown, number, number, 1>> {
-    return await makeIdxCarFile(t, result, cars, compact)
+    const indexes = result.indexes
+    const fp = compact ? { indexes, cars: [], compact: cars } : { indexes, cars, compact: [] } as IdxCarHeader
+    const blockView = await innerMakeCarFile(fp, t)
+    return blockView
   }
 
   protected this_defaultCarHeader(): IdxCarHeader {

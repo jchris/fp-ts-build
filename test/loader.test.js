@@ -12,7 +12,7 @@ import { CID } from 'multiformats/cid'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, matches, equals, resetDirectory, notEquals } from './helpers.js'
 
-import { parseDbCarFile, parseIdxCarFile } from '../dist/loader-helpers.esm.js'
+import { parseCarFile } from '../dist/loader-helpers.esm.js'
 
 import { IdxLoader, DbLoader } from '../dist/loader.esm.js'
 import { CRDT } from '../dist/crdt.esm.js'
@@ -41,7 +41,7 @@ describe('basic Loader', function () {
     equals(loader.carLog.length, 1)
     const reader = await loader.loadCar(carCid)
     assert(reader)
-    const parsed = await parseDbCarFile(reader)
+    const parsed = await parseCarFile(reader)
     assert(parsed.cars)
     equals(parsed.cars.length, 0)
     assert(parsed.head)
@@ -77,7 +77,7 @@ describe('basic Loader with two commits', function () {
   it('should commit', async function () {
     const reader = await loader.loadCar(carCid)
     assert(reader)
-    const parsed = await parseDbCarFile(reader)
+    const parsed = await parseCarFile(reader)
     assert(parsed.cars)
     equals(parsed.compact.length, 0)
     equals(parsed.cars.length, 1)
@@ -89,7 +89,7 @@ describe('basic Loader with two commits', function () {
 
     const reader = await loader.loadCar(compactCid)
     assert(reader)
-    const parsed = await parseDbCarFile(reader)
+    const parsed = await parseCarFile(reader)
     assert(parsed.cars)
     equals(parsed.compact.length, 2)
     equals(parsed.cars.length, 0)
@@ -126,7 +126,7 @@ describe('Loader with a committed transaction', function () {
   it('can load the car', async function () {
     const reader = await loader.loadCar(done.car)
     assert(reader)
-    const parsed = await parseDbCarFile(reader)
+    const parsed = await parseCarFile(reader)
     assert(parsed.cars)
     equals(parsed.cars.length, 0)
     assert(parsed.head)
@@ -160,7 +160,7 @@ describe('Loader with two committed transactions', function () {
   it('can load the car', async function () {
     const reader = await loader.loadCar(done2.car)
     assert(reader)
-    const parsed = await parseDbCarFile(reader)
+    const parsed = await parseCarFile(reader)
     assert(parsed.cars)
     equals(parsed.cars.length, 1)
     assert(parsed.head)
@@ -195,7 +195,7 @@ describe('Loader with many committed transactions', function () {
   it('can load the car', async function () {
     const reader = await loader.loadCar(dones[5].car)
     assert(reader)
-    const parsed = await parseDbCarFile(reader)
+    const parsed = await parseCarFile(reader)
     assert(parsed.cars)
     equals(parsed.cars.length, 5)
     assert(parsed.head)
@@ -238,7 +238,7 @@ describe('basic Loader with index commits', function () {
     equals(carLog.length, 1)
     const reader = await loader.loadCar(carCid)
     assert(reader)
-    const parsed = await parseIdxCarFile(reader)
+    const parsed = await parseCarFile(reader)
     assert(parsed.cars)
     equals(parsed.cars.length, 0)
     assert(parsed.indexes)
