@@ -1,4 +1,4 @@
-import { ClockHead, DocUpdate, MapFn, IndexUpdate, QueryOpts, DocFragment, IdxMeta } from './types'
+import { ClockHead, DocUpdate, MapFn, IndexUpdate, QueryOpts, IdxMeta } from './types'
 import { IndexBlockstore } from './transaction'
 import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery, encodeRange, encodeKey, loadIndex } from './indexer-helpers'
 import { CRDT } from './crdt'

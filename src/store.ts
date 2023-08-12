@@ -1,5 +1,5 @@
-import { format, parse, encode, decode, ByteView, ToString } from '@ipld/dag-json'
-import { AnyBlock, AnyLink, DbMeta, IndexCars } from './types'
+import { format, parse, ToString } from '@ipld/dag-json'
+import { AnyBlock, AnyLink, DbMeta } from './types'
 
 export abstract class HeaderStore {
   tag: string = 'header-base'

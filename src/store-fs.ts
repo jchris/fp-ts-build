@@ -2,7 +2,7 @@ import { join, dirname } from 'path'
 import { homedir } from 'os'
 import { mkdir, readFile, writeFile, unlink } from 'fs/promises'
 
-import { AnyBlock, AnyLink, IndexCars, DbMeta } from './types'
+import { AnyBlock, AnyLink, DbMeta } from './types'
 import { HeaderStore as HeaderStoreBase, CarStore as CarStoreBase } from './store'
 
 export const FORMAT = '0.9'
@@ -24,9 +24,9 @@ export class HeaderStore extends HeaderStoreBase {
     return bytes ? this.parseHeader(bytes.toString()) : null
   }
 
-  async save(carCid: AnyLink, indexes: IndexCars, branch: string = 'main'): Promise<void> {
+  async save(carCid: AnyLink, branch: string = 'main'): Promise<void> {
     const filepath = join(defaultConfig.dataDir, this.name, branch + '.json')
-    const bytes = this.makeHeader(carCid, indexes)
+    const bytes = this.makeHeader(carCid)
     await writePathFile(filepath, bytes)
   }
 }
