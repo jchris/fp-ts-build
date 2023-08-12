@@ -1,8 +1,13 @@
 import { format, parse, ToString } from '@ipld/dag-json'
 import { AnyBlock, AnyLink, DbMeta } from './types'
 
+import { PACKAGE_VERSION } from './version'
+const match = PACKAGE_VERSION.match(/^([^.]*\.[^.]*)/)
+if (!match) throw new Error('invalid version: ' + PACKAGE_VERSION)
+export const STORAGE_VERSION = match[0]
+
 abstract class VersionedStore {
-  VERSION: string = '0.9'
+  VERSION: string = STORAGE_VERSION
 }
 
 export abstract class HeaderStore extends VersionedStore {

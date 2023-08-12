@@ -18,12 +18,12 @@ import { IdxLoader, DbLoader } from '../dist/loader.esm.js'
 import { CRDT } from '../dist/crdt.esm.js'
 import { Transaction } from '../dist/transaction.esm.js'
 
-import { defaultConfig } from '../dist/store-fs.esm.js'
+import { testConfig } from '../dist/store-fs.esm.js'
 
 describe('basic Loader', function () {
   let loader, block, t
   beforeEach(async function () {
-    await resetDirectory(defaultConfig.dataDir, 'test-loader-commit')
+    await resetDirectory(testConfig.dataDir, 'test-loader-commit')
     t = new Transaction({})
     loader = new DbLoader('test-loader-commit')
     block = (await encode({
@@ -51,7 +51,7 @@ describe('basic Loader', function () {
 describe('basic Loader with two commits', function () {
   let loader, block, block2, t, carCid
   beforeEach(async function () {
-    await resetDirectory(defaultConfig.dataDir, 'test-loader-two-commit')
+    await resetDirectory(testConfig.dataDir, 'test-loader-two-commit')
     t = new Transaction({})
     loader = new DbLoader('test-loader-two-commit')
     block = (await encode({
@@ -109,7 +109,7 @@ describe('Loader with a committed transaction', function () {
   let loader, blockstore, crdt, done
   const dbname = 'test-loader'
   beforeEach(async function () {
-    await resetDirectory(defaultConfig.dataDir, 'test-loader')
+    await resetDirectory(testConfig.dataDir, 'test-loader')
     crdt = new CRDT(dbname)
     blockstore = crdt.blocks
     loader = blockstore.loader
@@ -138,7 +138,7 @@ describe('Loader with two committed transactions', function () {
   let loader, crdt, blockstore, done1, done2
   const dbname = 'test-loader'
   beforeEach(async function () {
-    await resetDirectory(defaultConfig.dataDir, 'test-loader')
+    await resetDirectory(testConfig.dataDir, 'test-loader')
     crdt = new CRDT(dbname)
     blockstore = crdt.blocks
     loader = blockstore.loader
@@ -174,7 +174,7 @@ describe('Loader with many committed transactions', function () {
   const dones = []
   const count = 10
   beforeEach(async function () {
-    await resetDirectory(defaultConfig.dataDir, 'test-loader')
+    await resetDirectory(testConfig.dataDir, 'test-loader')
     // loader = new DbLoader(dbname)
     crdt = new CRDT(dbname)
     blockstore = crdt.blocks
@@ -205,7 +205,7 @@ describe('Loader with many committed transactions', function () {
 describe('basic Loader with index commits', function () {
   let loader, block, t, indexerResult, cid
   beforeEach(async function () {
-    await resetDirectory(defaultConfig.dataDir, 'test-loader-index')
+    await resetDirectory(testConfig.dataDir, 'test-loader-index')
     t = new Transaction({})
     loader = new IdxLoader('test-loader-index')
     block = (await encode({

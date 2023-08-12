@@ -12,7 +12,7 @@ import { CID } from 'multiformats'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, matches, equals } from './helpers.js'
 
-import { CarStore, defaultConfig, HeaderStore } from '../dist/store-fs.esm.js'
+import { CarStore, testConfig, HeaderStore } from '../dist/store-fs.esm.js'
 
 const { readFile } = promises
 
@@ -33,7 +33,7 @@ describe('CarStore', function () {
       bytes: new Uint8Array([55, 56, 57])
     }
     await store.save(car)
-    const path = join(defaultConfig.dataDir, store.name, car.cid + '.car')
+    const path = join(testConfig.dataDir, store.name, car.cid + '.car')
     const data = await readFile(path)
     equals(data.toString(), decoder.decode(car.bytes))
   })
@@ -51,7 +51,7 @@ describe('CarStore with a saved car', function () {
     await store.save(car)
   })
   it('should have a car', async function () {
-    const path = join(defaultConfig.dataDir, store.name, car.cid + '.car')
+    const path = join(testConfig.dataDir, store.name, car.cid + '.car')
     const data = await readFile(path)
     equals(data.toString(), decoder.decode(car.bytes))
   })
@@ -84,7 +84,7 @@ describe('HeaderStore', function () {
     //   tomato: cid
     // }
     await store.save(cid)
-    const path = join(defaultConfig.dataDir, store.name, 'main.json')
+    const path = join(testConfig.dataDir, store.name, 'main.json')
     const file = await readFile(path)
     const header = JSON.parse(file.toString())
     assert(header)
@@ -111,7 +111,7 @@ describe('HeaderStore with a saved header', function () {
     await store.save(cid)
   })
   it('should have a header', async function () {
-    const path = join(defaultConfig.dataDir, store.name, 'main.json')
+    const path = join(testConfig.dataDir, store.name, 'main.json')
     const data = await readFile(path)
     matches(data, /car/)
     const header = JSON.parse(data.toString())

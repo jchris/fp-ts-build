@@ -26,7 +26,7 @@ export class HeaderStore extends HeaderStoreBase {
   }
 }
 
-export const defaultConfig = {
+export const testConfig = {
   dataDir: join(homedir(), '.fireproof', 'v' + new HeaderStore('').VERSION)
 }
 

@@ -9,14 +9,14 @@ import { assert, equals, notEquals, matches, equalsJSON, resetDirectory } from '
 
 import { Fireproof } from '../dist/fireproof.esm.js'
 import { Database } from '../dist/database.esm.js'
-import { defaultConfig } from '../dist/store-fs.esm.js'
+import { testConfig } from '../dist/store-fs.esm.js'
 
 describe('basic database', function () {
   /** @type {Database} */
   let db
   beforeEach(async function () {
     // erase the existing test data
-    await resetDirectory(defaultConfig.dataDir, 'test-basic')
+    await resetDirectory(testConfig.dataDir, 'test-basic')
 
     db = Fireproof.storage('test-basic')
   })
@@ -58,7 +58,7 @@ describe('Reopening a database', function () {
   let db
   beforeEach(async function () {
     // erase the existing test data
-    await resetDirectory(defaultConfig.dataDir, 'test-reopen')
+    await resetDirectory(testConfig.dataDir, 'test-reopen')
 
     db = Fireproof.storage('test-reopen')
     const ok = await db.put({ _id: 'test', foo: 'bar' })
@@ -133,8 +133,8 @@ describe('Reopening a database with indexes', function () {
   let db, idx, didMap, mapFn
   beforeEach(async function () {
     // erase the existing test data
-    await resetDirectory(defaultConfig.dataDir, 'test-reopen-idx')
-    await resetDirectory(defaultConfig.dataDir, 'test-reopen-idx.idx')
+    await resetDirectory(testConfig.dataDir, 'test-reopen-idx')
+    await resetDirectory(testConfig.dataDir, 'test-reopen-idx.idx')
 
     db = Fireproof.storage('test-reopen-idx')
     const ok = await db.put({ _id: 'test', foo: 'bar' })

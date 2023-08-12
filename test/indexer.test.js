@@ -10,12 +10,12 @@ import { CRDT } from '../dist/crdt.esm.js'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, matches, equals, resetDirectory, notEquals, equalsJSON } from './helpers.js'
 
-import { defaultConfig } from '../dist/store-fs.esm.js'
+import { testConfig } from '../dist/store-fs.esm.js'
 
 describe('basic Indexer', function () {
   let db, indexer, didMap
   beforeEach(async function () {
-    await resetDirectory(defaultConfig.dataDir, 'test-indexer')
+    await resetDirectory(testConfig.dataDir, 'test-indexer')
 
     db = Fireproof.storage('test-indexer')
     await db.put({ title: 'amazing' })
@@ -84,7 +84,7 @@ describe('basic Indexer', function () {
 describe('Indexer query with compound key', function () {
   let db, indexer
   beforeEach(async function () {
-    await resetDirectory(defaultConfig.dataDir, 'test-indexer')
+    await resetDirectory(testConfig.dataDir, 'test-indexer')
     db = Fireproof.storage('test-indexer')
     await db.put({ title: 'amazing', score: 1 })
     await db.put({ title: 'creative', score: 2 })
@@ -105,7 +105,7 @@ describe('Indexer query with compound key', function () {
 describe('basic Indexer with map fun', function () {
   let db, indexer
   beforeEach(async function () {
-    await resetDirectory(defaultConfig.dataDir, 'test-indexer')
+    await resetDirectory(testConfig.dataDir, 'test-indexer')
 
     db = Fireproof.storage('test-indexer')
     await db.put({ title: 'amazing' })
@@ -126,7 +126,7 @@ describe('basic Indexer with map fun', function () {
 describe('basic Indexer with string fun', function () {
   let db, indexer
   beforeEach(async function () {
-    await resetDirectory(defaultConfig.dataDir, 'test-indexer')
+    await resetDirectory(testConfig.dataDir, 'test-indexer')
 
     db = Fireproof.storage('test-indexer')
     await db.put({ title: 'amazing' })
@@ -149,8 +149,8 @@ describe('basic Indexer with string fun', function () {
 describe('basic Indexer upon cold start', function () {
   let crdt, indexer, result, didMap, mapFn
   beforeEach(async function () {
-    await resetDirectory(defaultConfig.dataDir, 'test-indexer-cold')
-    await resetDirectory(defaultConfig.dataDir, 'test-indexer-cold.idx')
+    await resetDirectory(testConfig.dataDir, 'test-indexer-cold')
+    await resetDirectory(testConfig.dataDir, 'test-indexer-cold.idx')
 
     // db = Fireproof.storage()
     crdt = new CRDT('test-indexer-cold')
@@ -236,7 +236,7 @@ describe('basic Indexer upon cold start', function () {
 describe('basic Indexer with no data', function () {
   let db, indexer, didMap
   beforeEach(async function () {
-    await resetDirectory(defaultConfig.dataDir, 'test-indexer')
+    await resetDirectory(testConfig.dataDir, 'test-indexer')
 
     db = Fireproof.storage('test-indexer')
     indexer = new Indexer(db._crdt.blocks, db._crdt, 'hello', (doc) => {
