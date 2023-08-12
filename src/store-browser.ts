@@ -1,7 +1,7 @@
 import { openDB, IDBPDatabase } from 'idb'
 // import { Buffer } from 'buffer'
 
-import { AnyBlock, AnyLink, DbMeta, IndexCars } from './types'
+import { AnyBlock, AnyLink, DbMeta } from './types'
 import { CarStore as CarStoreBase, HeaderStore as HeaderStoreBase } from './store'
 
 export const FORMAT = '0.9'
@@ -90,10 +90,10 @@ export class HeaderStore extends HeaderStoreBase {
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async save(carCid: AnyLink, indexes: IndexCars, branch: string = 'main'): Promise<void> {
+  async save(carCid: AnyLink, branch: string = 'main'): Promise<void> {
     try {
       const headerKey = this.headerKey(branch)
-      const bytes = this.makeHeader(carCid, indexes)
+      const bytes = this.makeHeader(carCid)
       return localStorage.setItem(headerKey, bytes)
     } catch (e) {}
   }

@@ -88,6 +88,10 @@ export type IdxCarHeader = CarHeader & IdxMetaMap
 
 export type IndexerResult = CarCommit & IdxMetaMap
 
+export type IndexerCarMap = {
+  [key: string]: AnyLink
+}
+
 export type QueryOpts = {
   descending?: boolean
   limit?: number
@@ -149,4 +153,4 @@ export type MapFn = (doc: Doc, map: CallbackFn) => DocFragment | void
 
 export type ListenerFn = (docs: Doc[]) => Promise<void> | void
 
-export type DbMeta = { car: AnyLink, indexes: IndexCars }
+export type DbMeta = { car: AnyLink }

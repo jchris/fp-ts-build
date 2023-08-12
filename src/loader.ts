@@ -1,7 +1,7 @@
 import { CarReader } from '@ipld/car'
 import { makeDbCarFile, makeIdxCarFile, parseDbCarFile, parseIdxCarFile } from './loader-helpers'
 import { Transaction } from './transaction'
-import { AnyBlock, AnyLink, BulkResult, DbCarHeader, DbMeta, IdxCarHeader, IndexerResult } from './types'
+import { AnyBlock, AnyLink, BulkResult, DbCarHeader, DbMeta, IdxCarHeader, IdxMeta, IndexCars, IndexerResult } from './types'
 import { BlockView, CID } from 'multiformats'
 import { CarStore, HeaderStore } from './store'
 
@@ -33,8 +33,7 @@ class Loader {
 
     this.ready = initializePromise.then(() => {
       if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
-      return this.headerStore.load('main').then(async (header?: DbMeta|null) => { // Specify the type
-        // Existing logic here
+      return this.headerStore.load('main').then(async (header?: DbMeta|null) => {
         return await this.ingestCarHead(header?.car)
       })
     })
@@ -53,7 +52,7 @@ class Loader {
     } else {
       this.carLog.push(car.cid)
     }
-    await this.headerStore.save(car.cid, {})
+    await this.headerStore.save(car.cid)
     return car.cid
   }
 

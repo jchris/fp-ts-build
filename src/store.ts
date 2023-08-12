@@ -8,10 +8,10 @@ export abstract class HeaderStore {
     this.name = name
   }
 
-  makeHeader(car: AnyLink, indexes: IndexCars): ToString<DbMeta> {
+  makeHeader(car: AnyLink): ToString<DbMeta> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    console.log('make header', { car, indexes })
-    const encoded = format({ car, indexes } as DbMeta)
+    console.log('make header', { car })
+    const encoded = format({ car } as DbMeta)
     // const encoded = encode({ car, indexes } as DbMeta)
     // const encoded = JSON.stringify({ car, indexes })
     console.log('made header', encoded)
@@ -29,7 +29,7 @@ export abstract class HeaderStore {
   }
 
   abstract load(branch?: string): Promise<DbMeta | null>
-  abstract save(carCid: AnyLink, indexes: IndexCars, branch?: string): Promise<void>
+  abstract save(carCid: AnyLink, branch?: string): Promise<void>
 }
 
 export abstract class CarStore {

@@ -44,7 +44,7 @@ abstract class FireproofBlockstore implements BlockFetcher {
   abstract commit(_t: Transaction, _done: IdxMeta|BulkResult, _indexes?: Map<string, IdxMeta>): Promise<AnyLink | undefined>
 
   abstract transaction(fn: (t: Transaction) => Promise<IdxMeta|BulkResult>, indexes?: Map<string, IdxMeta>): Promise<BulkResultCar|IdxMetaCar>
-  // abstract transaction(fn: (t: Transaction) => Promise<IdxMeta|BulkResult>, indexes: Map<string, AnyLink>): Promise<BulkResultCar|IdxMetaCar>
+
   // eslint-disable-next-line @typescript-eslint/require-await
   async put() {
     throw new Error('use a transaction to put')
@@ -107,6 +107,7 @@ export class IndexBlockstore extends FireproofBlockstore {
 
   async transaction(fn: (t: Transaction) => Promise<IdxMeta>, indexes: Map<string, IdxMeta>): Promise<IdxMetaCar> {
     return this.executeTransaction(fn, async (t, done) => {
+      indexes.set(done.name, done)
       const car = await this.commit(t, done, indexes)
       return { car, done }
     })
