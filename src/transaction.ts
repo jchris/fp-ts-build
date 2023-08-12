@@ -31,13 +31,13 @@ abstract class FireproofBlockstore implements BlockFetcher {
 
   private transactions: Set<Transaction> = new Set()
 
-  constructor(name?: string, loaderFactory?: (name: string) => DbLoader | IdxLoader) {
+  constructor(name?: string, loaderFactory: (name: string) => DbLoader | IdxLoader, defaultHeader: () => DbCarHeader|IdxCarHeader) {
     if (name && loaderFactory) {
       this.name = name
       this.loader = loaderFactory(name)
       this.ready = this.loader.ready
     } else {
-      this.ready = Promise.resolve({ head: [], cars: [], compact: [] })
+      this.ready = Promise.resolve(defaultHeader())
     }
   }
 
@@ -98,7 +98,7 @@ export class IndexBlockstore extends FireproofBlockstore {
   declare ready: Promise<IdxCarHeader>
 
   constructor(name?: string) {
-    super(name, (name) => new IdxLoader(name))
+    super(name, (name) => new IdxLoader(name), () => ({ cars: [], compact: [], indexes: new Map() as Map<string, IdxMeta> }))
   }
 
   async commit(t: Transaction, done: IdxMeta, indexes: Map<string, IdxMeta>): Promise<AnyLink | undefined> {
@@ -119,7 +119,8 @@ export class TransactionBlockstore extends FireproofBlockstore {
   declare ready: Promise<DbCarHeader>
 
   constructor(name?: string) {
-    super(name, (name) => new DbLoader(name)) // todo this will be a map of headers by branch name
+    super(name, (name) => new DbLoader(name), () => ({ cars: [], compact: [], head: [] }))
+    // todo this will be a map of headers by branch name
   }
 
   async commit(t: Transaction, done: BulkResult, _indexes?: Map<string, any>): Promise<AnyLink | undefined> {

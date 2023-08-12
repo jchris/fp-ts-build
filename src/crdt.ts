@@ -19,9 +19,15 @@ export class CRDT {
     this.indexBlocks = new IndexBlockstore(name ? name + '.idx' : undefined)
     this.ready = Promise.all([
       this.blocks.ready.then((header: DbCarHeader) => {
+        console.log('crdt-header', header)
+        // @ts-ignore
+        if (header.indexes) throw new Error('cannot have indexes in crdt header')
         if (header.head) { this._head = header.head } // todo multi head support here
       }),
       this.indexBlocks.ready.then((header: IdxCarHeader) => {
+        console.log('idx-header', header)
+        // @ts-ignore
+        if (header.head) throw new Error('cannot have head in idx header')
         if (header.indexes === undefined) return
         for (const [name, idx] of Object.entries(header.indexes)) {
           this.indexer(name, undefined, idx as IdxMeta)
