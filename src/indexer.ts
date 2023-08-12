@@ -155,7 +155,6 @@ export class Indexer {
       )
       this.byKey = await bulkIndex(tblocks, this.byKey, staleKeyIndexEntries.concat(indexEntries), byKeyOpts)
       this.indexHead = head
-      if (!this.name) throw new Error('No name defined')
       return { byId: this.byId.cid, byKey: this.byKey.cid, head, map: this.mapFnString, name: this.name } as IdxMeta
     }, indexerMeta)
   }
