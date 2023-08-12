@@ -11,16 +11,15 @@ export class CRDT {
 
   indexers: Map<string, Indexer> = new Map()
 
-  private _head: ClockHead
+  private _head: ClockHead = []
 
   constructor(name?: string, blocks?: TransactionBlockstore) {
     this.name = name || null
     this.blocks = blocks || new TransactionBlockstore(name)
     this.indexBlocks = new IndexBlockstore(name ? name + '.idx' : undefined)
-    this._head = []
     this.ready = Promise.all([
       this.blocks.ready.then((header: DbCarHeader) => {
-        this._head = header.head // todo multi head support here
+        if (header.head) { this._head = header.head } // todo multi head support here
       }),
       this.indexBlocks.ready.then((header: IdxCarHeader) => {
         if (header.indexes === undefined) return

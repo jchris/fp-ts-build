@@ -1,4 +1,5 @@
 import { openDB, IDBPDatabase } from 'idb'
+import { Buffer } from 'buffer'
 
 import { AnyBlock, AnyLink, DbMeta, IndexCars } from './types'
 import { CarStore as CarStoreBase, HeaderStore as HeaderStoreBase } from './store'
@@ -25,7 +26,7 @@ export class CarStore extends CarStoreBase {
   }
 
   async load(cid: AnyLink): Promise<AnyBlock> {
-    console.log('loading', cid.toString())
+    // console.log('loading', cid.toString())
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await this._withDB(async (db: IDBPDatabase<unknown>) => {
       const tx = db.transaction(['cars'], 'readonly')
@@ -74,8 +75,16 @@ export class HeaderStore extends HeaderStoreBase {
   // eslint-disable-next-line @typescript-eslint/require-await
   async load(branch: string = 'main'): Promise<DbMeta | null> {
     try {
-      const bytes = localStorage.getItem(this.headerKey(branch))
-      return bytes ? this.parseHeader(this.encoder.encode(bytes)) : null
+      const bytesString = localStorage.getItem(this.headerKey(branch))
+      if (!bytesString) return null
+
+      // Convert the string to a Uint8Array
+      // const uint8Array = new TextEncoder().encode(bytesString)
+
+      // Convert the Uint8Array to a Buffer-like object
+      // const bufferLikeObject = Buffer.from(uint8Array.buffer)
+
+      return this.parseHeader(bytesString)
     } catch (e) {
       return null
     }
@@ -85,8 +94,8 @@ export class HeaderStore extends HeaderStoreBase {
   async save(carCid: AnyLink, indexes: IndexCars, branch: string = 'main'): Promise<void> {
     try {
       const headerKey = this.headerKey(branch)
-      const bytes = this.makeHeader(carCid, indexes) as Uint8Array
-      return localStorage.setItem(headerKey, bytes.toString())
+      const bytes = this.makeHeader(carCid, indexes)
+      return localStorage.setItem(headerKey, bytes)
     } catch (e) {}
   }
 }

@@ -21,12 +21,12 @@ export class HeaderStore extends HeaderStoreBase {
       if (e.code === 'ENOENT') return null
       throw e
     })
-    return bytes ? this.parseHeader(bytes) : null
+    return bytes ? this.parseHeader(bytes.toString()) : null
   }
 
   async save(carCid: AnyLink, indexes: IndexCars, branch: string = 'main'): Promise<void> {
     const filepath = join(defaultConfig.dataDir, this.name, branch + '.json')
-    const bytes = this.makeHeader(carCid, indexes) as Uint8Array
+    const bytes = this.makeHeader(carCid, indexes)
     await writePathFile(filepath, bytes)
   }
 }
@@ -51,7 +51,7 @@ export class CarStore extends CarStoreBase {
   }
 }
 
-async function writePathFile(path: string, data: Uint8Array) {
+async function writePathFile(path: string, data: Uint8Array | string) {
   await mkdir(dirname(path), { recursive: true })
   return await writeFile(path, data)
 }

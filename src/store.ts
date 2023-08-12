@@ -1,4 +1,4 @@
-import { encode, decode, ByteView } from '@ipld/dag-json'
+import { format, parse, encode, decode, ByteView, ToString } from '@ipld/dag-json'
 import { AnyBlock, AnyLink, DbMeta, IndexCars } from './types'
 
 export abstract class HeaderStore {
@@ -8,15 +8,24 @@ export abstract class HeaderStore {
     this.name = name
   }
 
-  makeHeader(car: AnyLink, indexes: IndexCars): ByteView<DbMeta> {
+  makeHeader(car: AnyLink, indexes: IndexCars): ToString<DbMeta> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    // console.log('make header', { car, indexes })
-    return encode({ car, indexes } as DbMeta)
+    console.log('make header', { car, indexes })
+    const encoded = format({ car, indexes } as DbMeta)
+    // const encoded = encode({ car, indexes } as DbMeta)
+    // const encoded = JSON.stringify({ car, indexes })
+    console.log('made header', encoded)
+    return encoded
   }
 
-  parseHeader(headerData: Uint8Array): DbMeta {
+  parseHeader(headerData: ToString<DbMeta>): DbMeta {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    return decode(headerData)
+    console.log('parse header', headerData)
+    const got = parse<DbMeta>(headerData)
+    // const got = decode(headerData)
+    // const got = JSON.parse(headerData.toString())
+    console.log('parsed header', got)
+    return got
   }
 
   abstract load(branch?: string): Promise<DbMeta | null>

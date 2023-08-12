@@ -60,10 +60,6 @@ export function createBuildSettings(options) {
         entryPoints: [entryPoint],
         plugins: [
           polyfillNode({}),
-          alias({
-            // Define your alias here
-            'src/store-fs.ts': 'src/store-browser.ts'
-          }),
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           ...commonSettings.plugins
         ]

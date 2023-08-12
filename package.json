@@ -1,6 +1,6 @@
 {
   "name": "@fireproof/database",
-  "version": "0.10.21",
+  "version": "0.10.28",
   "description": "Immutable embedded distributed database for the web",
   "main": "dist/fireproof.cjs",
   "module": "dist/fireproof.esm.js",
