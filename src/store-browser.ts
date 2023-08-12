@@ -57,7 +57,6 @@ export class CarStore extends CarStoreBase {
 export class HeaderStore extends HeaderStoreBase {
   tag: string = 'header-browser-ls'
   keyId: string = 'public'
-  name: string = 'default'
   decoder: TextDecoder
   encoder: TextEncoder
 
@@ -76,13 +75,6 @@ export class HeaderStore extends HeaderStoreBase {
     try {
       const bytesString = localStorage.getItem(this.headerKey(branch))
       if (!bytesString) return null
-
-      // Convert the string to a Uint8Array
-      // const uint8Array = new TextEncoder().encode(bytesString)
-
-      // Convert the Uint8Array to a Buffer-like object
-      // const bufferLikeObject = Buffer.from(uint8Array.buffer)
-
       return this.parseHeader(bytesString)
     } catch (e) {
       return null

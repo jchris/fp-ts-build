@@ -14,7 +14,7 @@ export abstract class HeaderStore {
     const encoded = format({ car } as DbMeta)
     // const encoded = encode({ car, indexes } as DbMeta)
     // const encoded = JSON.stringify({ car, indexes })
-    console.log('made header', encoded)
+    console.log('made header', this.name, encoded)
     return encoded
   }
 
@@ -24,7 +24,7 @@ export abstract class HeaderStore {
     const got = parse<DbMeta>(headerData)
     // const got = decode(headerData)
     // const got = JSON.parse(headerData.toString())
-    console.log('parsed header', got)
+    console.log('parsed header', this.name, got)
     return got
   }
 
