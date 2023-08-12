@@ -163,7 +163,7 @@ describe('basic Indexer upon cold start', function () {
       didMap++
       return doc.title
     }
-    indexer = await crdt.indexer('hello', mapFn)
+    indexer = await crdt.index('hello', mapFn)
     // new Indexer(db._crdt.indexBlocks, db._crdt, 'hello', mapFn)
     result = await indexer.query()
     equalsJSON(indexer.indexHead, crdt._head)
@@ -182,7 +182,7 @@ describe('basic Indexer upon cold start', function () {
     const { result, head } = await crdt2.changes()
     assert(result)
     await crdt2.ready
-    const indexer2 = await crdt2.indexer('hello', mapFn)
+    const indexer2 = await crdt2.index('hello', mapFn)
     await indexer2.ready
     equalsJSON(indexer2.indexHead, head)
     const result2 = await indexer2.query()
@@ -193,7 +193,7 @@ describe('basic Indexer upon cold start', function () {
   it('should not rerun the map function on seen changes', async function () {
     didMap = 0
     const crdt2 = new CRDT('test-indexer-cold')
-    const indexer2 = await crdt2.indexer('hello', mapFn)
+    const indexer2 = await crdt2.index('hello', mapFn)
     await crdt2.ready
     const { result, head } = await crdt2.changes([])
 
@@ -228,7 +228,7 @@ describe('basic Indexer upon cold start', function () {
   })
   it('shouldnt allow map function definiton to change', async function () {
     const crdt2 = new CRDT('test-indexer-cold')
-    const e = await crdt2.indexer('hello', (doc) => doc.title).query().catch((e) => e)
+    const e = await crdt2.index('hello', (doc) => doc.title).query().catch((e) => e)
     matches(e.message, /cannot apply/)
   })
 })

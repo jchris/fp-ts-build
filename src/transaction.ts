@@ -63,7 +63,6 @@ abstract class FireproofBlockstore implements BlockFetcher {
   async commitCompaction(t: Transaction, head: ClockHead) {
     this.transactions.clear()
     this.transactions.add(t)
-    // todo replace cars
     return await this.loader?.commit(t, { head }, true)
   }
 

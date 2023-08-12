@@ -19,18 +19,16 @@ export class CRDT {
     this.indexBlocks = new IndexBlockstore(name ? name + '.idx' : undefined)
     this.ready = Promise.all([
       this.blocks.ready.then((header: DbCarHeader) => {
-        console.log('crdt-header', header)
         // @ts-ignore
         if (header.indexes) throw new Error('cannot have indexes in crdt header')
         if (header.head) { this._head = header.head } // todo multi head support here
       }),
       this.indexBlocks.ready.then((header: IdxCarHeader) => {
-        console.log('idx-header', header)
         // @ts-ignore
         if (header.head) throw new Error('cannot have head in idx header')
         if (header.indexes === undefined) throw new Error('missing indexes in idx header')
         for (const [name, idx] of Object.entries(header.indexes)) {
-          this.indexer(name, undefined, idx as IdxMeta)
+          this.index(name, undefined, idx as IdxMeta)
         }
       })
     ])
@@ -65,12 +63,7 @@ export class CRDT {
     return await doCompact(this.blocks, this._head)
   }
 
-  // async indexer(name: string, mapFn?: MapFn | string): Promise<Indexer> {
-  //   await this.ready
-  //   return this.indexer_int(name, mapFn)
-  // }
-
-  indexer(name: string, mapFn?: MapFn, meta?: IdxMeta): Indexer {
+  index(name: string, mapFn?: MapFn, meta?: IdxMeta): Indexer {
     if (mapFn && meta) throw new Error('cannot provide both mapFn and meta')
     if (mapFn && mapFn.constructor.name !== 'Function') throw new Error('mapFn must be a function')
     if (this.indexers.has(name)) {

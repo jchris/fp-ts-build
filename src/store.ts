@@ -9,22 +9,12 @@ export abstract class HeaderStore {
   }
 
   makeHeader(car: AnyLink): ToString<DbMeta> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    console.log('make header', { car })
     const encoded = format({ car } as DbMeta)
-    // const encoded = encode({ car, indexes } as DbMeta)
-    // const encoded = JSON.stringify({ car, indexes })
-    console.log('made header', this.name, encoded)
     return encoded
   }
 
   parseHeader(headerData: ToString<DbMeta>): DbMeta {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    console.log('parse header', headerData)
     const got = parse<DbMeta>(headerData)
-    // const got = decode(headerData)
-    // const got = JSON.parse(headerData.toString())
-    console.log('parsed header', this.name, got)
     return got
   }
 

@@ -205,7 +205,7 @@ describe('CRDT with an index', function () {
   beforeEach(async function () {
     crdt = new CRDT()
     await crdt.bulk([{ key: 'ace', value: { points: 11 } }, { key: 'king', value: { points: 10 } }])
-    idx = await crdt.indexer('points')
+    idx = await crdt.index('points')
   })
   it('should query the data', async function () {
     const got = await idx.query({ range: [9, 12] })
@@ -213,7 +213,7 @@ describe('CRDT with an index', function () {
     equals(got.rows[0].id, 'king')
   })
   it('should register the index', async function () {
-    const rIdx = await crdt.indexer('points')
+    const rIdx = await crdt.index('points')
     assert(rIdx)
     equals(rIdx.name, 'points')
     const got = await rIdx.query({ range: [9, 12] })
@@ -221,7 +221,7 @@ describe('CRDT with an index', function () {
     equals(got.rows[0].id, 'king')
   })
   it('creating a different index with same name should not work', async function () {
-    const e = await crdt.indexer('points', (doc) => doc._id).query().catch((err) => err)
+    const e = await crdt.index('points', (doc) => doc._id).query().catch((err) => err)
     matches(e.message, /cannot apply/)
   })
 })

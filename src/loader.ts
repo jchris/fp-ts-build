@@ -83,9 +83,11 @@ abstract class Loader {
   }
 
   async getBlock(cid: CID): Promise<AnyBlock | undefined> {
-    for (const [, reader] of [...this.carReaders]) { // .reverse()) { // reverse is faster
+    for (const [, reader] of [...this.carReaders]) {
       const block = await reader.get(cid)
-      if (block) return block
+      if (block) {
+        return block
+      }
     }
   }
 

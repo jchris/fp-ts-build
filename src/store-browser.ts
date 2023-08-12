@@ -25,7 +25,6 @@ export class CarStore extends CarStoreBase {
   }
 
   async load(cid: AnyLink): Promise<AnyBlock> {
-    // console.log('loading', cid.toString())
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await this._withDB(async (db: IDBPDatabase<unknown>) => {
       const tx = db.transaction(['cars'], 'readonly')

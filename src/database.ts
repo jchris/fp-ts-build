@@ -72,7 +72,7 @@ export class Database {
   }
 
   index(name: string, mapFn?: MapFn) {
-    return this._crdt.indexer(name, mapFn)
+    return this._crdt.index(name, mapFn)
   }
 
   subscribe(listener: ListenerFn): () => void {
