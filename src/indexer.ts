@@ -5,7 +5,7 @@ import { CRDT } from './crdt'
 
 function makeMapFnFromName(name: string): MapFn {
   return (doc) => {
-    if (doc[name]) return doc[name] as DocFragment
+    if (doc[name]) return doc[name]
   }
 }
 
@@ -136,13 +136,15 @@ export class Indexer {
     const byIdIndexEntries: DocUpdate[] = indexEntries.map(({ key }) => ({ key: key[1], value: key }))
     const indexerMeta: Map<string, IdxMeta> = new Map()
     for (const [name, indexer] of this.crdt.indexers) {
-      indexerMeta.set(name, {
-        byId: indexer.byId.cid,
-        byKey: indexer.byKey.cid,
-        head: indexer.indexHead,
-        map: indexer.mapFnString,
-        name: indexer.name
-      } as IdxMeta)
+      if (indexer.indexHead) {
+        indexerMeta.set(name, {
+          byId: indexer.byId.cid,
+          byKey: indexer.byKey.cid,
+          head: indexer.indexHead,
+          map: indexer.mapFnString,
+          name: indexer.name
+        } as IdxMeta)
+      }
     }
     return await this.blocks.transaction(async (tblocks): Promise<IdxMeta> => {
       this.byId = await bulkIndex(

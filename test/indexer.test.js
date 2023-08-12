@@ -166,9 +166,11 @@ describe('basic Indexer upon cold start', function () {
     indexer = await crdt.indexer('hello', mapFn)
     // new Indexer(db._crdt.indexBlocks, db._crdt, 'hello', mapFn)
     result = await indexer.query()
+    equalsJSON(indexer.indexHead, crdt._head)
   })
   it('should call map on first query', function () {
     assert(didMap)
+    equals(didMap, 3)
   })
   it('should get results on first query', function () {
     assert(result)
@@ -177,16 +179,25 @@ describe('basic Indexer upon cold start', function () {
   })
   it('should work on cold load', async function () {
     const crdt2 = new CRDT('test-indexer-cold')
+    const { result, head } = await crdt2.changes()
+    assert(result)
+    await crdt2.ready
     const indexer2 = await crdt2.indexer('hello', mapFn)
+    await indexer2.ready
+    equalsJSON(indexer2.indexHead, head)
     const result2 = await indexer2.query()
     assert(result2)
     equals(result2.rows.length, 3)
+    equalsJSON(indexer2.indexHead, head)
   })
-  it('should not rerun the map function on seen chantes', async function () {
+  it('should not rerun the map function on seen changes', async function () {
     didMap = 0
     const crdt2 = new CRDT('test-indexer-cold')
     const indexer2 = await crdt2.indexer('hello', mapFn)
+    await crdt2.ready
     const { result, head } = await crdt2.changes([])
+
+    equalsJSON(indexer2.indexHead, head)
 
     equals(result.length, 3)
     equals(head.length, 1)
@@ -200,7 +211,7 @@ describe('basic Indexer upon cold start', function () {
     const result2 = await indexer2.query()
     assert(result2)
     equals(result2.rows.length, 3)
-    assert(!didMap)
+    equals(didMap, 0)
 
     await crdt2.bulk([
       { key: 'abc4', value: { title: 'despicable' } }])

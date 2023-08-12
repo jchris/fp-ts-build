@@ -31,8 +31,8 @@ abstract class FireproofBlockstore implements BlockFetcher {
 
   private transactions: Set<Transaction> = new Set()
 
-  constructor(name?: string, loaderFactory: (name: string) => DbLoader | IdxLoader, defaultHeader: () => DbCarHeader|IdxCarHeader) {
-    if (name && loaderFactory) {
+  constructor(name: string | null, loaderFactory: (name: string) => DbLoader | IdxLoader, defaultHeader: () => DbCarHeader|IdxCarHeader) {
+    if (name) {
       this.name = name
       this.loader = loaderFactory(name)
       this.ready = this.loader.ready
@@ -44,7 +44,7 @@ abstract class FireproofBlockstore implements BlockFetcher {
   abstract commit(_t: Transaction, _done: IdxMeta|BulkResult, _indexes?: Map<string, IdxMeta>): Promise<AnyLink | undefined>
 
   abstract transaction(fn: (t: Transaction) => Promise<IdxMeta|BulkResult>, indexes?: Map<string, IdxMeta>): Promise<BulkResultCar|IdxMetaCar>
-
+  // abstract transaction(fn: (t: Transaction) => Promise<IdxMeta|BulkResult>, indexes: Map<string, AnyLink>): Promise<BulkResultCar|IdxMetaCar>
   // eslint-disable-next-line @typescript-eslint/require-await
   async put() {
     throw new Error('use a transaction to put')
@@ -98,18 +98,16 @@ export class IndexBlockstore extends FireproofBlockstore {
   declare ready: Promise<IdxCarHeader>
 
   constructor(name?: string) {
-    super(name, (name) => new IdxLoader(name), () => ({ cars: [], compact: [], indexes: new Map() as Map<string, IdxMeta> }))
+    super(name || null, (name) => new IdxLoader(name), () => ({ cars: [], compact: [], indexes: new Map() as Map<string, IdxMeta> }))
   }
 
-  async commit(t: Transaction, done: IdxMeta, indexes: Map<string, IdxMeta>): Promise<AnyLink | undefined> {
-    indexes.set(done.name, done)
+  async commit(t: Transaction, _done: IdxMeta, indexes: Map<string, IdxMeta>): Promise<AnyLink | undefined> {
     return await this.loader?.commit(t, { indexes })
   }
 
   async transaction(fn: (t: Transaction) => Promise<IdxMeta>, indexes: Map<string, IdxMeta>): Promise<IdxMetaCar> {
     return this.executeTransaction(fn, async (t, done) => {
-      indexes.set(done.name, done)
-      const car = await this.commit(t, done, indexes) as AnyLink
+      const car = await this.commit(t, done, indexes)
       return { car, done }
     })
   }
@@ -119,8 +117,8 @@ export class TransactionBlockstore extends FireproofBlockstore {
   declare ready: Promise<DbCarHeader>
 
   constructor(name?: string) {
-    super(name, (name) => new DbLoader(name), () => ({ cars: [], compact: [], head: [] }))
     // todo this will be a map of headers by branch name
+    super(name || null, (name) => new DbLoader(name), () => ({ cars: [], compact: [], head: [] }))
   }
 
   async commit(t: Transaction, done: BulkResult, _indexes?: Map<string, any>): Promise<AnyLink | undefined> {

@@ -15,6 +15,8 @@ export async function makeDbCarFile(
   cars: AnyLink[],
   compact: boolean = false
 ): Promise<BlockView<unknown, number, number, 1>> {
+  console.log('makeDbCarFile', result.head)
+
   const head = result.head
   if (!head) throw new Error('no head')
 
@@ -24,6 +26,7 @@ export async function makeDbCarFile(
 }
 
 async function innerMakeCarFile(fp: DbCarHeader|IdxCarHeader, t: Transaction) {
+  console.log('innerMakeCarFile', fp)
   const fpCarHeaderBlock = (await encode({
     value: { fp },
     hasher,

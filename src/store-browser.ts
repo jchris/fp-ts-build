@@ -1,5 +1,5 @@
 import { openDB, IDBPDatabase } from 'idb'
-import { Buffer } from 'buffer'
+// import { Buffer } from 'buffer'
 
 import { AnyBlock, AnyLink, DbMeta, IndexCars } from './types'
 import { CarStore as CarStoreBase, HeaderStore as HeaderStoreBase } from './store'
@@ -10,11 +10,10 @@ export class CarStore extends CarStoreBase {
   tag: string = 'car-browser-idb'
   keyId: string = 'public'
   idb: IDBPDatabase<unknown> | null = null
-  name: string = 'default'
 
   async _withDB(dbWorkFun: (arg0: any) => any) {
     if (!this.idb) {
-      const dbName = `fp.${FORMAT}.${this.keyId}.${this.name}.valet`
+      const dbName = `fp.${FORMAT}.${this.keyId}.${this.name}`
       this.idb = await openDB(dbName, 1, {
         upgrade(db): void {
           db.createObjectStore('cars')

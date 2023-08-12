@@ -28,7 +28,7 @@ export class CRDT {
         console.log('idx-header', header)
         // @ts-ignore
         if (header.head) throw new Error('cannot have head in idx header')
-        if (header.indexes === undefined) return
+        if (header.indexes === undefined) throw new Error('missing indexes in idx header')
         for (const [name, idx] of Object.entries(header.indexes)) {
           this.indexer(name, undefined, idx as IdxMeta)
         }
