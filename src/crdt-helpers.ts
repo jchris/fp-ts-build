@@ -1,20 +1,10 @@
-import { Link } from 'multiformats'
-import { create, encode, decode } from 'multiformats/block'
+import { encode, decode } from 'multiformats/block'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import * as codec from '@ipld/dag-cbor'
 import { put, get, entries, EventData } from '@alanshaw/pail/crdt'
 import { EventFetcher } from '@alanshaw/pail/clock'
 import { TransactionBlockstore, Transaction } from './transaction'
 import { DocUpdate, ClockHead, BlockFetcher, AnyLink, DocValue, BulkResult } from './types'
-
-// export function makeGetBlock(blocks: BlockFetcher) {
-//   return async (address: Link) => {
-//     const block = await blocks.get(address)
-//     if (!block) throw new Error(`Missing block ${address.toString()}`)
-//     const { cid, bytes } = block
-//     return create({ cid, bytes, hasher, codec })
-//   }
-// }
 
 export async function applyBulkUpdateToCrdt(
   tblocks: Transaction,

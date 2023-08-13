@@ -1,8 +1,7 @@
 import { Database } from './database'
-export { Database }
 
 export class Fireproof {
-  private static databases: Map<string, Database> = new Map()
+  static databases: Map<string, Database> = new Map()
 
   static database(name: string): Database {
     if (!Fireproof.databases.has(name)) {
@@ -14,4 +13,8 @@ export class Fireproof {
   static storage(name: string): Database {
     return new Database(name)
   }
+}
+
+export function database(name: string): Database {
+  return Fireproof.database(name)
 }
