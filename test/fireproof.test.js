@@ -7,7 +7,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, equals, notEquals, matches, equalsJSON, resetDirectory } from './helpers.js'
 
-import { Fireproof } from '../dist/fireproof.esm.js'
 import { database, Database } from '../dist/database.esm.js'
 import { index, Indexer } from '../dist/index.esm.js'
 import { testConfig } from '../dist/store-fs.esm.js'
@@ -51,7 +50,7 @@ describe('basic database', function () {
     // erase the existing test data
     await resetDirectory(testConfig.dataDir, 'test-basic')
 
-    db = Fireproof.storage('test-basic')
+    db = database('test-basic')
   })
   it('can put with id', async function () {
     const ok = await db.put({ _id: 'test', foo: 'bar' })
@@ -94,7 +93,7 @@ describe('Reopening a database', function () {
     // erase the existing test data
     await resetDirectory(testConfig.dataDir, 'test-reopen')
 
-    db = Fireproof.storage('test-reopen')
+    db = database('test-reopen')
     const ok = await db.put({ _id: 'test', foo: 'bar' })
     assert(ok)
     equals(ok.id, 'test')
@@ -109,7 +108,7 @@ describe('Reopening a database', function () {
   })
 
   it('should have the same data on reopen', async function () {
-    const db2 = Fireproof.storage('test-reopen')
+    const db2 = database('test-reopen')
     const doc = await db2.get('test')
     equals(doc.foo, 'bar')
     assert(db2._crdt._head)
@@ -125,7 +124,7 @@ describe('Reopening a database', function () {
   })
 
   it('should have carlog after reopen', async function () {
-    const db2 = Fireproof.storage('test-reopen')
+    const db2 = database('test-reopen')
     await db2._crdt.ready
     assert(db2._crdt.blocks.loader)
     assert(db2._crdt.blocks.loader.carLog)
@@ -134,7 +133,7 @@ describe('Reopening a database', function () {
 
   it('faster, should have the same data on reopen after reopen and update', async function () {
     for (let i = 0; i < 4; i++) {
-      const db = Fireproof.storage('test-reopen')
+      const db = database('test-reopen')
       assert(db._crdt.ready)
       await db._crdt.ready
       equals(db._crdt.blocks.loader.carLog.length, i + 1)
@@ -149,7 +148,7 @@ describe('Reopening a database', function () {
   it.skip('passing slow, should have the same data on reopen after reopen and update', async function () {
     for (let i = 0; i < 100; i++) {
       // console.log('iteration', i)
-      const db = Fireproof.storage('test-reopen')
+      const db = database('test-reopen')
       assert(db._crdt.ready)
       await db._crdt.ready
       equals(db._crdt.blocks.loader.carLog.length, i + 1)
@@ -170,7 +169,7 @@ describe('Reopening a database with indexes', function () {
     await resetDirectory(testConfig.dataDir, 'test-reopen-idx')
     await resetDirectory(testConfig.dataDir, 'test-reopen-idx.idx')
 
-    db = Fireproof.storage('test-reopen-idx')
+    db = database('test-reopen-idx')
     const ok = await db.put({ _id: 'test', foo: 'bar' })
     equals(ok.id, 'test')
 
@@ -216,7 +215,7 @@ describe('Reopening a database with indexes', function () {
   })
 
   it('should have the same data on reopen', async function () {
-    const db2 = Fireproof.storage('test-reopen-idx')
+    const db2 = database('test-reopen-idx')
     const doc = await db2.get('test')
     equals(doc.foo, 'bar')
     assert(db2._crdt._head)
@@ -231,7 +230,7 @@ describe('Reopening a database with indexes', function () {
     equals(r0.rows.length, 1)
     equals(r0.rows[0].key, 'bar')
 
-    const db2 = Fireproof.storage('test-reopen-idx')
+    const db2 = database('test-reopen-idx')
     const doc = await db2.get('test')
     equals(doc.foo, 'bar')
     assert(db2._crdt._head)
@@ -246,7 +245,7 @@ describe('Reopening a database with indexes', function () {
   //   equals(r0.rows.length, 1)
   //   equals(r0.rows[0].key, 'bar')
 
-  //   const db2 = Fireproof.storage('test-reopen-idx')
+  //   const db2 = database('test-reopen-idx')
   //   const d2 = await db2.get('test')
   //   equals(d2.foo, 'bar')
   //   didMap = false

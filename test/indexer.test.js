@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Indexer, index } from '../dist/index.esm.js'
-import { Fireproof } from '../dist/fireproof.esm.js'
+import { database } from '../dist/database.esm.js'
 import { CRDT } from '../dist/crdt.esm.js'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -17,7 +17,7 @@ describe('basic Indexer', function () {
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-indexer')
 
-    db = Fireproof.storage('test-indexer')
+    db = database('test-indexer')
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
@@ -85,7 +85,7 @@ describe('Indexer query with compound key', function () {
   let db, indexer
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-indexer')
-    db = Fireproof.storage('test-indexer')
+    db = database('test-indexer')
     await db.put({ title: 'amazing', score: 1 })
     await db.put({ title: 'creative', score: 2 })
     await db.put({ title: 'creative', score: 20 })
@@ -107,7 +107,7 @@ describe('basic Indexer with map fun', function () {
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-indexer')
 
-    db = Fireproof.storage('test-indexer')
+    db = database('test-indexer')
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
@@ -128,7 +128,7 @@ describe('basic Indexer with string fun', function () {
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-indexer')
 
-    db = Fireproof.storage('test-indexer')
+    db = database('test-indexer')
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
@@ -152,7 +152,7 @@ describe('basic Indexer upon cold start', function () {
     await resetDirectory(testConfig.dataDir, 'test-indexer-cold')
     await resetDirectory(testConfig.dataDir, 'test-indexer-cold.idx')
 
-    // db = Fireproof.storage()
+    // db = database()
     crdt = new CRDT('test-indexer-cold')
     await crdt.bulk([
       { key: 'abc1', value: { title: 'amazing' } },
@@ -229,7 +229,7 @@ describe('basic Indexer with no data', function () {
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-indexer')
 
-    db = Fireproof.storage('test-indexer')
+    db = database('test-indexer')
     indexer = new Indexer(db._crdt, 'hello', (doc) => {
       didMap = true
       return doc.title
