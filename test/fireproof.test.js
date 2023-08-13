@@ -50,7 +50,7 @@ describe('basic database', function () {
     // erase the existing test data
     await resetDirectory(testConfig.dataDir, 'test-basic')
 
-    db = database('test-basic')
+    db = new Database('test-basic')
   })
   it('can put with id', async function () {
     const ok = await db.put({ _id: 'test', foo: 'bar' })
@@ -93,7 +93,7 @@ describe('Reopening a database', function () {
     // erase the existing test data
     await resetDirectory(testConfig.dataDir, 'test-reopen')
 
-    db = database('test-reopen')
+    db = new Database('test-reopen')
     const ok = await db.put({ _id: 'test', foo: 'bar' })
     assert(ok)
     equals(ok.id, 'test')
@@ -108,7 +108,7 @@ describe('Reopening a database', function () {
   })
 
   it('should have the same data on reopen', async function () {
-    const db2 = database('test-reopen')
+    const db2 = new Database('test-reopen')
     const doc = await db2.get('test')
     equals(doc.foo, 'bar')
     assert(db2._crdt._head)
@@ -124,7 +124,7 @@ describe('Reopening a database', function () {
   })
 
   it('should have carlog after reopen', async function () {
-    const db2 = database('test-reopen')
+    const db2 = new Database('test-reopen')
     await db2._crdt.ready
     assert(db2._crdt.blocks.loader)
     assert(db2._crdt.blocks.loader.carLog)
@@ -133,7 +133,7 @@ describe('Reopening a database', function () {
 
   it('faster, should have the same data on reopen after reopen and update', async function () {
     for (let i = 0; i < 4; i++) {
-      const db = database('test-reopen')
+      const db = new Database('test-reopen')
       assert(db._crdt.ready)
       await db._crdt.ready
       equals(db._crdt.blocks.loader.carLog.length, i + 1)
@@ -148,7 +148,7 @@ describe('Reopening a database', function () {
   it.skip('passing slow, should have the same data on reopen after reopen and update', async function () {
     for (let i = 0; i < 100; i++) {
       // console.log('iteration', i)
-      const db = database('test-reopen')
+      const db = new Database('test-reopen')
       assert(db._crdt.ready)
       await db._crdt.ready
       equals(db._crdt.blocks.loader.carLog.length, i + 1)
