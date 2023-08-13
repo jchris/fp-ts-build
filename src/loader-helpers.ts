@@ -43,15 +43,3 @@ export async function parseCarFile(reader: CarReader): Promise<DbCarHeader | Idx
   const { fp } = value as { fp: DbCarHeader | IdxCarHeader }
   return fp
 }
-
-// export function isIndexerResult(result: BulkResult | IndexerResult): result is IndexerResult {
-//   return !!(result as IndexerResult).indexes
-// }
-
-// export function isIndexHeader(result: DbCarHeader | IdxCarHeader): result is IdxCarHeader {
-//   return !!(result as IdxCarHeader).indexes
-// }
-
-// export function isIndexerMeta(result: BulkResult | IdxMeta): result is IdxMeta {
-//   return !!(result as IdxMeta).name
-// }

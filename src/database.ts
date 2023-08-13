@@ -2,7 +2,7 @@
 // import cargoQueue from 'async/cargoQueue'
 import { WriteQueue, writeQueue } from './write-queue'
 import { CRDT } from './crdt'
-import { Doc, BulkResult, DocUpdate, DbResponse, ClockHead, ChangesResponse, MapFn, ListenerFn } from './types'
+import { BulkResult, DocUpdate, ClockHead, MapFn, Doc } from './types'
 
 export class Database {
   name: string
@@ -76,3 +76,15 @@ export class Database {
     }
   }
 }
+
+type ChangesResponse = {
+  clock: ClockHead
+  rows: { key: string; value: Doc }[]
+}
+
+type DbResponse = {
+  id: string
+  clock: ClockHead
+}
+
+type ListenerFn = (docs: Doc[]) => Promise<void> | void

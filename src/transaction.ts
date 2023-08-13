@@ -1,5 +1,8 @@
 import { MemoryBlockstore } from '@alanshaw/pail/block'
-import { BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead, DbCarHeader, IdxCarHeader, IdxMeta, IdxMetaCar, BulkResultCar } from './types'
+import {
+  BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead,
+  DbCarHeader, IdxCarHeader, IdxMeta, CarCommit
+} from './types'
 import { DbLoader, IdxLoader } from './loader'
 import { CID } from 'multiformats'
 
@@ -24,14 +27,14 @@ export class Transaction extends MemoryBlockstore {
 }
 
 abstract class FireproofBlockstore implements BlockFetcher {
-  ready: Promise<IdxCarHeader|DbCarHeader>
+  ready: Promise<IdxCarHeader | DbCarHeader>
   name: string | null = null
 
   loader: DbLoader | IdxLoader | null = null
 
   private transactions: Set<Transaction> = new Set()
 
-  constructor(name: string | null, loaderFactory: (name: string) => DbLoader | IdxLoader, defaultHeader: () => DbCarHeader|IdxCarHeader) {
+  constructor(name: string | null, loaderFactory: (name: string) => DbLoader | IdxLoader, defaultHeader: () => DbCarHeader | IdxCarHeader) {
     if (name) {
       this.name = name
       this.loader = loaderFactory(name)
@@ -41,9 +44,9 @@ abstract class FireproofBlockstore implements BlockFetcher {
     }
   }
 
-  abstract commit(_t: Transaction, _done: IdxMeta|BulkResult, _indexes?: Map<string, IdxMeta>): Promise<AnyLink | undefined>
+  abstract commit(_t: Transaction, _done: IdxMeta | BulkResult, _indexes?: Map<string, IdxMeta>): Promise<AnyLink | undefined>
 
-  abstract transaction(fn: (t: Transaction) => Promise<IdxMeta|BulkResult>, indexes?: Map<string, IdxMeta>): Promise<BulkResultCar|IdxMetaCar>
+  abstract transaction(fn: (t: Transaction) => Promise<IdxMeta | BulkResult>, indexes?: Map<string, IdxMeta>): Promise<BulkResultCar | IdxMetaCar>
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async put() {
@@ -132,3 +135,6 @@ export class TransactionBlockstore extends FireproofBlockstore {
     })
   }
 }
+
+type IdxMetaCar = IdxMeta & CarCommit
+type BulkResultCar = BulkResult & CarCommit

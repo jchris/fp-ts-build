@@ -34,7 +34,7 @@
     "test:watch": "nodemon -w src -w test -e ts,js --exec \"npm run build && npm run test:node\"",
     "test:node": "node ./scripts/test.js",
     "test:browser": "polendina test/*.js --webpack-config webpack.config.cjs",
-    "test": "npm run build && npm run test:node",
+    "test": "npm run build && npm run test:node && tsc",
     "lint": "eslint 'src/**/*.{js,ts}'",
     "lint:exports": "ts-unused-exports tsconfig.json",
     "lint:fix": "eslint --fix 'src/**/*.{js,ts}'"

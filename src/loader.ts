@@ -1,7 +1,7 @@
 import { CarReader } from '@ipld/car'
 import { innerMakeCarFile, parseCarFile } from './loader-helpers'
 import { Transaction } from './transaction'
-import { AnyBlock, AnyLink, BulkResult, DbCarHeader, IdxCarHeader, IndexerResult } from './types'
+import { AnyBlock, AnyLink, BulkResult, CarCommit, DbCarHeader, IdxCarHeader, IdxMetaMap } from './types'
 import { BlockView, CID } from 'multiformats'
 import { CarStore, HeaderStore } from './store'
 
@@ -153,3 +153,5 @@ export class IdxLoader extends Loader {
     return { cars: [], compact: [], indexes: new Map() }
   }
 }
+
+type IndexerResult = CarCommit & IdxMetaMap

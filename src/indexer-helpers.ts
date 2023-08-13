@@ -1,7 +1,5 @@
-import { Block } from 'multiformats'
-import {
-  create
-} from 'multiformats/block'
+import type { Block, Link } from 'multiformats'
+import { create } from 'multiformats/block'
 import { sha256 as hasher } from 'multiformats/hashes/sha2'
 import * as codec from '@ipld/dag-cbor'
 
@@ -13,8 +11,10 @@ import * as DbIndex from 'prolly-trees/db-index'
 import { bf, simpleCompare } from 'prolly-trees/utils'
 // @ts-ignore
 import { nocache as cache } from 'prolly-trees/cache'
+// @ts-ignore
+import { ProllyNode as BaseNode } from 'prolly-trees/base'
 
-import { AnyLink, DocUpdate, MapFn, DocFragment, StaticProllyOptions, BlockFetcher, ProllyNode, IndexKey, IndexUpdate, QueryOpts, IndexRow, AnyBlock } from './types'
+import { AnyLink, DocUpdate, MapFn, DocFragment, BlockFetcher, IndexKey, IndexUpdate, QueryOpts, IndexRow, AnyBlock } from './types'
 import { Transaction } from './transaction'
 import { CRDT } from './crdt'
 
@@ -94,7 +94,7 @@ export async function bulkIndex(tblocks: Transaction, inIndex: IndexTree, indexE
       let returnNode: ProllyNode | null = null
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       for await (const node of await DbIndex.create({ get: makeProllyGetBlock(tblocks), list: indexEntries, ...opts }) as ProllyNode[]) {
-        const block = await node.block as Block
+        const block = await node.block
         await tblocks.put(block.cid, block.bytes)
         returnRootBlock = block
         returnNode = node
@@ -108,10 +108,10 @@ export async function bulkIndex(tblocks: Transaction, inIndex: IndexTree, indexE
   }
   const { root, blocks: newBlocks } = await inIndex.root.bulk(indexEntries)
   if (root) {
-    for await (const block of newBlocks as Block[]) {
+    for await (const block of newBlocks) {
       await tblocks.put(block.cid, block.bytes)
     }
-    return { root, cid: (await root.block as Block).cid }
+    return { root, cid: (await root.block).cid }
   } else {
     return { root: null, cid: null }
   }
@@ -155,4 +155,26 @@ export function encodeRange(range: [DocFragment, DocFragment]): [IndexKey, Index
 export function encodeKey(key: string): string {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
   return charwise.encode(key) as string
+}
+
+// ProllyNode type based on the ProllyNode from 'prolly-trees/base'
+export interface ProllyNode extends BaseNode {
+  getAllEntries(): PromiseLike<{ [x: string]: any; result: IndexRow[] }>
+  getMany(removeIds: string[]): Promise<{ [x: string]: any; result: IndexKey[] }>
+  range(a: IndexKey, b: IndexKey): Promise<{ result: IndexRow[] }>
+  get(key: string): Promise<{ result: IndexRow[] }>
+  bulk(bulk: IndexUpdate[]): PromiseLike<{ root: ProllyNode | null; blocks: Block[] }>
+  address: Promise<Link>
+  distance: number
+  compare: (a: any, b: any) => number
+  cache: any
+  block: Promise<Block>
+}
+
+export interface StaticProllyOptions {
+  cache: any
+  chunker: (entry: any, distance: number) => boolean
+  codec: any
+  hasher: any
+  compare: (a: any, b: any) => number
 }
