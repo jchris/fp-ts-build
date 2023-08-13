@@ -4,16 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fireproof Test</title>
-    <script src="../dist/fireproof.browser.iife.js"></script>
+    <script src="../../dist/fireproof.browser.iife.js"></script>
     <script type="text/javascript">
-      const db = Fireproof.database('iife-test');
-      window.db = db;
-      async function initialize() {
-        console.log('initialize')
+      function testApp() {
+        const db = Fireproof.database('iife-test');
+
         const draw = async () => {
-          const result = await Fireproof.index(db, 'sort')
+          const result = await Fireproof
+            .index(db, 'sort')
             .query({includeDocs: true});
-          console.log('result', result.rows.length, result);
           document
             .querySelector('ul')
             .innerHTML = '';
@@ -24,20 +23,21 @@
               .innerText = JSON.stringify(row.doc);
           }
         }
-        db.subscribe(draw);
-        draw()
-      }
 
-      async function onButtonClick(e) {
-        console.log('onButtonClickk', e);
-        e.preventDefault();
-        const db = Fireproof.database('iife-test');
-        console.log('database', db);
-        const ok = await db.put({sort: Math.random(), test: 'test'});
-        console.log('ok', ok);
-      }
+        async function initialize() {
+          db.subscribe(draw);
+          draw()
+        }
 
-      window.onload = initialize;
+        async function onButtonClick(e) {
+          e.preventDefault();
+          const ok = await db.put({sort: Math.random(), test: 'test'});
+          console.log('ok', ok.id);
+        }
+        window.onButtonClick = onButtonClick;
+        window.onload = initialize;
+      }
+      testApp();
     </script>
   </head>
   <body>
