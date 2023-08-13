@@ -1,5 +1,6 @@
 // @ts-ignore
-import cargoQueue from 'async/cargoQueue'
+// import cargoQueue from 'async/cargoQueue'
+import { writeQueue } from './write-queue'
 import { CRDT } from './crdt'
 import { Doc, BulkResult, DocUpdate, DbResponse, ClockHead, ChangesResponse, MapFn, ListenerFn } from './types'
 
@@ -15,8 +16,7 @@ export class Database {
     this.config = config
     this._crdt = new CRDT(name)
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    this._writeQueue = cargoQueue(async (updates: DocUpdate[]) => {
+    this._writeQueue = writeQueue(async (updates: DocUpdate[]) => {
       const r = await this._crdt.bulk(updates)
       if (this.listeners.size) {
         const docs = updates.map(({ key, value }) => ({ _id: key, ...value }))
@@ -32,13 +32,10 @@ export class Database {
     const { _id, ...value } = doc
     const docId = _id || 'f' + Math.random().toString(36).slice(2) // todo uuid v7
 
-    return await new Promise<DbResponse>((resolve, reject) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-      this._writeQueue.push({ key: docId, value }, function (err: Error | null, result?: BulkResult) {
-        if (err) reject(err)
-        resolve({ id: docId, clock: result?.head } as DbResponse)
-      })
-    })
+    // Push the DocUpdate into the _writeQueue and await the result
+    const result: BulkResult = await this._writeQueue.push({ key: docId, value } as DocUpdate)
+
+    return { id: docId, clock: result?.head } as DbResponse
   }
 
   async get(id: string): Promise<Doc> {
@@ -53,13 +50,10 @@ export class Database {
   }
 
   async del(id: string): Promise<DbResponse> {
-    return await new Promise<DbResponse>((resolve, reject) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-      this._writeQueue.push({ key: id, del: true }, function (err: Error | null, result?: BulkResult) {
-        if (err) reject(err)
-        resolve({ id, clock: result?.head } as DbResponse)
-      })
-    })
+    // Push the delete operation into the _writeQueue and await the result
+    const result = await this._writeQueue.push({ key: id, del: true })
+
+    return { id, clock: result?.head } as DbResponse
   }
 
   async changes(since: ClockHead): Promise<ChangesResponse> {
