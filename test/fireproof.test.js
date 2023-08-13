@@ -8,8 +8,41 @@
 import { assert, equals, notEquals, matches, equalsJSON, resetDirectory } from './helpers.js'
 
 import { Fireproof } from '../dist/fireproof.esm.js'
-import { Database } from '../dist/database.esm.js'
+import { database, Database } from '../dist/database.esm.js'
+import { index, Indexer } from '../dist/index.esm.js'
 import { testConfig } from '../dist/store-fs.esm.js'
+
+describe('public API', function () {
+  beforeEach(async function () {
+    await resetDirectory(testConfig.dataDir, 'test-api')
+    this.db = database('test-api')
+    this.index = index(this.db, 'test-index', (doc) => doc.foo)
+    this.ok = await this.db.put({ _id: 'test', foo: 'bar' })
+    this.doc = await this.db.get('test')
+    this.query = await this.index.query()
+  })
+  it('should have a database', function () {
+    assert(this.db)
+    assert(this.db instanceof Database)
+  })
+  it('should have an index', function () {
+    assert(this.index)
+    assert(this.index instanceof Indexer)
+  })
+  it('should put', function () {
+    assert(this.ok)
+    equals(this.ok.id, 'test')
+  })
+  it('should get', function () {
+    equals(this.doc.foo, 'bar')
+  })
+  it('should query', function () {
+    assert(this.query)
+    assert(this.query.rows)
+    equals(this.query.rows.length, 1)
+    equals(this.query.rows[0].key, 'bar')
+  })
+})
 
 describe('basic database', function () {
   /** @type {Database} */
@@ -34,7 +67,7 @@ describe('basic database', function () {
   it('can define an index', async function () {
     const ok = await db.put({ _id: 'test', foo: 'bar' })
     assert(ok)
-    const idx = db.index('test-index', (doc) => doc.foo)
+    const idx = index(db, 'test-index', (doc) => doc.foo)
     const result = await idx.query()
     assert(result)
     assert(result.rows)
@@ -44,7 +77,8 @@ describe('basic database', function () {
   it('can define an index with a default function', async function () {
     const ok = await db.put({ _id: 'test', foo: 'bar' })
     assert(ok)
-    const idx = db.index('foo')
+
+    const idx = index(db, 'foo')
     const result = await idx.query()
     assert(result)
     assert(result.rows)
@@ -147,13 +181,13 @@ describe('Reopening a database with indexes', function () {
       return doc.foo
     }
 
-    idx = db.index('foo', mapFn)
+    idx = index(db, 'foo', mapFn)
   })
 
   it('should persist data', async function () {
     const doc = await db.get('test')
     equals(doc.foo, 'bar')
-    const idx2 = db.index('foo')
+    const idx2 = index(db, 'foo')
     assert(idx2 === idx, 'same object')
     const result = await idx2.query()
     assert(result)
@@ -164,7 +198,7 @@ describe('Reopening a database with indexes', function () {
   })
 
   it('should reuse the index', async function () {
-    const idx2 = db.index('foo', mapFn)
+    const idx2 = index(db, 'foo', mapFn)
     assert(idx2 === idx, 'same object')
     const result = await idx2.query()
     assert(result)

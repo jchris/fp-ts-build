@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Indexer } from '../dist/indexer.esm.js'
+import { Indexer, index } from '../dist/index.esm.js'
 import { Fireproof } from '../dist/fireproof.esm.js'
 import { CRDT } from '../dist/crdt.esm.js'
 
@@ -21,7 +21,7 @@ describe('basic Indexer', function () {
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
-    indexer = new Indexer(db._crdt.blocks, db._crdt, 'hello', (doc) => {
+    indexer = new Indexer(db._crdt, 'hello', (doc) => {
       didMap = true
       return doc.title
     })
@@ -90,7 +90,7 @@ describe('Indexer query with compound key', function () {
     await db.put({ title: 'creative', score: 2 })
     await db.put({ title: 'creative', score: 20 })
     await db.put({ title: 'bazillas', score: 3 })
-    indexer = new Indexer(db._crdt.blocks, db._crdt, 'hello', (doc) => {
+    indexer = new Indexer(db._crdt, 'hello', (doc) => {
       return [doc.title, doc.score]
     })
   })
@@ -111,7 +111,7 @@ describe('basic Indexer with map fun', function () {
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
-    indexer = new Indexer(db._crdt.blocks, db._crdt, 'hello', (doc, map) => {
+    indexer = new Indexer(db._crdt, 'hello', (doc, map) => {
       map(doc.title)
     })
   })
@@ -132,7 +132,7 @@ describe('basic Indexer with string fun', function () {
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
-    indexer = new Indexer(db._crdt.blocks, db._crdt, 'title')
+    indexer = new Indexer(db._crdt, 'title')
   })
   it('should get results', async function () {
     const result = await indexer.query()
@@ -163,7 +163,7 @@ describe('basic Indexer upon cold start', function () {
       didMap++
       return doc.title
     }
-    indexer = await crdt.index('hello', mapFn)
+    indexer = await index({ _crdt: crdt }, 'hello', mapFn)
     // new Indexer(db._crdt.indexBlocks, db._crdt, 'hello', mapFn)
     result = await indexer.query()
     equalsJSON(indexer.indexHead, crdt._head)
@@ -182,7 +182,7 @@ describe('basic Indexer upon cold start', function () {
     const { result, head } = await crdt2.changes()
     assert(result)
     await crdt2.ready
-    const indexer2 = await crdt2.index('hello', mapFn)
+    const indexer2 = await index({ _crdt: crdt2 }, 'hello', mapFn)
     await indexer2.ready
     equalsJSON(indexer2.indexHead, head)
     const result2 = await indexer2.query()
@@ -193,34 +193,25 @@ describe('basic Indexer upon cold start', function () {
   it('should not rerun the map function on seen changes', async function () {
     didMap = 0
     const crdt2 = new CRDT('test-indexer-cold')
-    const indexer2 = await crdt2.index('hello', mapFn)
-    await crdt2.ready
+    const indexer2 = await index({ _crdt: crdt2 }, 'hello', mapFn)
     const { result, head } = await crdt2.changes([])
-
-    equalsJSON(indexer2.indexHead, head)
-
     equals(result.length, 3)
     equals(head.length, 1)
-
     const { result: ch2, head: h2 } = await crdt2.changes(head)
-
     equals(ch2.length, 0)
     equals(h2.length, 1)
     equalsJSON(h2, head)
-    equalsJSON(indexer2.indexHead, head)
     const result2 = await indexer2.query()
+    equalsJSON(indexer2.indexHead, head)
     assert(result2)
     equals(result2.rows.length, 3)
     equals(didMap, 0)
-
     await crdt2.bulk([
       { key: 'abc4', value: { title: 'despicable' } }])
 
     const { result: ch3, head: h3 } = await crdt2.changes(head)
-
     equals(ch3.length, 1)
     equals(h3.length, 1)
-
     const result3 = await indexer2.query()
     assert(result3)
     equals(result3.rows.length, 4)
@@ -228,7 +219,7 @@ describe('basic Indexer upon cold start', function () {
   })
   it('shouldnt allow map function definiton to change', async function () {
     const crdt2 = new CRDT('test-indexer-cold')
-    const e = await crdt2.index('hello', (doc) => doc.title).query().catch((e) => e)
+    const e = await index({ _crdt: crdt2 }, 'hello', (doc) => doc.title).query().catch((e) => e)
     matches(e.message, /cannot apply/)
   })
 })
@@ -239,7 +230,7 @@ describe('basic Indexer with no data', function () {
     await resetDirectory(testConfig.dataDir, 'test-indexer')
 
     db = Fireproof.storage('test-indexer')
-    indexer = new Indexer(db._crdt.blocks, db._crdt, 'hello', (doc) => {
+    indexer = new Indexer(db._crdt, 'hello', (doc) => {
       didMap = true
       return doc.title
     })

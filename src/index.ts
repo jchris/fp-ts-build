@@ -1,12 +1,19 @@
-import { ClockHead, DocUpdate, MapFn, IndexUpdate, QueryOpts, IdxMeta } from './types'
+import { ClockHead, DocUpdate, MapFn, IndexUpdate, QueryOpts, IdxMeta, IdxCarHeader } from './types'
 import { IndexBlockstore } from './transaction'
 import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery, encodeRange, encodeKey, loadIndex } from './indexer-helpers'
 import { CRDT } from './crdt'
 
-function makeMapFnFromName(name: string): MapFn {
-  return (doc) => {
-    if (doc[name]) return doc[name]
+export function index({ _crdt }: { _crdt: CRDT}, name: string, mapFn?: MapFn, meta?: IdxMeta): Indexer {
+  if (mapFn && meta) throw new Error('cannot provide both mapFn and meta')
+  if (mapFn && mapFn.constructor.name !== 'Function') throw new Error('mapFn must be a function')
+  if (_crdt.indexers.has(name)) {
+    const idx = _crdt.indexers.get(name)!
+    idx.applyMapFn(name, mapFn, meta)
+  } else {
+    const idx = new Indexer(_crdt, name, mapFn, meta)
+    _crdt.indexers.set(name, idx)
   }
+  return _crdt.indexers.get(name)!
 }
 
 export class Indexer {
@@ -20,12 +27,21 @@ export class Indexer {
   indexHead: ClockHead | undefined = undefined
   includeDocsDefault: boolean = false
   initError: Error | null = null
+  ready: Promise<void>
 
-  constructor(blocks: IndexBlockstore, crdt: CRDT, name: string, mapFn?: MapFn, meta?: IdxMeta) {
-    this.blocks = blocks
+  constructor(crdt: CRDT, name: string, mapFn?: MapFn, meta?: IdxMeta) {
+    this.blocks = crdt.indexBlocks
     this.crdt = crdt
     this.applyMapFn(name, mapFn, meta)
     if (!(this.mapFnString || this.initError)) throw new Error('missing mapFnString')
+    this.ready = this.blocks.ready.then((header: IdxCarHeader) => {
+      // @ts-ignore
+      if (header.head) throw new Error('cannot have head in idx header')
+      if (header.indexes === undefined) throw new Error('missing indexes in idx header')
+      for (const [name, idx] of Object.entries(header.indexes)) {
+        index({ _crdt: crdt }, name, undefined, idx as IdxMeta)
+      }
+    })
   }
 
   applyMapFn(name: string, mapFn?: MapFn, meta?: IdxMeta) {
@@ -116,7 +132,7 @@ export class Indexer {
   }
 
   async _updateIndex() {
-    await this.crdt.ready
+    await this.ready
     if (this.initError) throw this.initError
     if (!this.mapFn) throw new Error('No map function defined')
     const { result, head } = await this.crdt.changes(this.indexHead)
@@ -157,5 +173,11 @@ export class Indexer {
       this.indexHead = head
       return { byId: this.byId.cid, byKey: this.byKey.cid, head, map: this.mapFnString, name: this.name } as IdxMeta
     }, indexerMeta)
+  }
+}
+
+function makeMapFnFromName(name: string): MapFn {
+  return (doc) => {
+    if (doc[name]) return doc[name]
   }
 }
