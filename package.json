@@ -1,6 +1,6 @@
 {
   "name": "@fireproof/database",
-  "version": "0.10.34",
+  "version": "0.10.35",
   "description": "Immutable embedded distributed database for the web",
   "main": "dist/fireproof.cjs",
   "module": "dist/fireproof.esm.js",
@@ -9,10 +9,28 @@
       "import": "./dist/fireproof.esm.js",
       "require": "./dist/fireproof.cjs"
     },
+    "./database": {
+      "import": "./dist/database.esm.js",
+      "require": "./dist/database.cjs"
+    },
+    "./index": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs"
+    },
     "./browser": {
       "import": "./dist/fireproof.browser.esm.js",
       "require": "./dist/fireproof.browser.cjs",
       "script": "./dist/fireproof.browser.iife.js"
+    },
+    "./database/browser": {
+      "import": "./dist/database.browser.esm.js",
+      "require": "./dist/database.browser.cjs",
+      "script": "./dist/database.browser.iife.js"
+    },
+    "./index/browser": {
+      "import": "./dist/index.browser.esm.js",
+      "require": "./dist/index.browser.cjs",
+      "script": "./dist/index.browser.iife.js"
     }
   },
   "browser": "./dist/fireproof.browser.iife.js",
@@ -27,7 +45,8 @@
     "build:version": "node -p \"'export const PACKAGE_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
     "build": "npm run clean && node ./scripts/build.js",
     "build:types": "tsc --declaration --outDir dist/types && node ./scripts/types.js",
-    "prepublishOnly": "npm run build && npm run build:types && npm run build:version",
+    "prepublishOnly": "npm run build:all",
+    "build:all": "npm run build && npm run build:types && npm run build:version",
     "clean": "rm -rf dist/*",
     "start": "node ./scripts/serve.js",
     "analyze": "node ./scripts/analyze.js",

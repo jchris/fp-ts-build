@@ -41,7 +41,7 @@ export function createBuildSettings(options) {
 
     builds.push(esmConfig)
 
-    if (/fireproof/.test(entryPoint)) {
+    if (/fireproof\.|database\.|index\./.test(entryPoint)) {
       const cjsConfig = {
         ...commonSettings,
         outfile: `dist/${filename}.cjs`,
