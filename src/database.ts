@@ -1,6 +1,6 @@
 // @ts-ignore
 // import cargoQueue from 'async/cargoQueue'
-import { writeQueue } from './write-queue'
+import { WriteQueue, writeQueue } from './write-queue'
 import { CRDT } from './crdt'
 import { Doc, BulkResult, DocUpdate, DbResponse, ClockHead, ChangesResponse, MapFn, ListenerFn } from './types'
 
@@ -9,7 +9,7 @@ export class Database {
   config: object
   listeners: Set<ListenerFn> = new Set()
   _crdt: CRDT
-  _writeQueue: any
+  _writeQueue: WriteQueue
 
   constructor(name: string, config = { blocks: null }) {
     this.name = name
