@@ -1,9 +1,10 @@
 import { CarReader } from '@ipld/car'
 import { innerMakeCarFile, parseCarFile } from './loader-helpers'
 import { Transaction } from './transaction'
-import type { AnyBlock, AnyLink, BulkResult, CarCommit, DbCarHeader, IdxCarHeader, IdxMeta, IdxMetaMap } from './types'
+import type { AnyBlock, AnyCarHeader, AnyLink, BulkResult, CarCommit, DbCarHeader, IdxCarHeader, IdxMeta, IdxMetaMap } from './types'
 import { CID } from 'multiformats'
 import { CarStore, HeaderStore } from './store'
+import { encryptedMakeCarFile } from './encrypt-helpers'
 
 abstract class Loader {
   name: string
@@ -11,12 +12,12 @@ abstract class Loader {
   carStore: CarStore | undefined
   carLog: AnyLink[] = []
   carReaders: Map<string, CarReader> = new Map()
-  ready: Promise<DbCarHeader | IdxCarHeader>
+  ready: Promise<AnyCarHeader>
   key: string | undefined
   keyId: string | undefined
 
-  static defaultHeader: DbCarHeader | IdxCarHeader
-  abstract defaultHeader: DbCarHeader | IdxCarHeader
+  static defaultHeader: AnyCarHeader
+  abstract defaultHeader: AnyCarHeader
 
   constructor(name: string) {
     this.name = name
@@ -31,8 +32,8 @@ abstract class Loader {
   async commit(t: Transaction, done: IndexerResult | BulkResult, compact: boolean = false): Promise<AnyLink> {
     await this.ready
     if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
-    const fp = this.makeCarHeader(t, done, this.carLog, compact)
-    const { cid, bytes } = await innerMakeCarFile(fp, t)
+    const fp = this.makeCarHeader(done, this.carLog, compact)
+    const { cid, bytes } = this.key ? await encryptedMakeCarFile(this.key, fp, t) : await innerMakeCarFile(fp, t)
     await this.carStore.save({ cid, bytes })
     if (compact) {
       for (const cid of this.carLog) {
@@ -61,11 +62,10 @@ abstract class Loader {
   }
 
   protected abstract makeCarHeader(
-    _t: Transaction,
     _result: BulkResult | IndexerResult,
     _cars: AnyLink[],
     _compact: boolean
-  ): DbCarHeader | IdxCarHeader;
+  ): AnyCarHeader;
 
   protected async loadCar(cid: AnyLink): Promise<CarReader> {
     if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
@@ -78,7 +78,7 @@ abstract class Loader {
     return reader
   }
 
-  protected async ingestCarHead(cid?: AnyLink): Promise<DbCarHeader | IdxCarHeader> {
+  protected async ingestCarHead(cid?: AnyLink): Promise<AnyCarHeader> {
     if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
     if (!cid) return this.defaultHeader
     const car = await this.carStore.load(cid)
@@ -103,7 +103,7 @@ abstract class Loader {
     }
   }
 
-  // protected abstract defaultCarHeader(): DbCarHeader | IdxCarHeader
+  // protected abstract defaultCarHeader(): AnyCarHeader
 }
 
 export class DbLoader extends Loader {
@@ -113,7 +113,6 @@ export class DbLoader extends Loader {
   defaultHeader = DbLoader.defaultHeader
 
   protected makeCarHeader(
-    t: Transaction,
     result: BulkResult,
     cars: AnyLink[],
     compact: boolean = false
@@ -122,10 +121,6 @@ export class DbLoader extends Loader {
     if (!head) throw new Error('no head')
     return compact ? { head, cars: [], compact: cars } : { head, cars, compact: [] }
   }
-
-  // protected defaultCarHeader(): DbCarHeader {
-  //   return { head: [], cars: [], compact: [] }
-  // }
 }
 
 export class IdxLoader extends Loader {
@@ -135,7 +130,6 @@ export class IdxLoader extends Loader {
   defaultHeader = IdxLoader.defaultHeader
 
   protected makeCarHeader(
-    t: Transaction,
     result: IndexerResult,
     cars: AnyLink[],
     compact: boolean = false
@@ -143,10 +137,6 @@ export class IdxLoader extends Loader {
     const indexes = result.indexes
     return compact ? { indexes, cars: [], compact: cars } : { indexes, cars, compact: [] }
   }
-
-  // protected defaultCarHeader(): IdxCarHeader {
-  //   return { cars: [], compact: [], indexes: new Map() }
-  // }
 }
 
 type IndexerResult = CarCommit & IdxMetaMap

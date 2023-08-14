@@ -65,10 +65,6 @@ type CarHeader = {
   compact: AnyLink[]
 }
 
-export type DbCarHeader = CarHeader & {
-  head: ClockHead
-}
-
 export type IdxMeta = {
   byId: AnyLink
   byKey: AnyLink
@@ -82,6 +78,12 @@ type IdxMetaMap = {
 }
 
 export type IdxCarHeader = CarHeader & IdxMetaMap
+
+export type DbCarHeader = CarHeader & {
+  head: ClockHead
+}
+
+export type AnyCarHeader = DbCarHeader | IdxCarHeader
 
 export type QueryOpts = {
   descending?: boolean
@@ -104,5 +106,4 @@ export type DbMeta = { car: AnyLink, key: string | null }
 
 export interface CarMakeable {
   entries(): Iterable<AnyBlock>
-  put(cid: AnyLink, bytes: Uint8Array): Promise<void>
 }

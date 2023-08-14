@@ -2,11 +2,16 @@
 import { CID } from 'multiformats'
 import { Block } from 'multiformats/block'
 import { sha256 } from 'multiformats/hashes/sha2'
-import { encrypt, decrypt } from '../crypto' // Adjusted path to crypto utilities
+// import { encrypt, decrypt } from '../crypto' // Adjusted path to crypto utilities
 import { Buffer } from 'buffer'
 import { bf as chunker } from 'prolly-trees/utils'
 import { nocache as cache } from 'prolly-trees/cache'
 import { innerMakeCarFile } from './loader-helpers' // Import the existing function
+import { AnyBlock, CarMakeable, AnyCarHeader } from './types'
+
+export async function encryptedMakeCarFile(key: string, fp: AnyCarHeader, t: CarMakeable): Promise<AnyBlock> {
+  throw new Error('not implemented')
+}
 
 export async function blocksToEncryptedCarBlock(
   innerBlockStoreClockRootCid: CID,
