@@ -1,26 +1,36 @@
-// @ts-nocheck
 import * as codec from './encrypted-block.js'
-import {
-  create,
-  load
-} from 'prolly-trees/cid-set'
-import { CID } from 'multiformats'
+// @ts-ignore
+import { create, load } from 'prolly-trees/cid-set'
+import { CID, MultihashHasher, ToString } from 'multiformats'
 import { encode, decode, create as mfCreate } from 'multiformats/block'
 import * as dagcbor from '@ipld/dag-cbor'
-import { sha256 as hasher } from 'multiformats/hashes/sha2'
+// import { sha256 as hasher } from 'multiformats/hashes/sha2'
+import { AnyBlock, AnyDecodedBlock, AnyLink } from './types.js'
 
-const createBlock = (bytes, cid) => mfCreate({ cid, bytes, hasher, codec })
+// const createBlock = (bytes: Uint8Array, cid: AnyLink) => mfCreate({ cid, bytes, hasher, codec })
 
-const encrypt = async function * ({ get, cids, hasher, key, cache, chunker, root }) {
-  const set = new Set()
+const encrypt = async function * ({
+  get, cids, hasher,
+  key, cache, chunker, root
+}:
+  {
+    get: (cid: AnyLink) => Promise<AnyBlock | undefined>,
+    key: Buffer, cids: AnyLink[], hasher: MultihashHasher<number>
+    chunker: (bytes: Uint8Array) => AsyncGenerator<Uint8Array>,
+    cache: (cid: AnyLink) => Promise<AnyBlock>,
+    root: AnyLink
+  }): AsyncGenerator<any, void, unknown> {
+  const set = new Set<ToString<AnyLink>>()
   let eroot
-  for (const string of cids) {
-    const cid = CID.parse(string)
-    let unencrypted = await get(cid)
-    if (!unencrypted.cid) {
-      unencrypted = { cid, bytes: unencrypted }
-    }
-    // console.log('unencrypted', unencrypted)
+  for (const cid of cids) {
+    // console.log('string', string.constructor, string)
+    // const cid = CID.parse(string)
+    const unencrypted = await get(cid)
+    // if (!unencrypted.cid) {
+    //   unencrypted = { cid, bytes: unencrypted }
+    // }
+    if (!unencrypted) throw new Error('missing cid: ' + cid.toString())
+    console.log('unencrypted', unencrypted)
     const block = await encode({ ...await codec.encrypt({ ...unencrypted, key }), codec, hasher })
     // console.log(`encrypting ${string} as ${block.cid}`)
     yield block
@@ -40,20 +50,34 @@ const encrypt = async function * ({ get, cids, hasher, key, cache, chunker, root
   yield block
 }
 
-const decrypt = async function * ({ root, get, key, cache, chunker, hasher }) {
-  const o = { ...await get(root), codec: dagcbor, hasher }
-  const decodedRoot = await decode(o)
+const decrypt = async function * ({ root, get, key, cache, chunker, hasher }: {
+  root: AnyLink,
+  get: (cid: AnyLink) => Promise<AnyBlock | undefined>,
+  key: Buffer,
+  cache: (cid: AnyLink) => Promise<AnyBlock>,
+  chunker: (bytes: Uint8Array) => AsyncGenerator<Uint8Array>,
+  hasher: MultihashHasher<number>
+}): AsyncGenerator<AnyBlock, void, undefined> {
+  const got = await get(root)
+  if (!got) throw new Error('missing root')
+  if (!got.bytes) throw new Error('missing bytes')
+  const o = { ...got, codec: dagcbor, hasher }!
+  const decodedRoot = await decode(o) as { value: [AnyLink, AnyLink] }
   // console.log('decodedRoot', decodedRoot)
   const { value: [eroot, tree] } = decodedRoot
-  const rootBlock = await get(eroot) // should I decrypt?
+  const rootBlock = await get(eroot) as AnyDecodedBlock
+  if (!rootBlock) throw new Error('missing root block')
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const cidset = await load({ cid: tree, get, cache, chunker, codec, hasher })
-  const { result: nodes } = await cidset.getAllEntries()
-  const unwrap = async (eblock) => {
-    const { bytes, cid } = await codec.decrypt({ ...eblock, key }).catch(e => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+  const { result: nodes } = await cidset.getAllEntries() as { result: { cid: CID }[] }
+  const unwrap = async (eblock: AnyBlock | undefined) => {
+    if (!eblock) throw new Error('missing block')
+    const { bytes, cid } = await codec.decrypt({ ...eblock as AnyDecodedBlock, key }).catch(e => {
       // console.log('ekey', e)
       throw new Error('bad key: ' + key.toString('hex'))
     })
-    const block = await createBlock(bytes, cid)
+    const block = await mfCreate({ cid, bytes, hasher, codec })
     return block
   }
   const promises = []

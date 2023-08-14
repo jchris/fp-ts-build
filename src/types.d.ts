@@ -1,7 +1,6 @@
 import type { Link } from 'multiformats'
 import type { EventLink } from '@alanshaw/pail/clock'
 import type { EventData } from '@alanshaw/pail/crdt'
-import { AnyBlock, AnyLink } from './types'
 
 export type ClockHead = EventLink<EventData>[]
 
@@ -96,6 +95,8 @@ export type QueryOpts = {
 
 export type AnyLink = Link<unknown, number, number, 1 | 0>
 export type AnyBlock = { cid: AnyLink; bytes: Uint8Array }
+export type AnyDecodedBlock = { cid: AnyLink; bytes: Uint8Array, value: any }
+
 export type BlockFetcher = { get: (link: AnyLink) => Promise<AnyBlock | undefined> }
 
 type CallbackFn = (k: string, v: DocFragment) => void

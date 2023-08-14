@@ -107,6 +107,7 @@
     "@alanshaw/pail": "^0.3.3",
     "@ipld/dag-cbor": "^9.0.3",
     "@ipld/dag-json": "^10.1.2",
+    "@peculiar/webcrypto": "^1.4.3",
     "async": "^3.2.4",
     "async-es": "^3.2.4",
     "charwise": "^3.0.1",

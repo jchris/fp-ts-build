@@ -15,7 +15,7 @@ export async function innerMakeCarFile(fp: AnyCarHeader, t: Transaction): Promis
   return encodeCarFile(cid, t)
 }
 
-async function encodeCarFile(carHeaderBlockCid: AnyLink, t: CarMakeable): Promise<AnyBlock> {
+export async function encodeCarFile(carHeaderBlockCid: AnyLink, t: CarMakeable): Promise<AnyBlock> {
   let size = 0
   const headerSize = CBW.headerLength({ roots: [carHeaderBlockCid as CID<unknown, number, number, 1>] })
   size += headerSize

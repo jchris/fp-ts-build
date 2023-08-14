@@ -5,6 +5,7 @@ import type { AnyBlock, AnyCarHeader, AnyLink, BulkResult, CarCommit, DbCarHeade
 import { CID } from 'multiformats'
 import { CarStore, HeaderStore } from './store'
 import { encryptedMakeCarFile } from './encrypt-helpers'
+import { randomBytes } from './encrypted-block'
 
 abstract class Loader {
   name: string
@@ -25,7 +26,10 @@ abstract class Loader {
     this.ready = this.initializeStores().then(async () => {
       if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
       const meta = await this.headerStore.load('main')
-      if (meta) { return await this.ingestCarHeadFromMeta(meta) } else { return this.defaultHeader }
+      if (meta) { return await this.ingestCarHeadFromMeta(meta) } else {
+        this.setKey(randomBytes(32).toString('hex'))
+        return this.defaultHeader
+      }
     })
   }
 
@@ -43,7 +47,7 @@ abstract class Loader {
     } else {
       this.carLog.push(cid)
     }
-    await this.headerStore.save({ car: cid, key: null })
+    await this.headerStore.save({ car: cid, key: this.key || null })
     return cid
   }
 
@@ -74,11 +78,15 @@ abstract class Loader {
     return reader
   }
 
+  protected setKey(key: string) {
+    this.key = key
+    this.keyId = key.split('').reverse().join('')
+  }
+
   protected async ingestCarHeadFromMeta({ car: cid, key }: DbMeta): Promise<AnyCarHeader> {
     if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
     if (key) {
-      this.key = key
-      this.keyId = key.split('').reverse().join('')
+      this.setKey(key)
     }
     const car = await this.carStore.load(cid)
     const reader = await CarReader.fromBytes(car.bytes)
