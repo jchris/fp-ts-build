@@ -1,7 +1,7 @@
 import { CarReader } from '@ipld/car'
 import { innerMakeCarFile, parseCarFile } from './loader-helpers'
 import { Transaction } from './transaction'
-import type { AnyBlock, AnyLink, BulkResult, CarCommit, DbCarHeader, IdxCarHeader, IdxMetaMap } from './types'
+import type { AnyBlock, AnyLink, BulkResult, CarCommit, DbCarHeader, IdxCarHeader, IdxMeta, IdxMetaMap } from './types'
 import { CID } from 'multiformats'
 import { CarStore, HeaderStore } from './store'
 
@@ -14,6 +14,9 @@ abstract class Loader {
   ready: Promise<DbCarHeader | IdxCarHeader>
   key: string | undefined
   keyId: string | undefined
+
+  static defaultHeader: DbCarHeader | IdxCarHeader
+  abstract defaultHeader: DbCarHeader | IdxCarHeader
 
   constructor(name: string) {
     this.name = name
@@ -77,7 +80,7 @@ abstract class Loader {
 
   protected async ingestCarHead(cid?: AnyLink): Promise<DbCarHeader | IdxCarHeader> {
     if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
-    if (!cid) return this.defaultCarHeader()
+    if (!cid) return this.defaultHeader
     const car = await this.carStore.load(cid)
     const reader = await CarReader.fromBytes(car.bytes)
     this.carReaders.set(cid.toString(), reader)
@@ -100,11 +103,14 @@ abstract class Loader {
     }
   }
 
-  protected abstract defaultCarHeader(): DbCarHeader | IdxCarHeader
+  // protected abstract defaultCarHeader(): DbCarHeader | IdxCarHeader
 }
 
 export class DbLoader extends Loader {
   declare ready: Promise<DbCarHeader> // todo this will be a map of headers by branch name
+
+  static defaultHeader = { cars: [], compact: [], head: [] }
+  defaultHeader = DbLoader.defaultHeader
 
   protected makeCarHeader(
     t: Transaction,
@@ -117,13 +123,16 @@ export class DbLoader extends Loader {
     return compact ? { head, cars: [], compact: cars } : { head, cars, compact: [] }
   }
 
-  protected defaultCarHeader(): DbCarHeader {
-    return { head: [], cars: [], compact: [] }
-  }
+  // protected defaultCarHeader(): DbCarHeader {
+  //   return { head: [], cars: [], compact: [] }
+  // }
 }
 
 export class IdxLoader extends Loader {
   declare ready: Promise<IdxCarHeader>
+
+  static defaultHeader = { cars: [], compact: [], indexes: new Map() as Map<string, IdxMeta> }
+  defaultHeader = IdxLoader.defaultHeader
 
   protected makeCarHeader(
     t: Transaction,
@@ -135,9 +144,9 @@ export class IdxLoader extends Loader {
     return compact ? { indexes, cars: [], compact: cars } : { indexes, cars, compact: [] }
   }
 
-  protected defaultCarHeader(): IdxCarHeader {
-    return { cars: [], compact: [], indexes: new Map() }
-  }
+  // protected defaultCarHeader(): IdxCarHeader {
+  //   return { cars: [], compact: [], indexes: new Map() }
+  // }
 }
 
 type IndexerResult = CarCommit & IdxMetaMap

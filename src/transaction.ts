@@ -29,17 +29,15 @@ abstract class FireproofBlockstore implements BlockFetcher {
 
   private transactions: Set<Transaction> = new Set()
 
-  constructor(name: string | null, loaderFactory: (name: string) => DbLoader | IdxLoader, defaultHeader: () => DbCarHeader | IdxCarHeader) {
+  constructor(name: string | null, LoaderClass: typeof DbLoader | typeof IdxLoader) {
     if (name) {
       this.name = name
-      this.loader = loaderFactory(name)
+      this.loader = new LoaderClass(name)
       this.ready = this.loader.ready
     } else {
-      this.ready = Promise.resolve(defaultHeader())
+      this.ready = Promise.resolve(LoaderClass.defaultHeader as DbCarHeader | IdxCarHeader)
     }
   }
-
-  abstract commit(_t: Transaction, _done: IdxMeta | BulkResult, _indexes?: Map<string, IdxMeta>): Promise<AnyLink | undefined>
 
   abstract transaction(fn: (t: Transaction) => Promise<IdxMeta | BulkResult>, indexes?: Map<string, IdxMeta>): Promise<BulkResultCar | IdxMetaCar>
 
@@ -90,17 +88,13 @@ export class IndexBlockstore extends FireproofBlockstore {
   declare ready: Promise<IdxCarHeader>
 
   constructor(name?: string) {
-    super(name || null, (name) => new IdxLoader(name), () => ({ cars: [], compact: [], indexes: new Map() as Map<string, IdxMeta> }))
-  }
-
-  async commit(t: Transaction, _done: IdxMeta, indexes: Map<string, IdxMeta>): Promise<AnyLink | undefined> {
-    return await this.loader?.commit(t, { indexes })
+    super(name || null, IdxLoader)
   }
 
   async transaction(fn: (t: Transaction) => Promise<IdxMeta>, indexes: Map<string, IdxMeta>): Promise<IdxMetaCar> {
     return this.executeTransaction(fn, async (t, done) => {
       indexes.set(done.name, done)
-      const car = await this.commit(t, done, indexes)
+      const car = await this.loader?.commit(t, { indexes })
       return { car, done }
     })
   }
@@ -111,16 +105,12 @@ export class TransactionBlockstore extends FireproofBlockstore {
 
   constructor(name?: string) {
     // todo this will be a map of headers by branch name
-    super(name || null, (name) => new DbLoader(name), () => ({ cars: [], compact: [], head: [] }))
-  }
-
-  async commit(t: Transaction, done: BulkResult, _indexes?: Map<string, any>): Promise<AnyLink | undefined> {
-    return await this.loader?.commit(t, done)
+    super(name || null, DbLoader)
   }
 
   async transaction(fn: (t: Transaction) => Promise<BulkResult>): Promise<BulkResultCar> {
     return this.executeTransaction(fn, async (t, done) => {
-      const car = await this.commit(t, done) as AnyLink
+      const car = await this.loader?.commit(t, done)
       return { car, done }
     })
   }
