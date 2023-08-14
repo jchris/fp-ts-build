@@ -1,6 +1,7 @@
 import type { Link } from 'multiformats'
 import type { EventLink } from '@alanshaw/pail/clock'
 import type { EventData } from '@alanshaw/pail/crdt'
+import { AnyBlock, AnyLink } from './types'
 
 export type ClockHead = EventLink<EventData>[]
 
@@ -100,3 +101,8 @@ type CallbackFn = (k: string, v: DocFragment) => void
 export type MapFn = (doc: Doc, map: CallbackFn) => DocFragment | void
 
 export type DbMeta = { car: AnyLink }
+
+export interface CarMakeable {
+  entries(): Iterable<AnyBlock>
+  put(cid: AnyLink, bytes: Uint8Array): Promise<void>
+}

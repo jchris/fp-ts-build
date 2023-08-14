@@ -6,10 +6,9 @@ import * as CBW from '@ipld/car/buffer-writer'
 import * as codec from '@ipld/dag-cbor'
 import { CarReader } from '@ipld/car'
 
-import { Transaction } from './transaction'
-import { AnyBlock, DbCarHeader, IdxCarHeader } from './types'
+import { AnyBlock, DbCarHeader, IdxCarHeader, CarMakeable } from './types'
 
-export async function innerMakeCarFile(fp: DbCarHeader|IdxCarHeader, t: Transaction) {
+export async function innerMakeCarFile(fp: DbCarHeader|IdxCarHeader, t: CarMakeable) {
   const fpCarHeaderBlock = (await encode({
     value: { fp },
     hasher,

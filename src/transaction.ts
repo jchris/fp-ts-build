@@ -1,12 +1,12 @@
 import { MemoryBlockstore } from '@alanshaw/pail/block'
 import {
   BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead,
-  DbCarHeader, IdxCarHeader, IdxMeta, CarCommit
+  DbCarHeader, IdxCarHeader, IdxMeta, CarCommit, CarMakeable
 } from './types'
 import { DbLoader, IdxLoader } from './loader'
 import { CID } from 'multiformats'
 
-export class Transaction extends MemoryBlockstore {
+export class Transaction extends MemoryBlockstore implements CarMakeable {
   constructor(private parent: BlockFetcher) {
     super()
     this.parent = parent
