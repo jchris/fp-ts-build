@@ -106,4 +106,5 @@ export type DbMeta = { car: AnyLink, key: string | null }
 
 export interface CarMakeable {
   entries(): Iterable<AnyBlock>
+  get(cid: AnyLink): Promise<AnyBlock | undefined>
 }

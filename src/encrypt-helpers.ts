@@ -2,15 +2,47 @@
 import { CID } from 'multiformats'
 import { Block } from 'multiformats/block'
 import { sha256 } from 'multiformats/hashes/sha2'
-// import { encrypt, decrypt } from '../crypto' // Adjusted path to crypto utilities
+import { encrypt, decrypt } from './crypto'
 import { Buffer } from 'buffer'
-import { bf as chunker } from 'prolly-trees/utils'
+import { bf } from 'prolly-trees/utils'
 import { nocache as cache } from 'prolly-trees/cache'
-import { innerMakeCarFile } from './loader-helpers' // Import the existing function
-import { AnyBlock, CarMakeable, AnyCarHeader } from './types'
+import { innerMakeCarFile, encodeCarHeader, encodeCarFile } from './loader-helpers' // Import the existing function
+import type { AnyBlock, CarMakeable, AnyCarHeader } from './types'
+import type { Transaction } from './transaction'
 
-export async function encryptedMakeCarFile(key: string, fp: AnyCarHeader, t: CarMakeable): Promise<AnyBlock> {
-  throw new Error('not implemented')
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+const chunker = bf(30)
+
+export async function encryptedMakeCarFile(key: string, fp: AnyCarHeader, t: Transaction): Promise<AnyBlock> {
+  const { cid, bytes } = await encodeCarHeader(fp)
+  await t.put(cid, bytes)
+  return encryptedEncodeCarFile(cid, t)
+}
+
+async function encryptedEncodeCarFile(key: string, rootCid: AnyLink, t: CarMakeable): Promise<AnyBlock> {
+  const encryptionKey = Buffer.from(key, 'hex')
+  const encryptedBlocks: Block[] = []
+
+  const cidsToEncrypt = [] as AnyLink[]
+  for (const { cid } of t.entries()) {
+    cidsToEncrypt.push(cid)
+  }
+
+  let last: Block
+  for await (const block of encrypt({
+    cids: cidsToEncrypt,
+    get: async (cid: CID) => {
+      return t.get(cid)
+    },
+    key: encryptionKey,
+    hasher: sha256,
+    chunker,
+    cache,
+    root: rootCid
+  })) {
+    encryptedBlocks.push(block)
+    last = block
+  }
 }
 
 export async function blocksToEncryptedCarBlock(

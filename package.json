@@ -53,7 +53,6 @@
     "test:watch": "nodemon -w src -w test -e ts,js --exec \"npm run build && npm run test:node\"",
     "test:node": "node ./scripts/test.js",
     "test:browser": "node ./scripts/browser-test.js",
-
     "test:coverage": "c8 --reporter=html --include='dist/*' node ./scripts/test.js && open coverage/src/index.html",
     "test": "npm run build && npm run test:node && npm run test:browser && tsc",
     "lint": "eslint 'src/**/*.{js,ts}'",
@@ -112,6 +111,7 @@
     "async-es": "^3.2.4",
     "charwise": "^3.0.1",
     "idb": "^7.1.1",
+    "js-crypto-aes": "^1.0.4",
     "multiformats": "^12.0.1",
     "prolly-trees": "^1.0.4"
   }
