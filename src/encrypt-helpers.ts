@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { CID } from 'multiformats'
 import { Block } from 'multiformats/block'
 import { sha256 } from 'multiformats/hashes/sha2'
@@ -5,7 +6,7 @@ import { encrypt, decrypt } from '../crypto' // Adjusted path to crypto utilitie
 import { Buffer } from 'buffer'
 import { bf as chunker } from 'prolly-trees/utils'
 import { nocache as cache } from 'prolly-trees/cache'
-import { blocksToCarBlock } from './loader-helpers' // Import the existing function
+import { innerMakeCarFile } from './loader-helpers' // Import the existing function
 
 export async function blocksToEncryptedCarBlock(
   innerBlockStoreClockRootCid: CID,
@@ -34,7 +35,7 @@ export async function blocksToEncryptedCarBlock(
     last = block
   }
 
-  const encryptedCar = await blocksToCarBlock(last.cid, encryptedBlocks)
+  const encryptedCar = await innerMakeCarFile(last.cid, encryptedBlocks)
   return encryptedCar
 } // Assuming separate chunking utilities
 

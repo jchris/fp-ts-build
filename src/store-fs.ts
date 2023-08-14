@@ -10,18 +10,18 @@ export class HeaderStore extends HeaderStoreBase {
   keyId: string = 'public'
   dataDir: string = join(homedir(), '.fireproof', 'v' + this.VERSION)
 
-  async load(branch: string = 'main'): Promise<DbMeta|null> {
+  async load(branch: string = 'main'): Promise<DbMeta | null> {
     const filepath = join(this.dataDir, this.name, branch + '.json')
-    const bytes = await readFile(filepath).catch((e: Error & { code: string}) => {
+    const bytes = await readFile(filepath).catch((e: Error & { code: string }) => {
       if (e.code === 'ENOENT') return null
       throw e
     })
     return bytes ? this.parseHeader(bytes.toString()) : null
   }
 
-  async save(carCid: AnyLink, branch: string = 'main'): Promise<void> {
+  async save(meta: DbMeta, branch: string = 'main'): Promise<void> {
     const filepath = join(this.dataDir, this.name, branch + '.json')
-    const bytes = this.makeHeader(carCid)
+    const bytes = this.makeHeader(meta)
     await writePathFile(filepath, bytes)
   }
 }

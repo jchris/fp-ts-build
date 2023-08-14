@@ -12,26 +12,13 @@ abstract class Loader {
   carLog: AnyLink[] = []
   carReaders: Map<string, CarReader> = new Map()
   ready: Promise<DbCarHeader | IdxCarHeader>
+  key: string | undefined
+  keyId: string | undefined
 
   constructor(name: string) {
     this.name = name
 
-    const initializePromise = new Promise<void>((resolve, reject) => {
-      const isBrowser = typeof window !== 'undefined'
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const module = isBrowser ? require('./store-browser') : require('./store-fs')
-      if (module) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        this.headerStore = new module.HeaderStore(name) as HeaderStore
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        this.carStore = new module.CarStore(name) as CarStore
-        resolve()
-      } else {
-        reject(new Error('Failed to initialize stores.'))
-      }
-    })
-
-    this.ready = initializePromise.then(async () => {
+    this.ready = this.initializeStores().then(async () => {
       if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
       const header = await this.headerStore.load('main')
       return await this.ingestCarHead(header?.car)
@@ -52,8 +39,22 @@ abstract class Loader {
     } else {
       this.carLog.push(cid)
     }
-    await this.headerStore.save(cid)
+    await this.headerStore.save({ car: cid, key: null })
     return cid
+  }
+
+  protected async initializeStores() {
+    const isBrowser = typeof window !== 'undefined'
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const module = isBrowser ? await require('./store-browser') : await require('./store-fs')
+    if (module) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      this.headerStore = new module.HeaderStore(this.name) as HeaderStore
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      this.carStore = new module.CarStore(this.name) as CarStore
+    } else {
+      throw new Error('Failed to initialize stores.')
+    }
   }
 
   protected abstract makeCarHeader(

@@ -100,7 +100,7 @@ type CallbackFn = (k: string, v: DocFragment) => void
 
 export type MapFn = (doc: Doc, map: CallbackFn) => DocFragment | void
 
-export type DbMeta = { car: AnyLink }
+export type DbMeta = { car: AnyLink, key: string | null }
 
 export interface CarMakeable {
   entries(): Iterable<AnyBlock>

@@ -57,7 +57,6 @@ abstract class FireproofBlockstore implements BlockFetcher {
     return await this.loader.getBlock(cid as CID)
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
   async commitCompaction(t: Transaction, head: ClockHead) {
     this.transactions.clear()
     this.transactions.add(t)

@@ -18,8 +18,8 @@ export abstract class HeaderStore extends VersionedStore {
     this.name = name
   }
 
-  makeHeader(car: AnyLink): ToString<DbMeta> {
-    const encoded = format({ car } as DbMeta)
+  makeHeader({ car, key }: DbMeta): ToString<DbMeta> {
+    const encoded = format({ car, key } as DbMeta)
     return encoded
   }
 
@@ -29,7 +29,7 @@ export abstract class HeaderStore extends VersionedStore {
   }
 
   abstract load(branch?: string): Promise<DbMeta | null>
-  abstract save(carCid: AnyLink, branch?: string): Promise<void>
+  abstract save(dbMeta: DbMeta, branch?: string): Promise<void>
 }
 
 export abstract class CarStore extends VersionedStore {
