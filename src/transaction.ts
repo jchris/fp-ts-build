@@ -6,11 +6,6 @@ import {
 import { DbLoader, IdxLoader } from './loader'
 import { CID } from 'multiformats'
 
-/** forked from
- * https://github.com/alanshaw/pail/blob/main/src/block.js
- * thanks Alan
-**/
-
 export class Transaction extends MemoryBlockstore {
   constructor(private parent: BlockFetcher) {
     super()
@@ -69,10 +64,6 @@ abstract class FireproofBlockstore implements BlockFetcher {
     return await this.loader?.commit(t, { head }, true)
   }
 
-  addTransaction(t: Transaction) {
-    this.transactions.add(t)
-  }
-
   async * entries(): AsyncIterableIterator<AnyBlock> {
     const seen: Set<string> = new Set()
     for (const t of this.transactions) {
@@ -89,7 +80,7 @@ abstract class FireproofBlockstore implements BlockFetcher {
     commitHandler: (t: Transaction, done: T) => Promise<{ car?: AnyLink, done: R }>
   ): Promise<R> {
     const t = new Transaction(this)
-    this.addTransaction(t)
+    this.transactions.add(t)
     const done: T = await fn(t)
     const { car, done: result } = await commitHandler(t, done)
     return car ? { ...result, car } : result
