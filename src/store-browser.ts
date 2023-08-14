@@ -1,6 +1,4 @@
 import { openDB, IDBPDatabase } from 'idb'
-// import { Buffer } from 'buffer'
-
 import { AnyBlock, AnyLink, DbMeta } from './types'
 import { CarStore as CarStoreBase, HeaderStore as HeaderStoreBase } from './store'
 
