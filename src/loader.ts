@@ -1,7 +1,11 @@
 import { CarReader } from '@ipld/car'
 import { innerMakeCarFile, parseCarFile } from './loader-helpers'
 import { Transaction } from './transaction'
-import type { AnyBlock, AnyCarHeader, AnyLink, BulkResult, CarCommit, DbCarHeader, DbMeta, IdxCarHeader, IdxMeta, IdxMetaMap } from './types'
+import type {
+  AnyBlock, AnyCarHeader, AnyLink, BulkResult,
+  CarCommit, DbCarHeader, DbMeta, IdxCarHeader,
+  IdxMeta, IdxMetaMap
+} from './types'
 import { CID } from 'multiformats'
 import { CarStore, HeaderStore } from './store'
 import { encryptedMakeCarFile } from './encrypt-helpers'
@@ -26,29 +30,34 @@ abstract class Loader {
     this.ready = this.initializeStores().then(async () => {
       if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
       const meta = await this.headerStore.load('main')
-      if (meta) { return await this.ingestCarHeadFromMeta(meta) } else {
-        this.setKey(randomBytes(32).toString('hex'))
-        return this.defaultHeader
-      }
+      return await this.ingestCarHeadFromMeta(meta)
     })
   }
 
   async commit(t: Transaction, done: IndexerResult | BulkResult, compact: boolean = false): Promise<AnyLink> {
     await this.ready
-    if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
     const fp = this.makeCarHeader(done, this.carLog, compact)
     const { cid, bytes } = this.key ? await encryptedMakeCarFile(this.key, fp, t) : await innerMakeCarFile(fp, t)
-    await this.carStore.save({ cid, bytes })
+    await this.carStore!.save({ cid, bytes })
     if (compact) {
       for (const cid of this.carLog) {
-        await this.carStore.remove(cid)
+        await this.carStore!.remove(cid)
       }
       this.carLog.splice(0, this.carLog.length, cid)
     } else {
       this.carLog.push(cid)
     }
-    await this.headerStore.save({ car: cid, key: this.key || null })
+    await this.headerStore!.save({ car: cid, key: this.key || null })
     return cid
+  }
+
+  async getBlock(cid: CID): Promise<AnyBlock | undefined> {
+    for (const [, reader] of [...this.carReaders]) {
+      const block = await reader.get(cid)
+      if (block) {
+        return block
+      }
+    }
   }
 
   protected async initializeStores() {
@@ -83,14 +92,18 @@ abstract class Loader {
     this.keyId = key.split('').reverse().join('')
   }
 
-  protected async ingestCarHeadFromMeta({ car: cid, key }: DbMeta): Promise<AnyCarHeader> {
+  protected async ingestCarHeadFromMeta(meta: DbMeta | null): Promise<AnyCarHeader> {
     if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
+    if (!meta) {
+      // this.setKey(randomBytes(32).toString('hex'))
+      return this.defaultHeader
+    }
+    const { car: cid, key } = meta
+    console.log('ingesting car head from meta', { car: cid, key })
     if (key) {
       this.setKey(key)
-    }
-    const car = await this.carStore.load(cid)
-    const reader = await CarReader.fromBytes(car.bytes)
-    this.carReaders.set(cid.toString(), reader)
+    }// use loadCar
+    const reader = await this.loadCar(cid)
     this.carLog = [cid] // this.carLog.push(cid)
     const carHeader = await parseCarFile(reader)
     await this.getMoreReaders(carHeader.cars)
@@ -99,15 +112,6 @@ abstract class Loader {
 
   protected async getMoreReaders(cids: AnyLink[]) {
     await Promise.all(cids.map(cid => this.loadCar(cid)))
-  }
-
-  async getBlock(cid: CID): Promise<AnyBlock | undefined> {
-    for (const [, reader] of [...this.carReaders]) {
-      const block = await reader.get(cid)
-      if (block) {
-        return block
-      }
-    }
   }
 }
 

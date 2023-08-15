@@ -1,14 +1,15 @@
-// @ts-nocheck
 // from https://github.com/mikeal/encrypted-block
 // import randomBytes from 'randombytes'
 // import aes from 'js-crypto-aes'
-
+//
 import { Crypto } from '@peculiar/webcrypto'
+
+// import aes from 'browserify-aes'
 
 import { CID } from 'multiformats'
 import { Buffer } from 'buffer'
 
-import * as rbCrypto from 'crypto'
+// import * as rbCrypto from 'crypto'
 import { AnyLink } from './types'
 
 const crypto = new Crypto()
@@ -27,7 +28,7 @@ export function randomBytes(size: number) {
   return bytes
 }
 
-const enc32 = value => {
+const enc32 = (value: number) => {
   value = +value
   const buff = new Uint8Array(4)
   buff[3] = (value >>> 24)
@@ -45,6 +46,27 @@ const readUInt32LE = (buffer) => {
     (buffer[offset + 3] * 0x1000000)
 }
 
+// const concat = buffers => Uint8Array.from(buffers.map(b => [...b]).flat())
+
+// const concat = (buffers) => {
+//   const uint8Arrays = buffers.map(b => b instanceof ArrayBuffer ? new Uint8Array(b) : b)
+//   return Uint8Array.from(uint8Arrays.flat())
+// }
+
+const concat = (buffers) => {
+  const uint8Arrays = buffers.map(b => b instanceof ArrayBuffer ? new Uint8Array(b) : b)
+  const totalLength = uint8Arrays.reduce((sum, arr) => sum + arr.length, 0)
+  const result = new Uint8Array(totalLength)
+
+  let offset = 0
+  for (const arr of uint8Arrays) {
+    result.set(arr, offset)
+    offset += arr.length
+  }
+
+  return result
+}
+
 const encode = ({ iv, bytes }) => concat([iv, bytes])
 const decode = bytes => {
   const iv = bytes.subarray(0, 12)
@@ -54,30 +76,41 @@ const decode = bytes => {
 
 const code = 0x300000 + 1337
 
-const concat = buffers => Uint8Array.from(buffers.map(b => [...b]).flat())
-
-const decrypt = async ({ key, value }): Promise<{ cid: AnyLink, bytes: Uint8Array }> => {
+const decrypt = async ({ key, value }:
+  {key: ArrayBuffer, value: { bytes: Uint8Array, iv: Uint8Array}
+ }): Promise<{ cid: AnyLink, bytes: Uint8Array }> => {
   let { bytes, iv } = value
-  bytes = await aes.decrypt(bytes, key, { name: 'AES-GCM', iv, tagLength: 16 })
+  // const cryKey = await crypto.subtle.importKey(
+  //   'raw', // raw or jwk
+  //   key, // raw data
+  //   'AES-CTR',
+  //   false, // extractable
+  //   ['encrypt', 'decrypt']
+  // )
+  // console.log('aes', aes)
+  // bytes = await aes.decrypt(bytes, key, { name: 'AES-GCM', iv, tagLength: 16 })
   const len = readUInt32LE(bytes.subarray(0, 4))
   const cid = CID.decode(bytes.subarray(4, 4 + len))
   bytes = bytes.subarray(4 + len)
   return { cid, bytes }
 }
-const encrypt = async ({ key, cid, bytes }: { key: Uint8Array, cid: AnyLink, bytes: Uint8Array }) => {
+const encrypt = async ({ key, cid, bytes }: { key: Uint8Array, cid: AnyLink, bytes: ArrayBuffer }) => {
   const len = enc32(cid.bytes.byteLength)
   // console.log('len', len)
   // const iv = randomBytes(12)
   const iv = crypto.getRandomValues(new Uint8Array(12))
   const msg = concat([len, cid.bytes, bytes])
   try {
+    // console.log('key.length', key.length)
     const cryKey = await crypto.subtle.importKey(
       'raw', // raw or jwk
       key, // raw data
-      'AES-CTR',
+      // 'AES-CTR',
+      'AES-GCM',
       false, // extractable
       ['encrypt', 'decrypt']
     )
+    // console.log('cryKey', cryKey)
     bytes = await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
@@ -95,7 +128,9 @@ const encrypt = async ({ key, cid, bytes }: { key: Uint8Array, cid: AnyLink, byt
   return { value: { bytes, iv } }
 }
 
-const cryptoFn = key => {
+const cryptoFn = (key: Uint8Array) => {
+  // @ts-ignore
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   return { encrypt: opts => encrypt({ key, ...opts }), decrypt: opts => decrypt({ key, ...opts }) }
 }
 

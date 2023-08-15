@@ -15,7 +15,7 @@ const encrypt = async function * ({
 }:
   {
     get: (cid: AnyLink) => Promise<AnyBlock | undefined>,
-    key: Buffer, cids: AnyLink[], hasher: MultihashHasher<number>
+    key: ArrayBuffer, cids: AnyLink[], hasher: MultihashHasher<number>
     chunker: (bytes: Uint8Array) => AsyncGenerator<Uint8Array>,
     cache: (cid: AnyLink) => Promise<AnyBlock>,
     root: AnyLink
@@ -30,8 +30,14 @@ const encrypt = async function * ({
     //   unencrypted = { cid, bytes: unencrypted }
     // }
     if (!unencrypted) throw new Error('missing cid: ' + cid.toString())
-    console.log('unencrypted', unencrypted)
-    const block = await encode({ ...await codec.encrypt({ ...unencrypted, key }), codec, hasher })
+    // console.log('unencrypted', unencrypted)
+    const encrypted = await codec.encrypt({ ...unencrypted, key })
+    // console.log('encrypted', encrypted)
+
+    // const testConcat = codec.encode(encrypted.value)
+    // console.log('testConcat', testConcat)
+
+    const block = await encode({ ...encrypted, codec, hasher })
     // console.log(`encrypting ${string} as ${block.cid}`)
     yield block
     set.add(block.cid.toString())

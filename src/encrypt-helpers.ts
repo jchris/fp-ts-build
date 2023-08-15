@@ -1,4 +1,3 @@
-import { CID } from 'multiformats'
 // import { Block } from 'multiformats/block'
 import { sha256 } from 'multiformats/hashes/sha2'
 import { encrypt, decrypt } from './crypto'
@@ -22,7 +21,8 @@ export async function encryptedMakeCarFile(key: string, fp: AnyCarHeader, t: Tra
 }
 
 async function encryptedEncodeCarFile(key: string, rootCid: AnyLink, t: CarMakeable): Promise<AnyBlock> {
-  const encryptionKey = Buffer.from(key, 'hex')
+  const encryptionKeyBuffer = Buffer.from(key, 'hex')
+  const encryptionKey = encryptionKeyBuffer.buffer.slice(encryptionKeyBuffer.byteOffset, encryptionKeyBuffer.byteOffset + encryptionKeyBuffer.byteLength)
   const encryptedBlocks = new MemoryBlockstore()
   const cidsToEncrypt = [] as AnyLink[]
   for (const { cid } of t.entries()) {

@@ -110,6 +110,7 @@
     "@peculiar/webcrypto": "^1.4.3",
     "async": "^3.2.4",
     "async-es": "^3.2.4",
+    "browserify-aes": "^1.2.0",
     "charwise": "^3.0.1",
     "idb": "^7.1.1",
     "js-crypto-aes": "^1.0.4",
