@@ -36,17 +36,17 @@ export function createBuildSettings(options) {
       outfile: `dist/${filename}.esm.js`,
       format: 'esm',
       platform: 'node',
-      entryPoints: [entryPoint],
-      banner: {
-        js: `
-        import path from 'path';
-        import { fileURLToPath } from 'url';
-        import { createRequire as topLevelCreateRequire } from 'module';
-        const require = topLevelCreateRequire(import.meta.url);
-        const __filename = fileURLToPath(import.meta.url);
-        const __dirname = path.dirname(__filename);
-        `
-      }
+      entryPoints: [entryPoint]
+      // banner: {
+      //   js: `
+      //   import path from 'path';
+      //   import { fileURLToPath } from 'url';
+      //   import { createRequire as topLevelCreateRequire } from 'module';
+      //   const require = topLevelCreateRequire(import.meta.url);
+      //   const __filename = fileURLToPath(import.meta.url);
+      //   const __dirname = path.dirname(__filename);
+      //   `
+      // }
     }
 
     builds.push(esmConfig)
@@ -70,7 +70,9 @@ export function createBuildSettings(options) {
         target: 'es2015',
         entryPoints: [entryPoint],
         plugins: [
-          polyfillNode({}),
+          polyfillNode({
+            polyfills: { crypto: true, fs: true }
+          }),
           // alias({
           //   crypto: 'crypto-browserify'
           // }),
