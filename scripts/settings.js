@@ -71,9 +71,9 @@ export function createBuildSettings(options) {
         entryPoints: [entryPoint],
         plugins: [
           polyfillNode({}),
-          alias({
-            crypto: 'crypto-browserify'
-          }),
+          // alias({
+          //   crypto: 'crypto-browserify'
+          // }),
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           ...commonSettings.plugins
         ]

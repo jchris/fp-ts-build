@@ -11,7 +11,6 @@ import { encodeCarHeader, encodeCarFile } from './loader-helpers' // Import the 
 import type { AnyBlock, CarMakeable, AnyCarHeader, AnyLink, BlockFetcher } from './types'
 import type { Transaction } from './transaction'
 import { MemoryBlockstore } from '@alanshaw/pail/block'
-import type { CID } from 'multiformats'
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 const chunker = bf(30)
@@ -36,7 +35,9 @@ async function encryptedEncodeCarFile(key: string, rootCid: AnyLink, t: CarMakea
     get: t.get.bind(t),
     key: encryptionKey,
     hasher: sha256,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     chunker,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     cache,
     root: rootCid
   }) as AsyncGenerator<AnyBlock, void, unknown>) {
@@ -68,7 +69,9 @@ async function decodeCarBlocks(
     get,
     key: decryptionKey,
     hasher: sha256,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     chunker,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     cache
   })) {
     await decryptedBlocks.put(block.cid, block.bytes)

@@ -9,7 +9,7 @@ import type {
 import { CID } from 'multiformats'
 import { CarStore, HeaderStore } from './store'
 import { decodeEncryptedCar, encryptedMakeCarFile } from './encrypt-helpers'
-import { randomBytes } from './encrypted-block'
+import { getCrypto, randomBytes } from './encrypted-block'
 
 type LoaderOpts = {
   public?: boolean
@@ -112,7 +112,11 @@ abstract class Loader {
     if (!meta) {
       // generate a random key
       if (!this.opts.public) {
-        this.setKey(randomBytes(32).toString('hex'))
+        if (getCrypto()) {
+          this.setKey(randomBytes(32).toString('hex'))
+        } else {
+          console.warn('missing crypto module, using public mode')
+        }
       }
       return this.defaultHeader
     }
