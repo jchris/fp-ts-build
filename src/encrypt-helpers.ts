@@ -1,4 +1,5 @@
-// import { Block } from 'multiformats/block'
+import type { CarReader } from '@ipld/car'
+
 import { sha256 } from 'multiformats/hashes/sha2'
 import { encrypt, decrypt } from './crypto'
 import { Buffer } from 'buffer'
@@ -7,9 +8,10 @@ import { bf } from 'prolly-trees/utils'
 // @ts-ignore
 import { nocache as cache } from 'prolly-trees/cache'
 import { encodeCarHeader, encodeCarFile } from './loader-helpers' // Import the existing function
-import type { AnyBlock, CarMakeable, AnyCarHeader, AnyLink } from './types'
+import type { AnyBlock, CarMakeable, AnyCarHeader, AnyLink, BlockFetcher } from './types'
 import type { Transaction } from './transaction'
 import { MemoryBlockstore } from '@alanshaw/pail/block'
+import type { CID } from 'multiformats'
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 const chunker = bf(30)
@@ -46,56 +48,32 @@ async function encryptedEncodeCarFile(key: string, rootCid: AnyLink, t: CarMakea
   return encryptedCar
 }
 
-// export async function blocksToEncryptedCarBlock(
-//   innerBlockStoreClockRootCid: AnyLink,
-//   blocks: Map<AnyLink, AnyBlock>,
-//   keyMaterial: string,
-//   cids: AnyLink[]
-// ): Promise<AnyBlock> {
-//   const encryptionKey = Buffer.from(keyMaterial, 'hex')
-//   const encryptedBlocks = new MemoryBlockstore()
-//   let last: AnyBlock
+export async function decodeEncryptedCar(key: string, reader: CarReader) {
+  const roots = await reader.getRoots()
+  const root = roots[0]
+  return await decodeCarBlocks(root, reader.get.bind(reader), key)
+}
+async function decodeCarBlocks(
+  root: AnyLink,
+  get: (cid: any) => Promise<AnyBlock|undefined>,
+  keyMaterial: string
+): Promise<{ blocks: BlockFetcher; root: AnyLink }> {
+  const decryptionKeyBuffer = Buffer.from(keyMaterial, 'hex')
+  const decryptionKey = decryptionKeyBuffer.buffer.slice(decryptionKeyBuffer.byteOffset, decryptionKeyBuffer.byteOffset + decryptionKeyBuffer.byteLength)
 
-//   for await (const block of encrypt({
-//     cids,
-//     get: async (cid: CID) => {
-//       const got = blocks.get(cid)
-//       return got.block ? { cid, bytes: got.block } : got
-//     },
-//     key: encryptionKey,
-//     hasher: sha256,
-//     chunker,
-//     cache,
-//     root: innerBlockStoreClockRootCid
-//   })) {
-//     encryptedBlocks.push(block)
-//     last = block
-//   }
-
-//   const encryptedCar = await encodeCarFile(last.cid, encryptedBlocks)
-//   return encryptedCar
-// } // Assuming separate chunking utilities
-
-// async function blocksFromEncryptedCarBlock(
-//   cid: CID,
-//   get: (cid: CID) => Promise<AnyBlock>,
-//   keyMaterial: string
-// ): Promise<{ blocks: AnyBlock[]; cids: Set<string> }> {
-//   const decryptionKey = Buffer.from(keyMaterial, 'hex')
-//   const cids = new Set<string>()
-//   const decryptedBlocks: AnyBlock[] = []
-
-//   for await (const block of decrypt({
-//     root: cid,
-//     get,
-//     key: decryptionKey,
-//     chunker,
-//     hasher: sha256,
-//     cache
-//   })) {
-//     decryptedBlocks.push(block)
-//     cids.add(block.cid.toString())
-//   }
-
-//   return { blocks: decryptedBlocks, cids }
-// }
+  const decryptedBlocks = new MemoryBlockstore()
+  let last: AnyBlock | null = null
+  for await (const block of decrypt({
+    root,
+    get,
+    key: decryptionKey,
+    hasher: sha256,
+    chunker,
+    cache
+  })) {
+    await decryptedBlocks.put(block.cid, block.bytes)
+    last = block
+  }
+  if (!last) throw new Error('no blocks decrypted')
+  return { blocks: decryptedBlocks, root: last.cid }
+}

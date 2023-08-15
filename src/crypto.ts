@@ -59,36 +59,53 @@ const encrypt = async function * ({
 const decrypt = async function * ({ root, get, key, cache, chunker, hasher }: {
   root: AnyLink,
   get: (cid: AnyLink) => Promise<AnyBlock | undefined>,
-  key: Buffer,
+  key: ArrayBuffer,
   cache: (cid: AnyLink) => Promise<AnyBlock>,
   chunker: (bytes: Uint8Array) => AsyncGenerator<Uint8Array>,
   hasher: MultihashHasher<number>
 }): AsyncGenerator<AnyBlock, void, undefined> {
-  const got = await get(root)
-  if (!got) throw new Error('missing root')
-  if (!got.bytes) throw new Error('missing bytes')
-  const o = { ...got, codec: dagcbor, hasher }!
-  const decodedRoot = await decode(o) as { value: [AnyLink, AnyLink] }
+  const getWithDecode = async (cid: AnyLink) => get(cid).then(async (block) => {
+    if (!block) return
+    const decoded = await decode({ ...block, codec: dagcbor, hasher })
+    return decoded
+  })
+  const getWithDecrypt = async (cid: AnyLink) => get(cid).then(async (block) => {
+    if (!block) return
+    const decoded = await decode({ ...block, codec, hasher })
+    return decoded
+  })
+  const decodedRoot = await getWithDecode(root)
+  if (!decodedRoot) throw new Error('missing root')
+  if (!decodedRoot.bytes) throw new Error('missing bytes')
+  // const o = { ...got, codec: dagcbor, hasher }!
+  // const decodedRoot = await decode(o) as { value: [AnyLink, AnyLink] }
   // console.log('decodedRoot', decodedRoot)
-  const { value: [eroot, tree] } = decodedRoot
+  const { value: [eroot, tree] } = decodedRoot as { value: [AnyLink, AnyLink] }
   const rootBlock = await get(eroot) as AnyDecodedBlock
   if (!rootBlock) throw new Error('missing root block')
+
+  const rootTree = await get(tree) as AnyDecodedBlock
+
+  console.log('abou tot load CID set', rootBlock, rootTree)
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-  const cidset = await load({ cid: tree, get, cache, chunker, codec, hasher })
+  const cidset = await load({ cid: tree, get: getWithDecode, cache, chunker, codec, hasher })
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
   const { result: nodes } = await cidset.getAllEntries() as { result: { cid: CID }[] }
-  const unwrap = async (eblock: AnyBlock | undefined) => {
+  console.log('nodes', nodes)
+  const unwrap = async (eblock: AnyDecodedBlock | undefined) => {
     if (!eblock) throw new Error('missing block')
-    const { bytes, cid } = await codec.decrypt({ ...eblock as AnyDecodedBlock, key }).catch(e => {
-      // console.log('ekey', e)
-      throw new Error('bad key: ' + key.toString('hex'))
+    // console.log('unwrap', eblock)
+    if (!eblock.value) { eblock = await decode({ ...eblock, codec, hasher }) as AnyDecodedBlock }
+    const { bytes, cid } = await codec.decrypt({ ...eblock, key }).catch(e => {
+      console.log('ekey', e, key)
+      throw e
     })
     const block = await mfCreate({ cid, bytes, hasher, codec })
     return block
   }
   const promises = []
   for (const { cid } of nodes) {
-    if (!rootBlock.cid.equals(cid)) promises.push(get(cid).then(unwrap))
+    if (!rootBlock.cid.equals(cid)) promises.push(getWithDecrypt(cid).then(unwrap))
   }
   yield * promises
   yield unwrap(rootBlock)

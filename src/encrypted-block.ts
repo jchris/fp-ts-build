@@ -80,21 +80,33 @@ const decrypt = async ({ key, value }:
   {key: ArrayBuffer, value: { bytes: Uint8Array, iv: Uint8Array}
  }): Promise<{ cid: AnyLink, bytes: Uint8Array }> => {
   let { bytes, iv } = value
-  // const cryKey = await crypto.subtle.importKey(
-  //   'raw', // raw or jwk
-  //   key, // raw data
-  //   'AES-CTR',
-  //   false, // extractable
-  //   ['encrypt', 'decrypt']
-  // )
+  const cryKey = await crypto.subtle.importKey(
+    'raw', // raw or jwk
+    key, // raw data
+    // 'AES-CTR',
+    'AES-GCM',
+    false, // extractable
+    ['encrypt', 'decrypt']
+  )
+  bytes = await crypto.subtle.decrypt(
+    {
+      name: 'AES-GCM',
+      iv, // BufferSource
+      tagLength: 128 // 32, 64, 96, 104, 112, 120 or 128 (default)
+    },
+    cryKey, // AES key
+    bytes // BufferSource
+  )
   // console.log('aes', aes)
   // bytes = await aes.decrypt(bytes, key, { name: 'AES-GCM', iv, tagLength: 16 })
+  bytes = new Uint8Array(bytes)
+  console.log('bytes', bytes)
   const len = readUInt32LE(bytes.subarray(0, 4))
   const cid = CID.decode(bytes.subarray(4, 4 + len))
   bytes = bytes.subarray(4 + len)
   return { cid, bytes }
 }
-const encrypt = async ({ key, cid, bytes }: { key: Uint8Array, cid: AnyLink, bytes: ArrayBuffer }) => {
+const encrypt = async ({ key, cid, bytes }: { key: ArrayBuffer, cid: AnyLink, bytes: ArrayBuffer }) => {
   const len = enc32(cid.bytes.byteLength)
   // console.log('len', len)
   // const iv = randomBytes(12)
