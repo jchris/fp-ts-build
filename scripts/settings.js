@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import esbuildPluginTsc from 'esbuild-plugin-tsc'
-import alias from 'esbuild-plugin-alias'
+// import alias from 'esbuild-plugin-alias'
 import fs from 'fs'
 import path from 'path'
 import { polyfillNode } from 'esbuild-plugin-polyfill-node'
