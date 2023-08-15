@@ -38,7 +38,7 @@ const enc32 = (value: number) => {
   return buff
 }
 
-const readUInt32LE = (buffer) => {
+const readUInt32LE = (buffer: Uint8Array) => {
   const offset = buffer.byteLength - 4
   return ((buffer[offset]) |
     (buffer[offset + 1] << 8) |
@@ -53,7 +53,7 @@ const readUInt32LE = (buffer) => {
 //   return Uint8Array.from(uint8Arrays.flat())
 // }
 
-const concat = (buffers) => {
+const concat = (buffers: Array<ArrayBuffer|Uint8Array>) => {
   const uint8Arrays = buffers.map(b => b instanceof ArrayBuffer ? new Uint8Array(b) : b)
   const totalLength = uint8Arrays.reduce((sum, arr) => sum + arr.length, 0)
   const result = new Uint8Array(totalLength)
@@ -67,8 +67,8 @@ const concat = (buffers) => {
   return result
 }
 
-const encode = ({ iv, bytes }) => concat([iv, bytes])
-const decode = bytes => {
+const encode = ({ iv, bytes }: {iv: Uint8Array, bytes: Uint8Array}) => concat([iv, bytes])
+const decode = (bytes: Uint8Array) => {
   const iv = bytes.subarray(0, 12)
   bytes = bytes.slice(12)
   return { iv, bytes }
@@ -88,7 +88,7 @@ const decrypt = async ({ key, value }:
     false, // extractable
     ['encrypt', 'decrypt']
   )
-  bytes = await crypto.subtle.decrypt(
+  const deBytes = await crypto.subtle.decrypt(
     {
       name: 'AES-GCM',
       iv, // BufferSource
@@ -99,13 +99,13 @@ const decrypt = async ({ key, value }:
   )
   // console.log('aes', aes)
   // bytes = await aes.decrypt(bytes, key, { name: 'AES-GCM', iv, tagLength: 16 })
-  bytes = new Uint8Array(bytes)
+  bytes = new Uint8Array(deBytes)
   const len = readUInt32LE(bytes.subarray(0, 4))
   const cid = CID.decode(bytes.subarray(4, 4 + len))
   bytes = bytes.subarray(4 + len)
   return { cid, bytes }
 }
-const encrypt = async ({ key, cid, bytes }: { key: ArrayBuffer, cid: AnyLink, bytes: ArrayBuffer }) => {
+const encrypt = async ({ key, cid, bytes }: { key: ArrayBuffer, cid: AnyLink, bytes: Uint8Array }) => {
   const len = enc32(cid.bytes.byteLength)
   // console.log('len', len)
   // const iv = randomBytes(12)
@@ -122,7 +122,7 @@ const encrypt = async ({ key, cid, bytes }: { key: ArrayBuffer, cid: AnyLink, by
       ['encrypt', 'decrypt']
     )
     // console.log('cryKey', cryKey)
-    bytes = await crypto.subtle.encrypt(
+    const deBytes = await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
         iv, // BufferSource
@@ -131,6 +131,7 @@ const encrypt = async ({ key, cid, bytes }: { key: ArrayBuffer, cid: AnyLink, by
       cryKey, // AES key
       msg // BufferSource
     )
+    bytes = new Uint8Array(deBytes)
     // bytes = await aes.encrypt(msg, key, { name: 'AES-GCM', iv, tagLength: 16 })
   } catch (e) {
     console.log('e', e)

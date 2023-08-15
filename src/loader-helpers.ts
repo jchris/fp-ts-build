@@ -47,7 +47,8 @@ export async function parseCarFile(reader: CarReader): Promise<AnyCarHeader> {
   const header = await reader.get(roots[0])
   if (!header) throw new Error('missing header block')
   const { value } = await decode({ bytes: header.bytes, hasher, codec })
-  if (value.fp === undefined) throw new Error('missing fp')
+  // @ts-ignore
+  if (value && value.fp === undefined) throw new Error('missing fp')
   const { fp } = value as { fp: AnyCarHeader }
   return fp
 }
