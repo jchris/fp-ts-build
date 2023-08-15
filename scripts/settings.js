@@ -40,14 +40,10 @@ export function createBuildSettings(options) {
       banner: {
         js: `
 console.log('esm/node build');
-`
+import { createRequire } from 'module'; 
+const require = createRequire(import.meta.url);
+        `
       }
-      // banner: {
-      //   js: `
-      //   import { createRequire as topLevelCreateRequire } from 'module';
-      //   const require = topLevelCreateRequire(import.meta.url);
-      //   `
-      // }
     }
 
     builds.push(esmConfig)
