@@ -1,7 +1,7 @@
 {
   "name": "@fireproof/database",
-  "version": "0.10.35",
-  "description": "Immutable embedded distributed database for the web",
+  "version": "0.10.37",
+  "description": "Live database for the web",
   "main": "dist/fireproof.cjs",
   "module": "dist/fireproof.esm.js",
   "exports": {
@@ -9,6 +9,7 @@
       "import": "./dist/fireproof.esm.js",
       "require": "./dist/fireproof.cjs"
     },
+    "./types": "./dist/types/index.d.ts",
     "./database": {
       "import": "./dist/database.esm.js",
       "require": "./dist/database.cjs"
