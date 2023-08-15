@@ -170,9 +170,8 @@ describe('Loader with two committed transactions', function () {
 
 describe('Loader with many committed transactions', function () {
   /** @type {Loader} */
-  let loader, blockstore, crdt
+  let loader, blockstore, crdt, dones
   const dbname = 'test-loader'
-  const dones = []
   const count = 10
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-loader')
@@ -180,6 +179,7 @@ describe('Loader with many committed transactions', function () {
     crdt = new CRDT(dbname)
     blockstore = crdt.blocks
     loader = blockstore.loader
+    dones = []
     for (let i = 0; i < count; i++) {
       const did = await crdt.bulk([{ key: `apple${i}`, value: { foo: 'bar' } }])
       dones.push(did)

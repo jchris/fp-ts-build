@@ -100,7 +100,6 @@ const decrypt = async ({ key, value }:
   // console.log('aes', aes)
   // bytes = await aes.decrypt(bytes, key, { name: 'AES-GCM', iv, tagLength: 16 })
   bytes = new Uint8Array(bytes)
-  console.log('bytes', bytes)
   const len = readUInt32LE(bytes.subarray(0, 4))
   const cid = CID.decode(bytes.subarray(4, 4 + len))
   bytes = bytes.subarray(4 + len)

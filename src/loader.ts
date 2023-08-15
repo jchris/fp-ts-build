@@ -117,7 +117,7 @@ abstract class Loader {
       return this.defaultHeader
     }
     const { car: cid, key } = meta
-    console.log('ingesting car head from meta', { car: cid, key })
+    // console.log('ingesting car head from meta', { car: cid, key })
     if (key) {
       this.setKey(key)
     }

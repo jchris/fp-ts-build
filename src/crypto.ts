@@ -86,18 +86,16 @@ const decrypt = async function * ({ root, get, key, cache, chunker, hasher }: {
 
   const rootTree = await get(tree) as AnyDecodedBlock
 
-  console.log('abou tot load CID set', rootBlock, rootTree)
+  // console.log('abou tot load CID set', rootBlock, rootTree)
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const cidset = await load({ cid: tree, get: getWithDecode, cache, chunker, codec, hasher })
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
   const { result: nodes } = await cidset.getAllEntries() as { result: { cid: CID }[] }
-  console.log('nodes', nodes)
   const unwrap = async (eblock: AnyDecodedBlock | undefined) => {
     if (!eblock) throw new Error('missing block')
     // console.log('unwrap', eblock)
     if (!eblock.value) { eblock = await decode({ ...eblock, codec, hasher }) as AnyDecodedBlock }
     const { bytes, cid } = await codec.decrypt({ ...eblock, key }).catch(e => {
-      console.log('ekey', e, key)
       throw e
     })
     const block = await mfCreate({ cid, bytes, hasher, codec })
