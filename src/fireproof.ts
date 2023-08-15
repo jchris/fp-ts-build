@@ -1,7 +1,4 @@
-import { database } from './database'
-import { index } from './index'
-
-export {
-  database,
-  index
-}
+import type * as types from './types'
+export * from './database'
+export * from './index'
+export { types }

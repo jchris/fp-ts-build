@@ -8,6 +8,9 @@ import type {
 } from './types'
 import { CID } from 'multiformats'
 import { CarStore, HeaderStore } from './store'
+// import { decodeEncryptedCar, encryptedMakeCarFile } from './encrypt-helpers'
+// import { getCrypto, randomBytes } from './encrypted-block'
+
 type LoaderOpts = {
   public?: boolean
 }
@@ -39,6 +42,10 @@ abstract class Loader {
 
   async commit(t: Transaction, done: IndexerResult | BulkResult, compact: boolean = false): Promise<AnyLink> {
     await this.ready
+    const fp = this.makeCarHeader(done, this.carLog, compact)
+    // const { cid, bytes } = this.key ? await encryptedMakeCarFile(this.key, fp, t) : await innerMakeCarFile(fp, t)
+    const { cid, bytes } = await innerMakeCarFile(fp, t)
+
     await this.carStore!.save({ cid, bytes })
     if (compact) {
       for (const cid of this.carLog) {
@@ -82,18 +89,47 @@ abstract class Loader {
     if (this.carReaders.has(cid.toString())) return this.carReaders.get(cid.toString()) as CarReader
     const car = await this.carStore.load(cid)
     if (!car) throw new Error(`missing car file ${cid.toString()}`)
-    const reader = await CarReader.fromBytes(car.bytes)
+    const reader = await this.ensureDecryptedReader(await CarReader.fromBytes(car.bytes))
     this.carReaders.set(cid.toString(), reader)
     this.carLog.push(cid)
     return reader
   }
 
-  protected async ingestCarHead(cid?: AnyLink): Promise<DbCarHeader | IdxCarHeader> {
+  // eslint-disable-next-line @typescript-eslint/require-await
+  protected async ensureDecryptedReader(reader: CarReader) {
+    return reader
+    // if (!this.key) return reader
+    // const { blocks, root } = await decodeEncryptedCar(this.key, reader)
+    // return {
+    //   getRoots: () => [root],
+    //   get: blocks.get.bind(blocks)
+    // }
+  }
+
+  protected setKey(key: string) {
+    this.key = key
+    this.keyId = key.split('').reverse().join('')
+  }
+
+  protected async ingestCarHeadFromMeta(meta: DbMeta | null): Promise<AnyCarHeader> {
     if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
-    if (!cid) return this.defaultCarHeader()
-    const car = await this.carStore.load(cid)
-    const reader = await CarReader.fromBytes(car.bytes)
-    this.carReaders.set(cid.toString(), reader)
+    if (!meta) {
+      // generate a random key
+      // if (!this.opts.public) {
+      //   if (getCrypto()) {
+      //     this.setKey(randomBytes(32).toString('hex'))
+      //   } else {
+      //     console.warn('missing crypto module, using public mode')
+      //   }
+      // }
+      return this.defaultHeader
+    }
+    const { car: cid, key } = meta
+    // console.log('ingesting car head from meta', { car: cid, key })
+    if (key) {
+      this.setKey(key)
+    }
+    const reader = await this.loadCar(cid)
     this.carLog = [cid] // this.carLog.push(cid)
     const carHeader = await parseCarFile(reader)
     await this.getMoreReaders(carHeader.cars)
