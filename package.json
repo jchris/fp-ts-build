@@ -1,7 +1,7 @@
 {
   "name": "@fireproof/database",
-  "version": "0.10.35",
-  "description": "Immutable embedded distributed database for the web",
+  "version": "0.10.40",
+  "description": "Live database for the web",
   "main": "dist/fireproof.cjs",
   "module": "dist/fireproof.esm.js",
   "exports": {
@@ -9,6 +9,7 @@
       "import": "./dist/fireproof.esm.js",
       "require": "./dist/fireproof.cjs"
     },
+    "./types": "./dist/types/index.d.ts",
     "./database": {
       "import": "./dist/database.esm.js",
       "require": "./dist/database.cjs"
@@ -53,7 +54,6 @@
     "test:watch": "nodemon -w src -w test -e ts,js --exec \"npm run build && npm run test:node\"",
     "test:node": "node ./scripts/test.js",
     "test:browser": "node ./scripts/browser-test.js",
-
     "test:coverage": "c8 --reporter=html --include='dist/*' node ./scripts/test.js && open coverage/src/index.html",
     "test": "npm run build && npm run test:node && npm run test:browser && tsc",
     "lint": "eslint 'src/**/*.{js,ts}'",
@@ -108,10 +108,13 @@
     "@alanshaw/pail": "^0.3.3",
     "@ipld/dag-cbor": "^9.0.3",
     "@ipld/dag-json": "^10.1.2",
+    "@peculiar/webcrypto": "^1.4.3",
     "async": "^3.2.4",
     "async-es": "^3.2.4",
+    "browserify-aes": "^1.2.0",
     "charwise": "^3.0.1",
     "idb": "^7.1.1",
+    "js-crypto-aes": "^1.0.4",
     "multiformats": "^12.0.1",
     "prolly-trees": "^1.0.4"
   }

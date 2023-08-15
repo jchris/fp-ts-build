@@ -77,10 +77,10 @@ export class HeaderStore extends HeaderStoreBase {
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async save(carCid: AnyLink, branch: string = 'main'): Promise<void> {
+  async save(meta: DbMeta, branch: string = 'main'): Promise<void> {
     try {
       const headerKey = this.headerKey(branch)
-      const bytes = this.makeHeader(carCid)
+      const bytes = this.makeHeader(meta)
       return localStorage.setItem(headerKey, bytes)
     } catch (e) {}
   }

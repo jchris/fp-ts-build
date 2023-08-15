@@ -1,6 +1,6 @@
 import { TransactionBlockstore, IndexBlockstore } from './transaction'
-import { DocUpdate, BulkResult, ClockHead, DbCarHeader, IdxCarHeader, MapFn, IdxMeta } from './types'
 import { clockChangesSince, applyBulkUpdateToCrdt, getValueFromCrdt, doCompact } from './crdt-helpers'
+import type { DocUpdate, BulkResult, ClockHead, DbCarHeader } from './types'
 import type { Indexer } from '.'
 
 export class CRDT {

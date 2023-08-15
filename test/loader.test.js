@@ -19,13 +19,14 @@ import { CRDT } from '../dist/crdt.esm.js'
 import { Transaction } from '../dist/transaction.esm.js'
 
 import { testConfig } from '../dist/store-fs.esm.js'
+import { MemoryBlockstore } from '@alanshaw/pail/block'
 
 describe('basic Loader', function () {
   let loader, block, t
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-loader-commit')
-    t = new Transaction({})
-    loader = new DbLoader('test-loader-commit')
+    t = new Transaction(new MemoryBlockstore())
+    loader = new DbLoader('test-loader-commit', { public: true })
     block = (await encode({
       value: { hello: 'world' },
       hasher,
@@ -52,8 +53,8 @@ describe('basic Loader with two commits', function () {
   let loader, block, block2, t, carCid
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-loader-two-commit')
-    t = new Transaction({})
-    loader = new DbLoader('test-loader-two-commit')
+    t = new Transaction(new MemoryBlockstore())
+    loader = new DbLoader('test-loader-two-commit', { public: true })
     block = (await encode({
       value: { hello: 'world' },
       hasher,
@@ -169,9 +170,8 @@ describe('Loader with two committed transactions', function () {
 
 describe('Loader with many committed transactions', function () {
   /** @type {Loader} */
-  let loader, blockstore, crdt
+  let loader, blockstore, crdt, dones
   const dbname = 'test-loader'
-  const dones = []
   const count = 10
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-loader')
@@ -179,6 +179,7 @@ describe('Loader with many committed transactions', function () {
     crdt = new CRDT(dbname)
     blockstore = crdt.blocks
     loader = blockstore.loader
+    dones = []
     for (let i = 0; i < count; i++) {
       const did = await crdt.bulk([{ key: `apple${i}`, value: { foo: 'bar' } }])
       dones.push(did)
@@ -206,8 +207,8 @@ describe('basic Loader with index commits', function () {
   let loader, block, t, indexerResult, cid
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-loader-index')
-    t = new Transaction({})
-    loader = new IdxLoader('test-loader-index')
+    t = new Transaction(new MemoryBlockstore())
+    loader = new IdxLoader('test-loader-index', { public: true })
     block = (await encode({
       value: { hello: 'world' },
       hasher,

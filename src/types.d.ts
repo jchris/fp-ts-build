@@ -64,10 +64,6 @@ type CarHeader = {
   compact: AnyLink[]
 }
 
-export type DbCarHeader = CarHeader & {
-  head: ClockHead
-}
-
 export type IdxMeta = {
   byId: AnyLink
   byKey: AnyLink
@@ -82,6 +78,12 @@ type IdxMetaMap = {
 
 export type IdxCarHeader = CarHeader & IdxMetaMap
 
+export type DbCarHeader = CarHeader & {
+  head: ClockHead
+}
+
+export type AnyCarHeader = DbCarHeader | IdxCarHeader
+
 export type QueryOpts = {
   descending?: boolean
   limit?: number
@@ -93,10 +95,17 @@ export type QueryOpts = {
 
 export type AnyLink = Link<unknown, number, number, 1 | 0>
 export type AnyBlock = { cid: AnyLink; bytes: Uint8Array }
+export type AnyDecodedBlock = { cid: AnyLink; bytes: Uint8Array, value: any }
+
 export type BlockFetcher = { get: (link: AnyLink) => Promise<AnyBlock | undefined> }
 
 type CallbackFn = (k: string, v: DocFragment) => void
 
 export type MapFn = (doc: Doc, map: CallbackFn) => DocFragment | void
 
-export type DbMeta = { car: AnyLink }
+export type DbMeta = { car: AnyLink, key: string | null }
+
+export interface CarMakeable {
+  entries(): Iterable<AnyBlock>
+  get(cid: AnyLink): Promise<AnyBlock | undefined>
+}

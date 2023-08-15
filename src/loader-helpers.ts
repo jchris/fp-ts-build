@@ -6,19 +6,18 @@ import * as CBW from '@ipld/car/buffer-writer'
 import * as codec from '@ipld/dag-cbor'
 import { CarReader } from '@ipld/car'
 
+import { AnyBlock, AnyCarHeader, AnyLink, CarMakeable } from './types'
 import { Transaction } from './transaction'
-import { AnyBlock, DbCarHeader, IdxCarHeader } from './types'
 
-export async function innerMakeCarFile(fp: DbCarHeader|IdxCarHeader, t: Transaction) {
-  const fpCarHeaderBlock = (await encode({
-    value: { fp },
-    hasher,
-    codec
-  })) as AnyBlock
-  await t.put(fpCarHeaderBlock.cid, fpCarHeaderBlock.bytes)
+export async function innerMakeCarFile(fp: AnyCarHeader, t: Transaction): Promise<AnyBlock> {
+  const { cid, bytes } = await encodeCarHeader(fp)
+  await t.put(cid, bytes)
+  return encodeCarFile(cid, t)
+}
 
+export async function encodeCarFile(carHeaderBlockCid: AnyLink, t: CarMakeable): Promise<AnyBlock> {
   let size = 0
-  const headerSize = CBW.headerLength({ roots: [fpCarHeaderBlock.cid as CID<unknown, number, number, 1>] })
+  const headerSize = CBW.headerLength({ roots: [carHeaderBlockCid as CID<unknown, number, number, 1>] })
   size += headerSize
   for (const { cid, bytes } of t.entries()) {
     size += CBW.blockLength({ cid, bytes } as Block<unknown, number, number, 1>)
@@ -26,7 +25,7 @@ export async function innerMakeCarFile(fp: DbCarHeader|IdxCarHeader, t: Transact
   const buffer = new Uint8Array(size)
   const writer = CBW.createWriter(buffer, { headerSize })
 
-  writer.addRoot(fpCarHeaderBlock.cid as CID<unknown, number, number, 1>)
+  writer.addRoot(carHeaderBlockCid as CID<unknown, number, number, 1>)
 
   for (const { cid, bytes } of t.entries()) {
     writer.write({ cid, bytes } as Block<unknown, number, number, 1>)
@@ -35,11 +34,21 @@ export async function innerMakeCarFile(fp: DbCarHeader|IdxCarHeader, t: Transact
   return await encode({ value: writer.bytes, hasher, codec: raw })
 }
 
-export async function parseCarFile(reader: CarReader): Promise<DbCarHeader | IdxCarHeader> {
+export async function encodeCarHeader(fp: AnyCarHeader) {
+  return (await encode({
+    value: { fp },
+    hasher,
+    codec
+  })) as AnyBlock
+}
+
+export async function parseCarFile(reader: CarReader): Promise<AnyCarHeader> {
   const roots = await reader.getRoots()
   const header = await reader.get(roots[0])
   if (!header) throw new Error('missing header block')
   const { value } = await decode({ bytes: header.bytes, hasher, codec })
-  const { fp } = value as { fp: DbCarHeader | IdxCarHeader }
+  // @ts-ignore
+  if (value && value.fp === undefined) throw new Error('missing fp')
+  const { fp } = value as { fp: AnyCarHeader }
   return fp
 }
