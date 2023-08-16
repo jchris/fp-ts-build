@@ -1,11 +1,11 @@
 {
   "name": "@fireproof/database",
-  "version": "0.10.58",
+  "version": "0.10.61",
   "description": "Live database for the web",
   "main": "dist/fireproof.cjs",
   "module": "dist/fireproof.esm.js",
   "exports": {
-    ".": {
+    "./node": {
       "import": "./dist/node/fireproof.esm.js",
       "require": "./dist/node/fireproof.cjs",
       "types": "./dist/types/fireproof.d.ts",
@@ -23,7 +23,7 @@
       "types": "./dist/types/index.d.ts",
       "script": "./dist/browser/index.iife.js"
     },
-    "./poly": {
+    ".": {
       "import": "./dist/browser/fireproof.esm.js",
       "require": "./dist/browser/fireproof.cjs",
       "types": "./dist/types/fireproof.d.ts",

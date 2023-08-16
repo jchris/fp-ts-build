@@ -120,10 +120,11 @@ abstract class Loader {
           console.warn('missing crypto module, using public mode')
         }
       }
+      console.log('no meta, returning default header', this.key)
       return this.defaultHeader
     }
     const { car: cid, key } = meta
-    // console.log('ingesting car head from meta', { car: cid, key })
+    console.log('ingesting car head from meta', { car: cid, key })
     if (key) {
       this.setKey(key)
     }
