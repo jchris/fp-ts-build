@@ -104,9 +104,17 @@ abstract class Loader {
     }
   }
 
-  protected setKey(key: string) {
+  protected async setKey(key: string) {
+    if (this.key && this.key !== key) throw new Error('key already set')
     this.key = key
-    this.keyId = key.split('').reverse().join('')
+    const crypto = getCrypto()
+    if (!crypto) throw new Error('missing crypto module')
+    const subtle = crypto.subtle
+    const encoder = new TextEncoder()
+    const data = encoder.encode(key)
+    const hashBuffer = await subtle.digest('SHA-256', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    this.keyId = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
   }
 
   protected async ingestCarHeadFromMeta(meta: DbMeta | null): Promise<AnyCarHeader> {
@@ -115,7 +123,7 @@ abstract class Loader {
       // generate a random key
       if (!this.opts.public) {
         if (getCrypto()) {
-          this.setKey(randomBytes(32).toString('hex'))
+          await this.setKey(randomBytes(32).toString('hex'))
         } else {
           console.warn('missing crypto module, using public mode')
         }
@@ -126,7 +134,7 @@ abstract class Loader {
     const { car: cid, key } = meta
     console.log('ingesting car head from meta', { car: cid, key })
     if (key) {
-      this.setKey(key)
+      await this.setKey(key)
     }
     const reader = await this.loadCar(cid)
     this.carLog = [cid] // this.carLog.push(cid)

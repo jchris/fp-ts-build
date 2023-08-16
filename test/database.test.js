@@ -84,6 +84,54 @@ describe('basic Database with record', function () {
   })
 })
 
+describe('named Database with record', function () {
+  /** @type {Database} */
+  let db
+  beforeEach(async function () {
+    db = new Database('test-db-name')
+    /** @type {Doc} */
+    const doc = { _id: 'hello', value: 'world' }
+    const ok = await db.put(doc)
+    equals(ok.id, 'hello')
+  })
+  it('should get', async function () {
+    const doc = await db.get('hello')
+    assert(doc)
+    equals(doc._id, 'hello')
+    equals(doc.value, 'world')
+  })
+  it('should update', async function () {
+    const ok = await db.put({ _id: 'hello', value: 'universe' })
+    equals(ok.id, 'hello')
+    const doc = await db.get('hello')
+    assert(doc)
+    equals(doc._id, 'hello')
+    equals(doc.value, 'universe')
+  })
+  it('should del last record', async function () {
+    const ok = await db.del('hello')
+    equals(ok.id, 'hello')
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    const e = await (db.get('hello')).catch(e => e)
+    matches(e.message, /Not found/)
+  })
+  it('has changes', async function () {
+    const { rows } = await db.changes([])
+    equals(rows.length, 1)
+    equals(rows[0].key, 'hello')
+    equals(rows[0].value._id, 'hello')
+  })
+  it('should have a key', async function () {
+    const { rows } = await db.changes([])
+    equals(rows.length, 1)
+    const loader = db._crdt.blocks.loader
+    await loader.ready
+    equals(loader.key.length, 64)
+    equals(loader.keyId.length, 64)
+    notEquals(loader.key, loader.keyId)
+  })
+})
+
 describe('basic Database parallel writes', function () {
   /** @type {Database} */
   let db
