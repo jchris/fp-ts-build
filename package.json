@@ -1,6 +1,6 @@
 {
   "name": "@fireproof/database",
-  "version": "0.10.53",
+  "version": "0.10.55",
   "description": "Live database for the web",
   "main": "dist/fireproof.cjs",
   "module": "dist/fireproof.esm.js",
@@ -14,12 +14,20 @@
     "./database": {
       "import": "./dist/node/database.esm.js",
       "require": "./dist/node/database.cjs",
-      "types": "./dist/types/database.d.ts"
+      "types": "./dist/types/database.d.ts",
+      "script": "./dist/browser/database.iife.js"
     },
     "./index": {
-      "import": "./dist/inode/ndex.esm.js",
+      "import": "./dist/node/index.esm.js",
       "require": "./dist/node/index.cjs",
-      "types": "./dist/types/index.d.ts"
+      "types": "./dist/types/index.d.ts",
+      "script": "./dist/browser/index.iife.js"
+    },
+    "./poly": {
+      "import": "./dist/browser/fireproof.esm.js",
+      "require": "./dist/browser/fireproof.cjs",
+      "types": "./dist/types/fireproof.d.ts",
+      "script": "./dist/browser/fireproof.iife.js"
     }
   },
   "browser": "./dist/fireproof.browser.iife.js",

@@ -54,22 +54,9 @@ console.log('esm/node build');
 
     if (/fireproof\.|database\.|index\./.test(entryPoint)) {
       const esmPublishConfig = {
-        ...commonSettings,
+        ...esmConfig,
         outfile: `dist/node/${filename}.esm.js`,
-        format: 'esm',
-        platform: 'node',
-        entryPoints: [entryPoint],
-        banner: {
-          js: `
-  console.log('esm/node build');
-  `
-        }
-        // banner: {
-        //   js: `
-        //   import { createRequire as topLevelCreateRequire } from 'module';
-        //   const require = topLevelCreateRequire(import.meta.url);
-        //   `
-        // }
+        entryPoints: [entryPoint]
       }
       builds.push(esmPublishConfig)
 
@@ -102,7 +89,7 @@ console.log('browser/es2015 build');
         },
         plugins: [
           polyfillNode({
-            polyfills: { crypto: true, fs: true }
+            polyfills: { crypto: true, fs: true, process: 'empty' }
           }),
           // alias({
           //   crypto: 'crypto-browserify'
