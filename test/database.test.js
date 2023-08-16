@@ -3,8 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, equals, notEquals, matches } from './helpers.js'
-import { Database } from '../dist/database.esm.js'
-// import { Doc } from '../dist/types.d.esm.js'
+import { Database } from '../dist/test/database.esm.js'
+// import { Doc } from '../dist/test/types.d.esm.js'
 
 /**
  * @typedef {Object.<string, any>} DocBody

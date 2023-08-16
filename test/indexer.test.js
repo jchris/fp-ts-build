@@ -3,14 +3,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Indexer, index } from '../dist/index.esm.js'
-import { Database, database } from '../dist/database.esm.js'
-import { CRDT } from '../dist/crdt.esm.js'
+import { Indexer, index } from '../dist/test/index.esm.js'
+import { Database, database } from '../dist/test/database.esm.js'
+import { CRDT } from '../dist/test/crdt.esm.js'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, matches, equals, resetDirectory, notEquals, equalsJSON } from './helpers.js'
 
-import { testConfig } from '../dist/store-fs.esm.js'
+import { testConfig } from '../dist/test/store-fs.esm.js'
 
 describe('basic Indexer', function () {
   let db, indexer, didMap

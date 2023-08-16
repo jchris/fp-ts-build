@@ -26,9 +26,7 @@
   "types": "dist/types/types.d.ts",
   "files": [
     "src",
-    "dist/node/fireproof.*",
-    "dist/node/database.*",
-    "dist/node/index.*",
+    "dist/node",
     "dist/browser",
     "dist/types"
   ],

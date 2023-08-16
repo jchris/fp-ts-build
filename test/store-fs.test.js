@@ -12,7 +12,7 @@ import { CID } from 'multiformats'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, matches, equals } from './helpers.js'
 
-import { CarStore, testConfig, HeaderStore } from '../dist/store-fs.esm.js'
+import { CarStore, testConfig, HeaderStore } from '../dist/test/store-fs.esm.js'
 
 const { readFile } = promises
 

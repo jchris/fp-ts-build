@@ -5,9 +5,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable mocha/max-top-level-suites */
 import { assert, equals, resetDirectory } from './helpers.js'
-import { database, Database } from '../dist/database.esm.js'
-import { index, Indexer } from '../dist/index.esm.js'
-import { testConfig } from '../dist/store-fs.esm.js'
+import { database, Database } from '../dist/test/database.esm.js'
+import { index, Indexer } from '../dist/test/index.esm.js'
+import { testConfig } from '../dist/test/store-fs.esm.js'
 
 describe('Hello World Test', function () {
   it('should pass the hello world test', function () {

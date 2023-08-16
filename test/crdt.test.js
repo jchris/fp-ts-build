@@ -4,8 +4,8 @@
 /* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable mocha/max-top-level-suites */
 import { assert, equals, equalsJSON, matches, notEquals } from './helpers.js'
-import { CRDT } from '../dist/crdt.esm.js'
-import { index } from '../dist/index.esm.js'
+import { CRDT } from '../dist/test/crdt.esm.js'
+import { index } from '../dist/test/index.esm.js'
 
 describe('Fresh crdt', function () {
   /** @type {CRDT} */

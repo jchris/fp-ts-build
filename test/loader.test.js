@@ -12,13 +12,13 @@ import { CID } from 'multiformats/cid'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, matches, equals, resetDirectory, notEquals } from './helpers.js'
 
-import { parseCarFile } from '../dist/loader-helpers.esm.js'
+import { parseCarFile } from '../dist/test/loader-helpers.esm.js'
 
-import { IdxLoader, DbLoader } from '../dist/loader.esm.js'
-import { CRDT } from '../dist/crdt.esm.js'
-import { Transaction } from '../dist/transaction.esm.js'
+import { IdxLoader, DbLoader } from '../dist/test/loader.esm.js'
+import { CRDT } from '../dist/test/crdt.esm.js'
+import { Transaction } from '../dist/test/transaction.esm.js'
 
-import { testConfig } from '../dist/store-fs.esm.js'
+import { testConfig } from '../dist/test/store-fs.esm.js'
 import { MemoryBlockstore } from '@alanshaw/pail/block'
 
 describe('basic Loader', function () {

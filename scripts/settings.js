@@ -33,7 +33,7 @@ export function createBuildSettings(options) {
 
     const esmConfig = {
       ...commonSettings,
-      outfile: `dist/node/${filename}.esm.js`,
+      outfile: `dist/test/${filename}.esm.js`,
       format: 'esm',
       platform: 'node',
       entryPoints: [entryPoint],
@@ -53,6 +53,26 @@ console.log('esm/node build');
     builds.push(esmConfig)
 
     if (/fireproof\.|database\.|index\./.test(entryPoint)) {
+      const esmPublishConfig = {
+        ...commonSettings,
+        outfile: `dist/node/${filename}.esm.js`,
+        format: 'esm',
+        platform: 'node',
+        entryPoints: [entryPoint],
+        banner: {
+          js: `
+  console.log('esm/node build');
+  `
+        }
+        // banner: {
+        //   js: `
+        //   import { createRequire as topLevelCreateRequire } from 'module';
+        //   const require = topLevelCreateRequire(import.meta.url);
+        //   `
+        // }
+      }
+      builds.push(esmPublishConfig)
+
       const cjsConfig = {
         ...commonSettings,
         outfile: `dist/node/${filename}.cjs`,

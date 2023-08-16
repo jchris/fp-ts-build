@@ -7,9 +7,9 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, equals, notEquals, matches, equalsJSON, resetDirectory } from './helpers.js'
 
-import { database, Database } from '../dist/database.esm.js'
-import { index, Indexer } from '../dist/index.esm.js'
-import { testConfig } from '../dist/store-fs.esm.js'
+import { database, Database } from '../dist/test/database.esm.js'
+import { index, Indexer } from '../dist/test/index.esm.js'
+import { testConfig } from '../dist/test/store-fs.esm.js'
 
 describe('public API', function () {
   beforeEach(async function () {
