@@ -33,18 +33,19 @@ export function createBuildSettings(options) {
 
     const esmConfig = {
       ...commonSettings,
-      outfile: `dist/${filename}.esm.js`,
+      outfile: `dist/node/${filename}.esm.js`,
       format: 'esm',
       platform: 'node',
-      entryPoints: [entryPoint]
+      entryPoints: [entryPoint],
+      banner: {
+        js: `
+console.log('esm/node build');
+`
+      }
       // banner: {
       //   js: `
-      //   import path from 'path';
-      //   import { fileURLToPath } from 'url';
       //   import { createRequire as topLevelCreateRequire } from 'module';
       //   const require = topLevelCreateRequire(import.meta.url);
-      //   const __filename = fileURLToPath(import.meta.url);
-      //   const __dirname = path.dirname(__filename);
       //   `
       // }
     }
@@ -54,21 +55,31 @@ export function createBuildSettings(options) {
     if (/fireproof\.|database\.|index\./.test(entryPoint)) {
       const cjsConfig = {
         ...commonSettings,
-        outfile: `dist/${filename}.cjs`,
+        outfile: `dist/node/${filename}.cjs`,
         format: 'cjs',
         platform: 'node',
-        entryPoints: [entryPoint]
+        entryPoints: [entryPoint],
+        banner: {
+          js: `
+console.log('cjs/node build');
+`
+        }
       }
       builds.push(cjsConfig)
 
       const browserIIFEConfig = {
         ...commonSettings,
-        outfile: `dist/${filename}.browser.iife.js`,
+        outfile: `dist/browser/${filename}.iife.js`,
         format: 'iife',
         globalName: 'Fireproof',
         platform: 'browser',
         target: 'es2015',
         entryPoints: [entryPoint],
+        banner: {
+          js: `
+console.log('browser/es2015 build');
+`
+        },
         plugins: [
           polyfillNode({
             polyfills: { crypto: true, fs: true }
@@ -85,16 +96,26 @@ export function createBuildSettings(options) {
 
       const browserESMConfig = {
         ...browserIIFEConfig,
-        outfile: `dist/${filename}.browser.esm.js`,
-        format: 'esm'
+        outfile: `dist/browser/${filename}.esm.js`,
+        format: 'esm',
+        banner: {
+          js: `
+console.log('esm/es2015 build');
+`
+        }
       }
 
       builds.push(browserESMConfig)
 
       const browserCJSConfig = {
         ...browserIIFEConfig,
-        outfile: `dist/${filename}.browser.cjs`,
-        format: 'cjs'
+        outfile: `dist/browser/${filename}.cjs`,
+        format: 'cjs',
+        banner: {
+          js: `
+console.log('cjs/es2015 build');
+`
+        }
       }
       builds.push(browserCJSConfig)
     }

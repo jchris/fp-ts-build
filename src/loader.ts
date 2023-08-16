@@ -60,6 +60,7 @@ abstract class Loader {
   }
 
   async getBlock(cid: CID): Promise<AnyBlock | undefined> {
+    await this.ready
     for (const [, reader] of [...this.carReaders]) {
       const block = await reader.get(cid)
       if (block) {

@@ -1,44 +1,35 @@
 {
   "name": "@fireproof/database",
-  "version": "0.10.46",
+  "version": "0.10.50",
   "description": "Live database for the web",
   "main": "dist/fireproof.cjs",
   "module": "dist/fireproof.esm.js",
   "exports": {
     ".": {
-      "import": "./dist/fireproof.esm.js",
-      "require": "./dist/fireproof.cjs"
+      "import": "./dist/node/fireproof.esm.js",
+      "require": "./dist/node/fireproof.cjs",
+      "types": "./dist/types/fireproof.d.ts",
+      "script": "./dist/browser/fireproof.iife.js"
     },
-    "./types": "./dist/types/index.d.ts",
     "./database": {
-      "import": "./dist/database.esm.js",
-      "require": "./dist/database.cjs"
+      "import": "./dist/node/database.esm.js",
+      "require": "./dist/node/database.cjs",
+      "types": "./dist/types/database.d.ts"
     },
     "./index": {
-      "import": "./dist/index.esm.js",
-      "require": "./dist/index.cjs"
-    },
-    "./browser": {
-      "import": "./dist/fireproof.browser.esm.js",
-      "require": "./dist/fireproof.browser.cjs",
-      "script": "./dist/fireproof.browser.iife.js"
-    },
-    "./database/browser": {
-      "import": "./dist/database.browser.esm.js",
-      "require": "./dist/database.browser.cjs",
-      "script": "./dist/database.browser.iife.js"
-    },
-    "./index/browser": {
-      "import": "./dist/index.browser.esm.js",
-      "require": "./dist/index.browser.cjs",
-      "script": "./dist/index.browser.iife.js"
+      "import": "./dist/inode/ndex.esm.js",
+      "require": "./dist/node/index.cjs",
+      "types": "./dist/types/index.d.ts"
     }
   },
   "browser": "./dist/fireproof.browser.iife.js",
-  "types": "dist/types/index.d.ts",
+  "types": "dist/types/types.d.ts",
   "files": [
     "src",
-    "dist/fireproof.*",
+    "dist/node/fireproof.*",
+    "dist/node/database.*",
+    "dist/node/index.*",
+    "dist/browser",
     "dist/types"
   ],
   "type": "module",
@@ -109,12 +100,8 @@
     "@ipld/dag-cbor": "^9.0.3",
     "@ipld/dag-json": "^10.1.2",
     "@peculiar/webcrypto": "^1.4.3",
-    "async": "^3.2.4",
-    "async-es": "^3.2.4",
-    "browserify-aes": "^1.2.0",
     "charwise": "^3.0.1",
     "idb": "^7.1.1",
-    "js-crypto-aes": "^1.0.4",
     "multiformats": "^12.0.1",
     "prolly-trees": "^1.0.4"
   }
