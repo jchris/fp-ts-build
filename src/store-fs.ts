@@ -1,8 +1,10 @@
+/* eslint-disable import/first */
+console.log('import store-node-fs')
+
 import { join, dirname } from 'path'
 import { homedir } from 'os'
 import { mkdir, readFile, writeFile, unlink } from 'fs/promises'
-
-import { AnyBlock, AnyLink, DbMeta } from './types'
+import type { AnyBlock, AnyLink, DbMeta } from './types'
 import { HeaderStore as HeaderStoreBase, CarStore as CarStoreBase } from './store'
 
 export class HeaderStore extends HeaderStoreBase {

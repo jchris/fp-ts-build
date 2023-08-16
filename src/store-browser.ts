@@ -1,3 +1,6 @@
+/* eslint-disable import/first */
+console.log('import store-browser')
+
 import { openDB, IDBPDatabase } from 'idb'
 import { AnyBlock, AnyLink, DbMeta } from './types'
 import { CarStore as CarStoreBase, HeaderStore as HeaderStoreBase } from './store'

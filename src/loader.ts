@@ -71,6 +71,7 @@ abstract class Loader {
 
   protected async initializeStores() {
     const isBrowser = typeof window !== 'undefined'
+    console.log('is browser?', isBrowser)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const module = isBrowser ? await require('./store-browser') : await require('./store-fs')
     if (module) {
