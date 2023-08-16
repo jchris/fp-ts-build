@@ -1,7 +1,7 @@
 import { TransactionBlockstore, IndexBlockstore } from './transaction'
 import { clockChangesSince, applyBulkUpdateToCrdt, getValueFromCrdt, doCompact } from './crdt-helpers'
 import type { DocUpdate, BulkResult, ClockHead, DbCarHeader } from './types'
-import type { Indexer } from '.'
+import type { Index } from './index'
 
 export class CRDT {
   name: string | null
@@ -9,7 +9,7 @@ export class CRDT {
   blocks: TransactionBlockstore
   indexBlocks: IndexBlockstore
 
-  indexers: Map<string, Indexer> = new Map()
+  indexers: Map<string, Index> = new Map()
 
   private _head: ClockHead = []
 

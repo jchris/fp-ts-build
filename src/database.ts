@@ -17,7 +17,7 @@ export class Database {
 
   _listeners: Set<ListenerFn> = new Set()
   _crdt: CRDT
-  // _indexes: Map<string, Indexer> = new Map()
+  // _indexes: Map<string, Index> = new Map()
   _writeQueue: WriteQueue
 
   constructor(name: string, config = { blocks: null }) {

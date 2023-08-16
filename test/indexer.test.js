@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Indexer, index } from '../dist/test/index.esm.js'
+import { Index, index } from '../dist/test/index.esm.js'
 import { Database, database } from '../dist/test/database.esm.js'
 import { CRDT } from '../dist/test/crdt.esm.js'
 
@@ -12,7 +12,7 @@ import { assert, matches, equals, resetDirectory, notEquals, equalsJSON } from '
 
 import { testConfig } from '../dist/test/store-fs.esm.js'
 
-describe('basic Indexer', function () {
+describe('basic Index', function () {
   let db, indexer, didMap
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-indexer')
@@ -21,7 +21,7 @@ describe('basic Indexer', function () {
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
-    indexer = new Indexer(db._crdt, 'hello', (doc) => {
+    indexer = new Index(db._crdt, 'hello', (doc) => {
       didMap = true
       return doc.title
     })
@@ -81,7 +81,7 @@ describe('basic Indexer', function () {
 })
 
 // eslint-disable-next-line mocha/max-top-level-suites
-describe('Indexer query with compound key', function () {
+describe('Index query with compound key', function () {
   let db, indexer
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-indexer')
@@ -90,7 +90,7 @@ describe('Indexer query with compound key', function () {
     await db.put({ title: 'creative', score: 2 })
     await db.put({ title: 'creative', score: 20 })
     await db.put({ title: 'bazillas', score: 3 })
-    indexer = new Indexer(db._crdt, 'hello', (doc) => {
+    indexer = new Index(db._crdt, 'hello', (doc) => {
       return [doc.title, doc.score]
     })
   })
@@ -102,7 +102,7 @@ describe('Indexer query with compound key', function () {
   })
 })
 
-describe('basic Indexer with map fun', function () {
+describe('basic Index with map fun', function () {
   let db, indexer
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-indexer')
@@ -111,7 +111,7 @@ describe('basic Indexer with map fun', function () {
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
-    indexer = new Indexer(db._crdt, 'hello', (doc, map) => {
+    indexer = new Index(db._crdt, 'hello', (doc, map) => {
       map(doc.title)
     })
   })
@@ -123,7 +123,7 @@ describe('basic Indexer with map fun', function () {
   })
 })
 
-describe('basic Indexer with string fun', function () {
+describe('basic Index with string fun', function () {
   let db, indexer
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-indexer')
@@ -132,7 +132,7 @@ describe('basic Indexer with string fun', function () {
     await db.put({ title: 'amazing' })
     await db.put({ title: 'creative' })
     await db.put({ title: 'bazillas' })
-    indexer = new Indexer(db._crdt, 'title')
+    indexer = new Index(db._crdt, 'title')
   })
   it('should get results', async function () {
     const result = await indexer.query()
@@ -146,7 +146,7 @@ describe('basic Indexer with string fun', function () {
   })
 })
 
-describe('basic Indexer upon cold start', function () {
+describe('basic Index upon cold start', function () {
   let crdt, indexer, result, didMap, mapFn
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-indexer-cold')
@@ -164,7 +164,7 @@ describe('basic Indexer upon cold start', function () {
       return doc.title
     }
     indexer = await index({ _crdt: crdt }, 'hello', mapFn)
-    // new Indexer(db._crdt.indexBlocks, db._crdt, 'hello', mapFn)
+    // new Index(db._crdt.indexBlocks, db._crdt, 'hello', mapFn)
     result = await indexer.query()
     equalsJSON(indexer.indexHead, crdt._head)
   })
@@ -224,13 +224,13 @@ describe('basic Indexer upon cold start', function () {
   })
 })
 
-describe('basic Indexer with no data', function () {
+describe('basic Index with no data', function () {
   let db, indexer, didMap
   beforeEach(async function () {
     await resetDirectory(testConfig.dataDir, 'test-indexer')
 
     db = new Database('test-indexer')
-    indexer = new Indexer(db._crdt, 'hello', (doc) => {
+    indexer = new Index(db._crdt, 'hello', (doc) => {
       didMap = true
       return doc.title
     })

@@ -1,22 +1,22 @@
-import { ClockHead, DocUpdate, MapFn, IndexUpdate, QueryOpts, IdxMeta, IdxCarHeader } from './types'
+import type { ClockHead, DocUpdate, MapFn, IndexUpdate, QueryOpts, IdxMeta, IdxCarHeader } from './types'
 import { IndexBlockstore } from './transaction'
 import { bulkIndex, indexEntriesForChanges, byIdOpts, byKeyOpts, IndexTree, applyQuery, encodeRange, encodeKey, loadIndex } from './indexer-helpers'
 import { CRDT } from './crdt'
 
-export function index({ _crdt }: { _crdt: CRDT}, name: string, mapFn?: MapFn, meta?: IdxMeta): Indexer {
+export function index({ _crdt }: { _crdt: CRDT}, name: string, mapFn?: MapFn, meta?: IdxMeta): Index {
   if (mapFn && meta) throw new Error('cannot provide both mapFn and meta')
   if (mapFn && mapFn.constructor.name !== 'Function') throw new Error('mapFn must be a function')
   if (_crdt.indexers.has(name)) {
     const idx = _crdt.indexers.get(name)!
     idx.applyMapFn(name, mapFn, meta)
   } else {
-    const idx = new Indexer(_crdt, name, mapFn, meta)
+    const idx = new Index(_crdt, name, mapFn, meta)
     _crdt.indexers.set(name, idx)
   }
   return _crdt.indexers.get(name)!
 }
 
-export class Indexer {
+export class Index {
   blocks: IndexBlockstore
   crdt: CRDT
   name: string | null = null

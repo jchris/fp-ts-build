@@ -8,7 +8,7 @@
 import { assert, equals, notEquals, matches, equalsJSON, resetDirectory } from './helpers.js'
 
 import { database, Database } from '../dist/test/database.esm.js'
-import { index, Indexer } from '../dist/test/index.esm.js'
+import { index, Index } from '../dist/test/index.esm.js'
 import { testConfig } from '../dist/test/store-fs.esm.js'
 
 describe('public API', function () {
@@ -26,7 +26,7 @@ describe('public API', function () {
   })
   it('should have an index', function () {
     assert(this.index)
-    assert(this.index instanceof Indexer)
+    assert(this.index instanceof Index)
   })
   it('should put', function () {
     assert(this.ok)
