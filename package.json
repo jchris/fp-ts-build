@@ -62,7 +62,18 @@
     "lint:fix": "eslint --fix 'src/**/*.{js,ts}'"
   },
   "keywords": [
-    "database"
+    "database",
+    "JSON",
+    "document",
+    "IPLD",
+    "CID",
+    "IPFS"
+  ],
+  "contributors": [
+    "J Chris Anderson",
+    "Alan Shaw",
+    "Travis Vachon",
+    "Mikeal Rogers"
   ],
   "author": "J Chris Anderson",
   "license": "Apache-2.0 OR MIT",
