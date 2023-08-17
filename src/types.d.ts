@@ -2,6 +2,10 @@ import type { Link } from 'multiformats'
 import type { EventLink } from '@alanshaw/pail/clock'
 import type { EventData } from '@alanshaw/pail/crdt'
 
+export type FireproofOptions = {
+  public?: boolean
+}
+
 export type ClockHead = EventLink<EventData>[]
 
 export type DocFragment = string | number | boolean | null | DocFragment[] | { [key: string]: DocFragment }

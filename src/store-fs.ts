@@ -29,7 +29,7 @@ export class HeaderStore extends HeaderStoreBase {
 }
 
 export const testConfig = {
-  dataDir: join(homedir(), '.fireproof', 'v' + new HeaderStore('').STORAGE_VERSION)
+  dataDir: HeaderStore.dataDir
 }
 
 export class CarStore extends CarStoreBase {

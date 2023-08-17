@@ -1,10 +1,11 @@
 import { TransactionBlockstore, IndexBlockstore } from './transaction'
 import { clockChangesSince, applyBulkUpdateToCrdt, getValueFromCrdt, doCompact } from './crdt-helpers'
-import type { DocUpdate, BulkResult, ClockHead, DbCarHeader } from './types'
+import type { DocUpdate, BulkResult, ClockHead, DbCarHeader, FireproofOptions } from './types'
 import type { Index } from './index'
 
 export class CRDT {
   name: string | null
+  opts: FireproofOptions = {}
   ready: Promise<void>
   blocks: TransactionBlockstore
   indexBlocks: IndexBlockstore
@@ -13,10 +14,11 @@ export class CRDT {
 
   private _head: ClockHead = []
 
-  constructor(name?: string, blocks?: TransactionBlockstore) {
+  constructor(name?: string, opts?: FireproofOptions) {
     this.name = name || null
-    this.blocks = blocks || new TransactionBlockstore(name)
-    this.indexBlocks = new IndexBlockstore(name ? name + '.idx' : undefined)
+    this.opts = opts || this.opts
+    this.blocks = new TransactionBlockstore(name, this.opts)
+    this.indexBlocks = new IndexBlockstore(name ? name + '.idx' : undefined, this.opts)
     this.ready = this.blocks.ready.then((header: DbCarHeader) => {
       // @ts-ignore
       if (header.indexes) throw new Error('cannot have indexes in crdt header')

@@ -61,8 +61,7 @@ export function useFireproof(
   console.log('testDb', testDb)
 
   const [ready, setReady] = useState(false)
-  const database = obtainDb(name)
-  database.config = config
+  const database = obtainDb(name, config)
 
   useEffect(() => {
     const doSetup = async () => {

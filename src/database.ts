@@ -1,22 +1,22 @@
 import { WriteQueue, writeQueue } from './write-queue'
 import { CRDT } from './crdt'
-import type { BulkResult, DocUpdate, ClockHead, Doc } from './types'
+import type { BulkResult, DocUpdate, ClockHead, Doc, FireproofOptions } from './types'
 
 export class Database {
   static databases: Map<string, Database> = new Map()
 
   name: string
-  config: object
+  opts: FireproofOptions = {}
 
   _listeners: Set<ListenerFn> = new Set()
   _crdt: CRDT
   // _indexes: Map<string, Index> = new Map()
   _writeQueue: WriteQueue
 
-  constructor(name: string, config = {}) {
+  constructor(name: string, opts?: FireproofOptions) {
     this.name = name
-    this.config = config
-    this._crdt = new CRDT(name)
+    this.opts = opts || this.opts
+    this._crdt = new CRDT(name, this.opts)
     this._writeQueue = writeQueue(async (updates: DocUpdate[]) => {
       const r = await this._crdt.bulk(updates)
       await this._notify(updates)
@@ -84,9 +84,9 @@ type DbResponse = {
 
 type ListenerFn = (docs: Doc[]) => Promise<void> | void
 
-export function database(name: string): Database {
+export function database(name: string, opts?: FireproofOptions): Database {
   if (!Database.databases.has(name)) {
-    Database.databases.set(name, new Database(name))
+    Database.databases.set(name, new Database(name, opts))
   }
   return Database.databases.get(name)!
 }

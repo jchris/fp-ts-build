@@ -1,7 +1,7 @@
 import { MemoryBlockstore } from '@alanshaw/pail/block'
 import {
   BlockFetcher, AnyBlock, AnyLink, BulkResult, ClockHead,
-  DbCarHeader, IdxCarHeader, IdxMeta, CarCommit, CarMakeable
+  DbCarHeader, IdxCarHeader, IdxMeta, CarCommit, CarMakeable, FireproofOptions
 } from './types'
 import { DbLoader, IdxLoader } from './loader'
 import { CID } from 'multiformats'
@@ -26,13 +26,15 @@ abstract class FireproofBlockstore implements BlockFetcher {
   name: string | null = null
 
   loader: DbLoader | IdxLoader | null = null
+  opts: FireproofOptions = {}
 
   private transactions: Set<Transaction> = new Set()
 
-  constructor(name: string | null, LoaderClass: typeof DbLoader | typeof IdxLoader) {
+  constructor(name: string | null, LoaderClass: typeof DbLoader | typeof IdxLoader, opts?: FireproofOptions) {
+    this.opts = opts || this.opts
     if (name) {
       this.name = name
-      this.loader = new LoaderClass(name)
+      this.loader = new LoaderClass(name, this.opts)
       this.ready = this.loader.ready
     } else {
       this.ready = Promise.resolve(LoaderClass.defaultHeader as DbCarHeader | IdxCarHeader)
@@ -87,8 +89,8 @@ abstract class FireproofBlockstore implements BlockFetcher {
 export class IndexBlockstore extends FireproofBlockstore {
   declare ready: Promise<IdxCarHeader>
 
-  constructor(name?: string) {
-    super(name || null, IdxLoader)
+  constructor(name?: string, opts?: FireproofOptions) {
+    super(name || null, IdxLoader, opts)
   }
 
   async transaction(fn: (t: Transaction) => Promise<IdxMeta>, indexes: Map<string, IdxMeta>): Promise<IdxMetaCar> {
@@ -103,9 +105,9 @@ export class IndexBlockstore extends FireproofBlockstore {
 export class TransactionBlockstore extends FireproofBlockstore {
   declare ready: Promise<DbCarHeader>
 
-  constructor(name?: string) {
+  constructor(name?: string, opts?: FireproofOptions) {
     // todo this will be a map of headers by branch name
-    super(name || null, DbLoader)
+    super(name || null, DbLoader, opts)
   }
 
   async transaction(fn: (t: Transaction) => Promise<BulkResult>): Promise<BulkResultCar> {

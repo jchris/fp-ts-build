@@ -3,7 +3,7 @@ import { innerMakeCarFile, parseCarFile } from './loader-helpers'
 import { Transaction } from './transaction'
 import type {
   AnyBlock, AnyCarHeader, AnyLink, BulkResult,
-  CarCommit, DbCarHeader, DbMeta, IdxCarHeader,
+  CarCommit, DbCarHeader, DbMeta, FireproofOptions, IdxCarHeader,
   IdxMeta, IdxMetaMap
 } from './types'
 import { CID } from 'multiformats'
@@ -11,13 +11,9 @@ import { CarStore, HeaderStore } from './store'
 import { decodeEncryptedCar, encryptedMakeCarFile } from './encrypt-helpers'
 import { getCrypto, randomBytes } from './encrypted-block'
 
-type LoaderOpts = {
-  public?: boolean
-}
-
 abstract class Loader {
   name: string
-  opts: LoaderOpts = {}
+  opts: FireproofOptions = {}
 
   headerStore: HeaderStore | undefined
   carStore: CarStore | undefined
@@ -30,9 +26,9 @@ abstract class Loader {
   static defaultHeader: AnyCarHeader
   abstract defaultHeader: AnyCarHeader
 
-  constructor(name: string, opts?: LoaderOpts) {
+  constructor(name: string, opts?: FireproofOptions) {
     this.name = name
-    if (opts) { this.opts = opts }
+    this.opts = opts || this.opts
     this.ready = this.initializeStores().then(async () => {
       if (!this.headerStore || !this.carStore) throw new Error('stores not initialized')
       const meta = await this.headerStore.load('main')
