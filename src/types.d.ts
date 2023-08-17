@@ -8,7 +8,6 @@ export type DocFragment = string | number | boolean | null | DocFragment[] | { [
 
 export type Doc = DocBody & {
   _id?: string
-  _meta?: DocBody
 }
 
 type DocBody = {

@@ -2,13 +2,6 @@ import { WriteQueue, writeQueue } from './write-queue'
 import { CRDT } from './crdt'
 import type { BulkResult, DocUpdate, ClockHead, Doc } from './types'
 
-export function database(name: string): Database {
-  if (!Database.databases.has(name)) {
-    Database.databases.set(name, new Database(name))
-  }
-  return Database.databases.get(name)!
-}
-
 export class Database {
   static databases: Map<string, Database> = new Map()
 
@@ -20,7 +13,7 @@ export class Database {
   // _indexes: Map<string, Index> = new Map()
   _writeQueue: WriteQueue
 
-  constructor(name: string, config = { blocks: null }) {
+  constructor(name: string, config = {}) {
     this.name = name
     this.config = config
     this._crdt = new CRDT(name)
@@ -90,3 +83,10 @@ type DbResponse = {
 }
 
 type ListenerFn = (docs: Doc[]) => Promise<void> | void
+
+export function database(name: string): Database {
+  if (!Database.databases.has(name)) {
+    Database.databases.set(name, new Database(name))
+  }
+  return Database.databases.get(name)!
+}
