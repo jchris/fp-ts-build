@@ -1,37 +1,41 @@
 {
   "name": "@fireproof/database",
-  "version": "0.10.64",
+  "version": "0.10.65",
   "description": "Live database for the web",
-  "main": "dist/fireproof.cjs",
-  "module": "dist/fireproof.esm.js",
+  "main": "./dist/browser/fireproof.cjs",
+  "module": "./dist/browser/fireproof.esm.js",
   "exports": {
     ".": {
       "import": "./dist/browser/fireproof.esm.js",
       "require": "./dist/browser/fireproof.cjs",
       "types": "./dist/types/fireproof.d.ts",
-      "script": "./dist/browser/fireproof.iife.js"
+      "script": "./dist/browser/fireproof.iife.js",
+      "default": "./dist/browser/fireproof.esm.js"
     },
     "./node": {
       "import": "./dist/node/fireproof.esm.js",
       "require": "./dist/node/fireproof.cjs",
       "types": "./dist/types/fireproof.d.ts",
-      "script": "./dist/browser/fireproof.iife.js"
+      "script": "./dist/browser/fireproof.iife.js",
+      "default": "./dist/node/fireproof.esm.js"
     },
     "./database": {
       "import": "./dist/node/database.esm.js",
       "require": "./dist/node/database.cjs",
       "types": "./dist/types/database.d.ts",
-      "script": "./dist/browser/database.iife.js"
+      "script": "./dist/browser/database.iife.js",
+      "default": "./dist/node/database.esm.js"
     },
     "./index": {
       "import": "./dist/node/index.esm.js",
       "require": "./dist/node/index.cjs",
       "types": "./dist/types/index.d.ts",
-      "script": "./dist/browser/index.iife.js"
+      "script": "./dist/browser/index.iife.js",
+      "default": "./dist/node/index.esm.js"
     }
   },
   "browser": "./dist/fireproof.browser.iife.js",
-  "types": "dist/types/fireproof.d.ts",
+  "types": "./dist/types/fireproof.d.ts",
   "files": [
     "src",
     "dist/node",

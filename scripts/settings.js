@@ -101,7 +101,7 @@ console.log('browser/es2015 build');
         ...browserIIFEConfig,
         outfile: `dist/browser/${filename}.esm.js`,
         format: 'esm',
-        banner: {
+        banner: { // should this include createRequire?
           js: `
 console.log('esm/es2015 build');
 `

@@ -7,7 +7,7 @@ if (!match) throw new Error('invalid version: ' + PACKAGE_VERSION)
 export const STORAGE_VERSION = match[0]
 
 abstract class VersionedStore {
-  VERSION: string = STORAGE_VERSION
+  STORAGE_VERSION: string = STORAGE_VERSION
 }
 
 export abstract class HeaderStore extends VersionedStore {

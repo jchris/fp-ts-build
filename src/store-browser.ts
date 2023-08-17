@@ -12,7 +12,7 @@ export class CarStore extends CarStoreBase {
 
   async _withDB(dbWorkFun: (arg0: any) => any) {
     if (!this.idb) {
-      const dbName = `fp.${this.VERSION}.${this.keyId}.${this.name}`
+      const dbName = `fp.${this.STORAGE_VERSION}.${this.keyId}.${this.name}`
       this.idb = await openDB(dbName, 1, {
         upgrade(db): void {
           db.createObjectStore('cars')
@@ -65,7 +65,7 @@ export class HeaderStore extends HeaderStoreBase {
   }
 
   headerKey(branch: string) {
-    return `fp.${this.VERSION}.${this.keyId}.${this.name}.${branch}`
+    return `fp.${this.STORAGE_VERSION}.${this.keyId}.${this.name}.${branch}`
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
