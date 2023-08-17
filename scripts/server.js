@@ -7,16 +7,7 @@ import * as fs from 'node:fs'
 import * as http from 'node:http'
 import * as path from 'node:path'
 
-import { join } from 'path'
-import { homedir } from 'os'
-// import { mkdir, writeFile } from 'fs/promises'
-import { Base } from '../src/storage/base.js'
-
 import { HeaderStore } from '../dist/test/store-fs.esm.js'
-
-const defaultConfig = {
-  dataDir: join(homedir(), '.fireproof', 'v' + Base.format)
-}
 
 const PORT = 8000
 
